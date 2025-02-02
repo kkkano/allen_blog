@@ -22,7 +22,8 @@ const Comments = () => {
         emitMetadata="0"
         inputPosition="bottom"
         theme={commentsTheme}
-        lang="zh-CN"
+        lang="en"
+   
       />
     </div>
   )
