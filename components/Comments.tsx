@@ -1,33 +1,32 @@
 'use client'
 
-import React, { useEffect } from 'react'
+import React from 'react'
+import { useTheme } from 'next-themes'
+import Giscus from '@giscus/react'
 
 const Comments = () => {
-  useEffect(() => {
-    const script = document.createElement('script')
-    script.src = 'https://giscus.app/client.js'
-    script.setAttribute('data-repo', 'kkkano/allen_blog')
-    script.setAttribute('data-repo-id', 'R_kgDONxOD7A')
-    script.setAttribute('data-category-id', 'DIC_kwDONxOD7M4CmjqM')
-    script.setAttribute('data-mapping', 'pathname')
-    script.setAttribute('data-strict', '1')
-    script.setAttribute('data-reactions-enabled', '1')
-    script.setAttribute('data-emit-metadata', '0')
-    script.setAttribute('data-input-position', 'bottom')
-    script.setAttribute('data-theme', 'light')
-    script.setAttribute('data-lang', 'en')
-    script.setAttribute('crossorigin', 'anonymous')
-    script.async = true
+  const { theme, resolvedTheme } = useTheme()
+  const commentsTheme = theme === 'dark' || resolvedTheme === 'dark' ? 'dark' : 'light'
 
-    const commentsContainer = document.getElementById('comments-container')
-    if (commentsContainer) commentsContainer.appendChild(script)
+  return (
+    <div className="wrapper" id="Comment">
+      <Giscus
+        repo="kkkano/allen_blog"
+        repoId="R_kgDONxOD7A"
+        category="General"
+        categoryId="DIC_kwDONxOD7M4CmjqM"
+        mapping="url" // 将评论映射到 URL
+        strict="0" // 不严格匹配路径
+        reactionsEnabled="1" // 启用反应（点赞等）
+        emitMetadata="0" // 不发送额外元数据
+        inputPosition="bottom" // 输入框位置设置为底部
+        theme={commentsTheme} // 动态设置主题
+        lang="en" // 设置语言为英文
+        loading="lazy" // 使用懒加载
+        />
+      </div>
 
-    return () => {
-      if (commentsContainer) commentsContainer.innerHTML = ''
-    }
-  }, [])
-
-  return <div id="comments-container" className="b-6-pt text-center text-gray-700 dark:text-gray-300"></div>
+);
 }
 
 export default Comments
