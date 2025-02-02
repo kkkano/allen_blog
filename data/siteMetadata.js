@@ -73,8 +73,7 @@ const siteMetadata = {
       emitMetadata: '0',
       inputPosition: 'bottom',
       theme: 'light',
-      lang: 'en',
-      crossorigin: 'anonymous'
+      lang: 'zh-CN'
     },
   },
   search: {
