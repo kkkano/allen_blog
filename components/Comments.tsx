@@ -9,7 +9,7 @@ const Comments = () => {
   const commentsTheme = theme === 'dark' || resolvedTheme === 'dark' ? 'dark' : 'light'
 
   return (
-    <div className="pt-6 pb-6 text-center text-gray-700 dark:text-gray-300">
+    <div className="b-6-pt text-center text-gray-700 dark:text-gray-300">
       <Giscus
         id="comments"
         repo="kkkano/allen_blog"

@@ -3,7 +3,8 @@ const siteMetadata = {
   title: "Allen's Blog",
   author: 'Allen Wang',
   headerTitle: "Allen's Blog",
-  description: 'The purpose of this blog is to share his insights and experiences in the field of technology, programming, and personal thoughts.',
+  description:
+    'The purpose of this blog is to share his insights and experiences in the field of technology, programming, and personal thoughts.',
   language: 'en-us',
   theme: 'system', // system, dark or light
   siteUrl: 'https://tailwind-nextjs-starter-blog.vercel.app',
@@ -73,7 +74,7 @@ const siteMetadata = {
       emitMetadata: '0',
       inputPosition: 'bottom',
       theme: 'light',
-      lang: 'zh-CN'
+      lang: 'zh-CN',
     },
   },
   search: {
