@@ -23,7 +23,6 @@ const Comments = () => {
         inputPosition="bottom"
         theme={commentsTheme}
         lang="en"
-   
       />
     </div>
   )
