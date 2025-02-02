@@ -2,14 +2,11 @@
 
 import React from 'react'
 import { useTheme } from 'next-themes'
-import siteMetadata from '@/data/siteMetadata'
 import Giscus from '@giscus/react'
 
 const Comments = () => {
   const { theme, resolvedTheme } = useTheme()
   const commentsTheme = theme === 'dark' || resolvedTheme === 'dark' ? 'dark' : 'light'
-
-  if (!siteMetadata.comments) return null
 
   return (
     <div className="pt-6 pb-6 text-center text-gray-700 dark:text-gray-300">
