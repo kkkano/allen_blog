@@ -23,9 +23,11 @@ const Comments = () => {
         theme={commentsTheme} // 动态设置主题
         lang="en" // 设置语言为英文
         loading="lazy" // 使用懒加载
-        />
-      </div>
-)
+      />
+    </div>
+  )
 }
+
+
 
 export default Comments
