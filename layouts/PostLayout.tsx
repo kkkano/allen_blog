@@ -104,21 +104,8 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
                 <Link href={editUrl(filePath)}>View on GitHub</Link>
               </div>
               {siteMetadata.comments && (
-                <div className="pb-6 pt-6 text-center text-gray-700 dark:text-gray-300">
-                  <Giscus
-                    id="comments"
-                    repo="kkkano/allen_blog"
-                    repoId="R_kgDONxOD7A"
-                    category="Announcements"
-                    categoryId="DIC_kwDONxOD7M4CmjqM"
-                    mapping="pathname"
-                    strict="1"
-                    reactionsEnabled="1"
-                    emitMetadata="0"
-                    inputPosition="bottom"
-                    theme="light"
-                    lang="zh-CN"
-                  />
+                <div className="pb-6 pt-6 text-center text-gray-700 dark:text-gray-300" id="comment">
+                  <Comments />
                 </div>
               )}
             </div>
