@@ -83,9 +83,14 @@ module.exports = () => {
     async headers() {
       return [
         {
-          source: '/(.*)',
-          headers: securityHeaders,
-        },
+          source: '/:path*',
+          headers: [
+            {
+              key: 'Content-Security-Policy',
+              value: "frame-ancestors 'self' https://giscus.app"
+            }
+          ]
+        }
       ]
     },
     webpack: (config, options) => {
