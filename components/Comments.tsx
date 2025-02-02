@@ -27,7 +27,4 @@ const Comments = () => {
     </div>
   )
 }
-
-
-
 export default Comments
