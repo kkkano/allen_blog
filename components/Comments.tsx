@@ -15,7 +15,7 @@ const Comments = () => {
         repoId="R_kgDONxOD7A"
         category="General"
         categoryId="DIC_kwDONxOD7M4CmjqM"
-        mapping="url" // 将评论映射到 URL
+        mapping="pathname" // 将评论映射到 pathname
         strict="0" // 不严格匹配路径
         reactionsEnabled="1" // 启用反应（点赞等）
         emitMetadata="0" // 不发送额外元数据
