@@ -8,11 +8,13 @@ summary: '探讨 LLM 和当前 Agent 技术在编程方面的局限性'
 authors: ['allen']
 ---
 
+_Source_:https://x.com/lidangzzz/status/1871505849983594677?t=5UnA5rIonz0gelZk-LMAjQ&s=05
+_Author_::[lidangzzz](https://x.com/lidangzzz)
+
 ## Introduction
 
 This post explores the limitations of LLMs and current Agent technology in programming, emphasizing the differences between real - world coding and solving TCS problems, and highlighting the importance of expanding the context window.
-_Source_:https://x.com/lidangzzz/status/1871505849983594677?t=5UnA5rIonz0gelZk-LMAjQ&s=05
-_Author_::[lidangzzz](https://x.com/lidangzzz)
+
 <TOCInline toc={props.toc} exclude="Introduction" />
 
 ## The original
@@ -72,18 +74,19 @@ LLM和目前Agent技术，可以代替很多tcs（理论计算机） phd，
 如果不把context window解决掉，或者坚信fine tuning比context window更重要——那么很多问题就会彻底卡死，成为这一轮AI、LLM、vertical AI agent浪潮的真正瓶颈。
 
 ## 立党老师观点:
-- 理论问题解决能力强 ：AI 大模型像 GPT - 4 在解决理论计算机问题上很厉害，像设计算法、数学证明这类抽象干净的问题能轻松搞定，就像天才科学家。
-- 实际编程能力差 ：但在实际写代码干工程活时完全不行，因为工作中要面对屎山代码、调试、配环境、读文档、和同事扯皮等复杂情况，模型根本玩不转。
-- 当前问题 ：AI 写代码的工具如 Devin、Cursor 最大的问题是 “记性太差”，代码量一多就处理不了，强行用技巧拼凑结果也容易出错。
+
+- **理论问题解决能力强**：AI 大模型像 GPT - 4 在解决理论计算机问题上很厉害，像设计算法、数学证明这类抽象干净的问题能轻松搞定，就像天才科学家。
+- **实际编程能力差**：但在实际写代码干工程活时完全不行，因为工作中要面对屎山代码、调试、配环境、读文档、和同事扯皮等复杂情况，模型根本玩不转。
+- **当前问题**：AI 写代码的工具如 Devin、Cursor 最大的问题是 “记性太差”，代码量一多就处理不了，强行用技巧拼凑结果也容易出错。
 - 未来关键 ：要想突破就得解决 “记性”（context window）问题，否则 AI 写代码永远只能搞小作业，干不了正经项目。
 ## 我的看法:
-- 理论vs实践：同意立党观点。模型能解数学题，但工程是脏活累活，需要和人、系统、细节打交道，目前AI确实不擅长。
+- **理论vs实践**：同意立党观点。模型能解数学题，但工程是脏活累活，需要和人、系统、细节打交道，目前AI确实不擅长。
 
-- context window是命门：现在模型记性差（比如只能看几页代码），导致它像“金鱼脑”，稍微复杂点的项目就蒙圈。扩展上下文确实是刚需，但成本和技术挑战也大。
+- **context window是命门**：现在模型记性差（比如只能看几页代码），导致它像“金鱼脑”，稍微复杂点的项目就蒙圈。扩展上下文确实是刚需，但成本和技术挑战也大。
 
-- AI写代码的定位：短期更适合辅助工具（比如生成代码片段、修bug），但想替代程序员？除非能真正“理解”业务逻辑和团队协作——这比解3-SAT难多了。
+- **AI写代码的定位**：短期更适合辅助工具（比如生成代码片段、修bug），但想替代程序员？除非能真正“理解”业务逻辑和团队协作——这比解3-SAT难多了。
 
-- 安全问题：把AWS密钥、数据库权限交给AI操作？想想就害怕……
+- **安全问题**：把AWS密钥、数据库权限交给AI操作？想想就害怕……
 
-（个人吐槽：现在的AI写代码工具，就像学霸帮你写作业，但真让他去公司996，分分钟被开除😂）
+~~（个人吐槽：现在的AI写代码工具，就像学霸帮你写作业，但真让他去公司996，分分钟被开除😂）~~
 
