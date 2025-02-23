@@ -1,0 +1,824 @@
+---
+title: Sample .md file
+date: '2025-02-23'
+tags: ['Java']
+draft: false
+summary: java反射
+---
+### <font style="color:rgb(79, 79, 79);">反射简介</font>
+#### <font style="color:rgb(79, 79, 79);">什么是反射</font>
+[<font style="color:rgb(77, 77, 77);">JAVA反射机制</font>](https://so.csdn.net/so/search?q=JAVA%E5%8F%8D%E5%B0%84%E6%9C%BA%E5%88%B6&spm=1001.2101.3001.7020)<font style="color:rgb(77, 77, 77);">是</font>**<font style="color:red;">在运行状态中</font>**<font style="color:rgb(77, 77, 77);">，对于任意一个类，都能够知道这个类的所有属性和方法；对于任意一个对象，都能够调用它的任意一个方法和属性；这种动态获取的信息以及动态调用对象的方法的功能称为java语言的</font>[<font style="color:rgb(77, 77, 77);">反射机制</font>](https://so.csdn.net/so/search?q=%E5%8F%8D%E5%B0%84%E6%9C%BA%E5%88%B6&spm=1001.2101.3001.7020)<font style="color:rgb(77, 77, 77);">。</font>
+
+#### <font style="color:rgb(79, 79, 79);">java反射的作用</font>
+<font style="color:rgb(77, 77, 77);">在运行时判断任意一个对象所属的类</font>
+
+<font style="color:rgb(77, 77, 77);">在运行时构造任意一个类的对象</font>
+
+<font style="color:rgb(77, 77, 77);">在运行时判断任意一个类所具有的成员变量和方法</font>
+
+<font style="color:rgb(77, 77, 77);">在运行时调用任意一个对象的方法</font>
+
+#### <font style="color:rgb(79, 79, 79);">反射机制有什么用</font>
+<font style="color:rgb(77, 77, 77);">通过java语言中的反射机制可以操作字节码文件（可以读和修改字节码文件。）</font>
+
+<font style="color:rgb(77, 77, 77);">通过反射机制可以操作代码片段。（class文件。）</font>
+
+#### <font style="color:rgb(79, 79, 79);">哪里会用到反射机制</font>
+<font style="color:rgb(77, 77, 77);">Web服务器中利用反射调用了Sevlet的服务方法。</font>
+
+<font style="color:rgb(77, 77, 77);">Eclispe等开发工具利用反射动态刨析对象的类型与结构，动态提示对象的属性和方法。</font>
+
+<font style="color:rgb(77, 77, 77);">模块化的开发，通过反射去调用对应的字节码</font>
+
+<font style="color:rgb(77, 77, 77);">动态代理设计模式也采用了反射机制</font>
+
+<font style="color:rgb(77, 77, 77);">Spring／Hibernate 等框架，也是利用</font>[<font style="color:rgb(77, 77, 77);">CGLIB</font>](https://so.csdn.net/so/search?q=CGLIB&spm=1001.2101.3001.7020)<font style="color:rgb(77, 77, 77);"> </font><font style="color:rgb(77, 77, 77);">反射机制才得以实现:</font>
+
+1. <font style="color:rgb(77, 77, 77);">JDBC中，利用反射动态加载了数据库驱动程序。</font>
+2. <font style="color:rgb(77, 77, 77);">很多框架都用到反射机制，注入属性，调用方法，如Spring。</font>
+
+#### <font style="color:rgb(79, 79, 79);">反射机制的应用场景有哪些</font>
+1. <font style="color:rgba(0, 0, 0, 0.75);">我们在使用JDBC连接数据库时使用Class.forName()通过反射加载数据库的驱动程序；</font>
+2. <font style="color:rgba(0, 0, 0, 0.75);">Spring框架也用到很多反射机制，最经典的就是xml的配置模式。</font>
+
+##### <font style="color:rgb(79, 79, 79);">JDBC重点(Class.forName导致类加载)</font>
+<font style="color:rgb(77, 77, 77);">如果你只是希望一个类的静态代码块执行，其它代码一律不执行，可以使用：</font>
+
+<font style="color:rgb(77, 77, 77);">Class.forName(“完整类名”);</font>
+
+<font style="color:rgb(77, 77, 77);">这个方法的执行会导致类加载，类加载时，静态代码块执行。</font>
+
+##### <font style="color:rgb(79, 79, 79);">Spring 通过 XML 配置模式装载 Bean 的过程</font>
+1. <font style="color:rgba(0, 0, 0, 0.75);">将程序内所有 XML 或 Properties 配置文件加载入内存中;</font>
+2. <font style="color:rgba(0, 0, 0, 0.75);">Java类里面解析xml或properties里面的内容，得到对应实体类的字节码字符串以及相关的属性信息;</font>
+3. <font style="color:rgba(0, 0, 0, 0.75);">使用反射机制，根据这个字符串获得某个类的Class实例;</font>
+4. <font style="color:rgba(0, 0, 0, 0.75);">动态配置实例的属性</font>
+
+###### <font style="color:rgb(79, 79, 79);">可查看数据库连接和Spring的反射案例：</font>
+<font style="color:rgb(77, 77, 77);">https://zhuanlan.zhihu.com/p/394766551</font>
+
+#### <font style="color:rgb(79, 79, 79);">反射机制的优缺点</font>
+<font style="color:rgb(77, 77, 77);">优点： 运行期类型的判断，动态加载类（在运行期间根据业务功能动态执行方法、访问属性），提高代码灵活度。</font>
+
+<font style="color:rgb(77, 77, 77);">缺点： 性能瓶颈：反射相当于一系列解释操作，通知 JVM 要做的事情，性能比直接的java代码要慢很多。</font>
+
+#### <font style="color:rgb(79, 79, 79);">反射机制的相关类在哪个包下</font>
+`<font style="color:rgb(199, 37, 78);background-color:rgb(249, 242, 244);">java.lang.reflect.*;</font>`
+
+### <font style="color:rgb(79, 79, 79);">反射使用步骤（获取 Class 对象、调用对象方法）</font>
+#### <font style="color:rgb(79, 79, 79);">获取 Class 对象的三种方法</font>
+<font style="color:rgb(77, 77, 77);">1.通过new对象实现反射机制: 对象.getClass()</font>
+
+<font style="color:rgb(77, 77, 77);">2.通过路径实现反射机制: Class.forName(“完整类名带包名”) 静态方法</font>
+
+<font style="color:rgb(77, 77, 77);">例如：com.mysql.jdbc.Driver Driver类已经被加载到 jvm中，并且完成了类的初始化工作就行了</font>
+
+<font style="color:rgb(77, 77, 77);">3.通过类名实现反射机制: 任何类型（类名）.class。 获取Class<？> clz 对象</font>
+
+##### <font style="color:rgb(79, 79, 79);">代码示例</font>
+```plain
+public class Student {
+	private int id;
+	String name;
+ 	protected boolean sex;
+	public float score;
+}
+
+public class Get {
+	//获取反射机制三种方式
+	public static void main(String[] args) throws ClassNotFoundException {
+        //方式一(通过建立对象)
+        Student stu = new Student();
+        Class classobj1 = stu.getClass();
+        System.out.println(classobj1.getName());
+
+        //方式二（所在通过路径-相对路径）
+        Class classobj2 = Class.forName("fanshe.Student");
+        System.out.println(classobj2.getName());
+
+        //方式三（通过类名）
+        Class classobj3 = Student.class;
+        System.out.println(classobj3.getName());
+	}
+}
+
+
+```
+
+#### <font style="color:rgb(79, 79, 79);">获取构造器对象，通过构造器new出一个对象</font>
+`<font style="color:rgb(199, 37, 78);background-color:rgb(249, 242, 244);">Clazz.getConstructor([String.class]);</font>`
+
+`<font style="color:rgb(199, 37, 78);background-color:rgb(249, 242, 244);">Con.newInstance([参数]);</font>`
+
+##### <font style="color:rgb(79, 79, 79);">通过反射 class对象创建一个实例对象</font>
+<font style="color:rgb(77, 77, 77);">相当与new类名（）无参构造器</font>
+
+`<font style="color:rgb(199, 37, 78);background-color:rgb(249, 242, 244);">Cls.newInstance(); //对象.newInstance()</font>`
+
+<font style="color:rgb(77, 77, 77);">注：newInstance()方法内部实际上调用了无参数构造方法，必须保证无参构造存在才可以。</font>
+
+<font style="color:rgb(77, 77, 77);">否则会抛出java.lang.InstantiationException异常。</font>
+
+###### <font style="color:rgb(79, 79, 79);">通过Class对象的newInstance()方法</font>
+`<font style="color:rgb(199, 37, 78);background-color:rgb(249, 242, 244);">Object instance = clazz1.newInstance()</font>`
+
+###### <font style="color:rgb(79, 79, 79);">代码示例</font>
+```plain
+class ReflectTest02{
+    public static void main(String[] args) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+        // 下面这段代码是以反射机制的方式创建对象。
+        // 通过反射机制，获取Class，通过Class来实例化对象
+        Class c = Class.forName("javase.reflectBean.User");
+        // newInstance() 这个方法会调用User这个类的无参数构造方法，完成对象的创建。
+        // 重点是：newInstance()调用的是无参构造，必须保证无参构造是存在的！
+        Object obj = c.newInstance();
+        System.out.println(obj);
+    }
+}
+
+
+```
+
+##### <font style="color:rgb(79, 79, 79);">通过构造方法实例化对象,代码示例</font>
+```plain
+//取得无参构造
+Constructor<?> constructor2 = clazz1.getConstructor();
+//通过无参构造创建一个对象
+Object child1 = constructor2.newInstance();
+
+//取得指定参数的构造方法对象
+Constructor<?> constructor3 = clazz1.getConstructor(String.class, int.class);
+//通过构造方法对象创建一个对象
+constructor3.newInstance("wenpan",21);
+
+
+```
+
+#### <font style="color:rgb(79, 79, 79);">通过class对象获得一个属性对象</font>
+<font style="color:rgb(77, 77, 77);">获得某个类的所有的公共（public）的字段，包括父类中的字段</font>
+
+`<font style="color:rgb(199, 37, 78);background-color:rgb(249, 242, 244);">Field c=cls.getFields()</font>`
+
+<font style="color:rgb(77, 77, 77);">获得某个类的所有声明的字段，即包括public、private和proteced，但是不包括父类的声明字段</font>
+
+`<font style="color:rgb(199, 37, 78);background-color:rgb(249, 242, 244);">Field c=cls.getDeclaredFields()</font>`
+
+##### <font style="color:rgb(79, 79, 79);">通过class对象获得一个方法对象</font>
+<font style="color:rgb(77, 77, 77);">只能获取公共的</font>
+
+`<font style="color:rgb(199, 37, 78);background-color:rgb(249, 242, 244);">Cls.getMethod(“方法名”,class……parameaType);</font>`
+
+<font style="color:rgb(77, 77, 77);">获取任意修饰的方法，不能执行私有</font>
+
+`<font style="color:rgb(199, 37, 78);background-color:rgb(249, 242, 244);">Cls.getDeclareMethod(“方法名”);</font>`
+
+<font style="color:rgb(77, 77, 77);">让私有的方法可以执行</font>
+
+`<font style="color:rgb(199, 37, 78);background-color:rgb(249, 242, 244);">M.setAccessible(true);</font>`
+
+##### <font style="color:rgb(79, 79, 79);">让方法执行</font>
+`<font style="color:rgb(199, 37, 78);background-color:rgb(249, 242, 244);">Method.invoke(obj实例对象,obj可变参数); //是有返回值的</font>`
+
+#### <font style="color:rgb(79, 79, 79);">Java反射创建对象效率高还是通过new创建对象的效率高？</font>
+<font style="color:rgb(77, 77, 77);">new创建对象的效率高</font>
+
+<font style="color:rgb(77, 77, 77);">Java代码是需要编译后在虚拟机里面运行的。</font>
+
+<font style="color:rgb(77, 77, 77);">一般都是通过一个前端编辑器，比如javac，把java文件转为class文件。程序运行期间，可能会通过一个JIT，即时编译器将字节码文件转换为计算机认识的机器码文件。</font>
+
+<font style="color:rgb(77, 77, 77);">另外一种可能是通过一个AOT编译器，直接把java文件编译为本地机器码文件。</font>
+
+<font style="color:rgb(77, 77, 77);">其中JIT在程序运行期会对程序进行优化，但是反射是通过动态解析的方式，因此可能无法执行某些java虚拟机的优化。</font>
+
+<font style="color:rgb(77, 77, 77);">下方博客有代码示例说明</font>
+
+[<font style="color:rgb(77, 77, 77);">Java反射和new效率对比_编程爱好者jony的博客-CSDN博客</font>](https://blog.csdn.net/sunny_json/article/details/113047372)
+
+#### <font style="color:rgb(79, 79, 79);">反射机制相关的重要的类有哪些</font>
+| _**<font style="color:rgb(79, 79, 79);">类</font>**_ | _**<font style="color:rgb(79, 79, 79);">含义</font>**_ |
+| :---: | :---: |
+| <font style="color:rgb(79, 79, 79);">java.lang.Class</font> | <font style="color:rgb(79, 79, 79);">代表整个字节码。代表一个类型，代表整个类。</font> |
+| <font style="color:rgb(79, 79, 79);">java.lang.reflect.Method</font> | <font style="color:rgb(79, 79, 79);">代表字节码中的方法字节码。代表类中的方法。</font> |
+| <font style="color:rgb(79, 79, 79);">java.lang.reflect.Constructor</font> | <font style="color:rgb(79, 79, 79);">代表字节码中的构造方法字节码。代表类中的构造方法。</font> |
+| <font style="color:rgb(79, 79, 79);">java.lang.reflect.Field</font> | <font style="color:rgb(79, 79, 79);">代表字节码中的属性字节码。代表类中的成员变量（静态变量+实例变量）。</font> |
+
+
+<font style="color:rgb(77, 77, 77);">注：必须先获得Class才能获取Method、Constructor、Field。</font>
+
+##### <font style="color:rgb(79, 79, 79);">Class代码示例</font>
+```plain
+java.lang.Class:
+public class User{
+    // Field
+    int no;
+    
+    // Constructor
+    public User(){
+	}
+
+    public User(int no){
+        this.no = no;
+    }
+    
+    // Method
+    public void setNo(int no){
+        this.no = no;
+	}
+
+    public int getNo(){
+        return no;
+    }
+}
+
+```
+
+### <font style="color:rgb(79, 79, 79);">反射Filed【反射/反编译一个类的属性】</font>
+#### <font style="color:rgb(79, 79, 79);">Class类方法</font>
+| **<font style="color:rgb(79, 79, 79);">方法名</font>** | **<font style="color:rgb(79, 79, 79);">备注</font>** |
+| :---: | :---: |
+| <font style="color:rgb(79, 79, 79);">public T newInstance()</font> | <font style="color:rgb(79, 79, 79);">创建对象</font> |
+| <font style="color:rgb(79, 79, 79);">public String getName()</font> | <font style="color:rgb(79, 79, 79);">返回完整类名带包名</font> |
+| <font style="color:rgb(79, 79, 79);">public String getSimpleName()</font> | <font style="color:rgb(79, 79, 79);">返回类名</font> |
+| <font style="color:rgb(79, 79, 79);">public Field[] getFields()</font> | <font style="color:rgb(79, 79, 79);">返回类中public修饰的属性</font> |
+| <font style="color:rgb(79, 79, 79);">public Field[] getDeclaredFields()</font> | <font style="color:rgb(79, 79, 79);">返回类中所有的属性</font> |
+| <font style="color:rgb(79, 79, 79);">public Field getDeclaredField(String name)</font> | <font style="color:rgb(79, 79, 79);">根据属性名name获取指定的属性</font> |
+| <font style="color:rgb(79, 79, 79);">public native int getModifiers()</font> | <font style="color:rgb(79, 79, 79);">获取属性的修饰符列表,返回的修饰符是一个数字，每个数字是修饰符的代号【一般配合Modifier类的toString(int x)方法使用】</font> |
+| <font style="color:rgb(79, 79, 79);">public Method[] getDeclaredMethods()</font> | <font style="color:rgb(79, 79, 79);">返回类中所有的实例方法</font> |
+| <font style="color:rgb(79, 79, 79);">public Method getDeclaredMethod(String name, Class<?>… parameterTypes)</font> | <font style="color:rgb(79, 79, 79);">根据方法名name和方法形参获取指定方法</font> |
+| <font style="color:rgb(79, 79, 79);">public Constructor<?>[] getDeclaredConstructors()</font> | <font style="color:rgb(79, 79, 79);">返回类中所有的构造方法</font> |
+| <font style="color:rgb(79, 79, 79);">public Constructor getDeclaredConstructor(Class<?>… parameterTypes)</font> | <font style="color:rgb(79, 79, 79);">根据方法形参获取指定的构造方法</font> |
+
+
+##### <font style="color:rgb(79, 79, 79);">获取一个类的父类以及所有实现的接口</font>
+| **<font style="color:rgb(79, 79, 79);">public native Class<? super T> getSuperclass()</font>** | **<font style="color:rgb(79, 79, 79);">返回调用类的父类</font>** |
+| :---: | :---: |
+| <font style="color:rgb(79, 79, 79);">public Class<?>[] getInterfaces()</font> | <font style="color:rgb(79, 79, 79);">返回调用类实现的接口集合</font> |
+
+
+#### <font style="color:rgb(79, 79, 79);">Field类方法</font>
+| **<font style="color:rgb(79, 79, 79);">方法名</font>** | **<font style="color:rgb(79, 79, 79);">备注</font>** |
+| :---: | :---: |
+| <font style="color:rgb(79, 79, 79);">public String getName()</font> | <font style="color:rgb(79, 79, 79);">返回属性名</font> |
+| <font style="color:rgb(79, 79, 79);">public int getModifiers()</font> | <font style="color:rgb(79, 79, 79);">获取属性的修饰符列表,返回的修饰符是一个数字，每个数字是修饰符的代号【一般配合Modifier类的toString(int x)方法使用】</font> |
+| <font style="color:rgb(79, 79, 79);">public Class<?> getType()</font> | <font style="color:rgb(79, 79, 79);">以Class类型，返回属性类型【一般配合Class类的getSimpleName()方法使用】</font> |
+| <font style="color:rgb(79, 79, 79);">public void set(Object obj, Object value)</font> | <font style="color:rgb(79, 79, 79);">设置属性值</font> |
+| <font style="color:rgb(79, 79, 79);">public Object get(Object obj)</font> | <font style="color:rgb(79, 79, 79);">读取属性值</font> |
+
+
+##### <font style="color:rgb(79, 79, 79);">反编译一个类的属性Field（本类的所有属性，不包含父类和接口）, 代码示例</font>
+```plain
+//通过反射机制，反编译一个类的属性Field（了解一下）
+class ReflectTest06{
+    public static void main(String[] args) throws ClassNotFoundException {
+		Class studentClass = Class.forName("javase.reflectBean.Student");
+		Modifier.toString(studentClass.getModifiers();
+		// Class类的getName方法
+		studentClass.getSimpleName()
+    
+        //获取所有的属性
+		Field[] declaredFields = clazz1.getDeclaredFields();
+        for (int i = 0; i < declaredFields.length; i++) {
+            //属性名称
+            String fieldName = declaredFields[i].getName();
+            //属性的类型 
+            // declaredFields[i]..getType().getSimpleName()
+            String fieldType = declaredFields[i].getType().getName();
+            //获取属性的修饰符列表，返回的修饰符是一个数字，每个数字是修饰符的代号
+            //用Modifier类的toString转换成字符串
+            String fieldModifier = Modifier.toString(declaredFields[i].getModifiers());
+            System.out.println(fieldModifier + " " + fieldType + " " + fieldName + ";");
+        }
+    }
+}
+
+
+```
+
+##### <font style="color:rgb(79, 79, 79);">取得实现的接口里的所有属性，代码示例</font>
+```plain
+//通过属性名取得属性
+Field field = clazz1.getDeclaredField("name");
+//访问私有属性需要设置Accessible为true才可以更改或读取值（get 或 set）
+field.setAccessible(true);
+//取得instance对象里面的属性值
+System.out.println("更改前的name值：" + field.get(instance));
+//更改instance对象里的name属性值
+field.set(instance,"文攀啊");
+System.out.println("更改后的name属性值：" + field.get(instance));
+
+
+```
+
+#### <font style="color:rgb(79, 79, 79);">给属性赋值三要素</font>
+<font style="color:rgb(77, 77, 77);">示例：给s对象的no属性赋值1111</font>
+
+<font style="color:rgb(77, 77, 77);">要素1：对象 s</font>
+
+<font style="color:rgb(77, 77, 77);">要素2：no 属性</font>
+
+<font style="color:rgb(77, 77, 77);">要素3：1111 值</font>
+
+#### <font style="color:rgb(79, 79, 79);">读属性值两个要素</font>
+<font style="color:rgb(77, 77, 77);">示例：获取s对象的no属性的值</font>
+
+<font style="color:rgb(77, 77, 77);">要素1：对象 s</font>
+
+<font style="color:rgb(77, 77, 77);">要素2：no属性</font>
+
+<font style="color:rgb(77, 77, 77);">注： Field类中set()、get()使用注意事项：</font>
+
+1. <font style="color:rgb(77, 77, 77);">属性.set(对象, 值);</font>
+2. <font style="color:rgb(77, 77, 77);">属性.get(对象);</font>
+
+##### <font style="color:rgb(79, 79, 79);">通过反射机制访问一个java对象的属性,代码示例</font>
+```plain
+/*
+必须掌握：
+怎么通过反射机制访问一个java对象的属性？
+给属性赋值set
+获取属性的值get
+ */
+class ReflectTest07{
+    public static void main(String[] args) throws ClassNotFoundException, InstantiationException, IllegalAccessException, NoSuchFieldException {
+        // 不使用反射机制给属性赋值
+        Student student = new Student();
+        // 给属性赋值三要素：给s对象的no属性赋值1111
+        student.no = 1111;
+        // 读属性值两个要素：获取s对象的no属性的值
+        System.out.println(student.no);
+
+        // 使用反射机制给属性赋值
+        Class studentClass = Class.forName("javase.reflectBean.Student");
+
+		// obj就是Student对象。（底层调用无参数构造方法）
+        Object obj = studentClass.newInstance();
+
+        // 获取no属性（根据属性的名称来获取Field）
+        Field noField = studentClass.getDeclaredField("no");
+
+        // 给obj对象(Student对象)的no属性赋值
+        noField.set(obj, 22222);
+
+        // 读取属性的值
+        // 两个要素：获取obj对象的no属性的值。
+        System.out.println(noField.get(obj));
+	}
+}
+
+
+```
+
+##### <font style="color:rgb(79, 79, 79);">set()可以访问私有属性嘛？</font>
+<font style="color:rgb(77, 77, 77);">不可以，需要打破封装，才可以</font>
+
+#### <font style="color:rgb(79, 79, 79);">Field方法</font>
+| **<font style="color:rgb(79, 79, 79);">方法</font>** | **<font style="color:rgb(79, 79, 79);">备注</font>** |
+| :---: | :---: |
+| <font style="color:rgb(79, 79, 79);">public void setAccessible(boolean flag)</font> | <font style="color:rgb(79, 79, 79);">默认false，设置为true为打破封装</font> |
+
+
+##### <font style="color:rgb(79, 79, 79);">代码示例</font>
+```plain
+// 可以访问私有的属性吗？
+Field nameField = studentClass.getDeclaredField("name");
+// 打破封装（反射机制的缺点：打破封装，可能会给不法分子留下机会！！！）
+// 这样设置完之后，在外部也是可以访问private的。
+nameField.setAccessible(true);
+// 给name属性赋值
+nameField.set(obj, "xiaowu");
+// 获取name属性的值
+System.out.println(nameField.get(obj));
+
+
+```
+
+### <font style="color:rgb(79, 79, 79);">反射Method【反射/反编译一个类的方法】</font>
+#### <font style="color:rgb(79, 79, 79);">Method类方法</font>
+| **<font style="color:rgb(79, 79, 79);">方法名</font>** | **<font style="color:rgb(79, 79, 79);">备注</font>** |
+| :---: | :---: |
+| <font style="color:rgb(79, 79, 79);">public String getName()</font> | <font style="color:rgb(79, 79, 79);">返回方法名</font> |
+| <font style="color:rgb(79, 79, 79);">public int getModifiers()</font> | <font style="color:rgb(79, 79, 79);">获取方法的修饰符列表,返回的修饰符是一个数字，每个数字是修饰符的代号【一般配合Modifier类的toString(int x)方法使用】</font> |
+| <font style="color:rgb(79, 79, 79);">public Class<?> getReturnType()</font> | <font style="color:rgb(79, 79, 79);">以Class类型，返回方法类型【一般配合Class类的getSimpleName()方法使用】</font> |
+| <font style="color:rgb(79, 79, 79);">public Class<?>[] getParameterTypes()</font> | <font style="color:rgb(79, 79, 79);">返回方法的修饰符列表（一个方法的参数可能会有多个。）【结果集一般配合Class类的getSimpleName()方法使用】</font> |
+| <font style="color:rgb(79, 79, 79);">public Object invoke(Object obj, Object… args)</font> | <font style="color:rgb(79, 79, 79);">调用方法</font> |
+
+
+#### <font style="color:rgb(79, 79, 79);">反编译一个类的方法Method</font>
+```plain
+class ReflectTest09{
+    public static void main(String[] args) throws ClassNotFoundException {
+        Class userServiceClass = Class.forName("java.lang.String");
+
+StringBuilder s = new StringBuilder();
+        s.append(Modifier.toString(userServiceClass.getModifiers()));
+        s.append(" class ");
+        s.append(userServiceClass.getSimpleName());
+        s.append(" {\n");
+
+        // 获取所有的Method（包括私有的！）
+        Method[] methods = userServiceClass.getDeclaredMethods();
+        for (Method m : methods){
+            s.append("\t");
+            // 获取修饰符列表
+            s.append(Modifier.toString(m.getModifiers()));
+            s.append(" ");
+            // 获取方法的返回值类型
+            s.append(m.getReturnType().getSimpleName());
+            s.append(" ");
+            // 获取方法名
+            s.append(m.getName());
+            s.append("(");
+            // 方法的修饰符列表（一个方法的参数可能会有多个。）
+            Class[] parameterTypes = m.getParameterTypes();
+            for (int i = 0; i < parameterTypes.length; i++){
+                s.append(parameterTypes[i].getSimpleName());
+                if (i != parameterTypes.length - 1) s.append(", ");
+            }
+            s.append(") {}\n");
+        }
+        s.append("}");
+        System.out.println(s);
+    }
+}
+
+
+```
+
+#### <font style="color:rgb(79, 79, 79);">调用方法四要素</font>
+<font style="color:rgb(77, 77, 77);">示例：调用对象userService的login方法</font>
+
+1. <font style="color:rgb(77, 77, 77);">对象 userService</font>
+2. <font style="color:rgb(77, 77, 77);">login 方法名</font>
+3. <font style="color:rgb(77, 77, 77);">实参列表</font>
+4. <font style="color:rgb(77, 77, 77);">返回值</font>
+
+<font style="color:rgb(77, 77, 77);">注： Method类中invoke()使用注意事项：</font>
+
+<font style="color:rgb(77, 77, 77);">方法.invoke(对象, 实参);</font>
+
+#### <font style="color:rgb(79, 79, 79);">取得一个类的所有方法（包括父类和实现的接口）</font>
+`<font style="color:rgb(199, 37, 78);background-color:rgb(249, 242, 244);">Method[] methods = clazz1.getMethods();</font>`
+
+##### <font style="color:rgb(79, 79, 79);">代码示例</font>
+```plain
+Method[] methods = clazz1.getMethods();
+//输出取得的方法
+for (int i = 0; i < methods.length; i++) {
+    StringBuffer buffer = new StringBuffer();
+    //方法修饰符
+    String modifier = Modifier.toString(methods[i].getModifiers());
+    //返回值类型
+    String returnType = methods[i].getReturnType().getSimpleName();
+    //方法名
+    String name = methods[i].getName();
+    //方法参数类型
+    Class<?>[] parameterTypes = methods[i].getParameterTypes();
+    buffer.append(modifier).append(" ").append(returnType).append(" ").
+        append(name).append("(");
+    for (int j = 0; j < parameterTypes.length; j++) {
+        buffer.append(parameterTypes[j].getSimpleName()).append(" arg").append(j);
+        if(j < parameterTypes.length - 1){
+            buffer.append(",");
+        }
+    }
+    buffer.append(")");
+    //方法抛出的异常信息
+    Class<?>[] exceptionTypes = methods[i].getExceptionTypes();
+    if(exceptionTypes.length > 0){
+        buffer.append(" throws");
+    }
+    for (int k = 0; k < exceptionTypes.length; k++) {
+        buffer.append(exceptionTypes[k].getSimpleName());
+        if(k < exceptionTypes.length -1){
+            buffer.append(",");
+        }
+    }
+    buffer.append("{ }");
+    System.out.println(buffer);
+}
+
+
+```
+
+#### <font style="color:rgb(79, 79, 79);">取得一个类的所有方法（不包括父类和实现的接口）</font>
+`<font style="color:rgb(199, 37, 78);background-color:rgb(249, 242, 244);">Method[] declaredMethods = clazz1.getDeclaredMethods();</font>`
+
+#### <font style="color:rgb(79, 79, 79);">通过反射机制调用一个对象的方法</font>
+##### <font style="color:rgb(79, 79, 79);">代码示例</font>
+```plain
+public static void main(String[] args) throws Exception {
+    //使用反射将Child类的Class对象加载进来
+    Class<?> clazz1 = Class.forName("com.wp.reflect.entity.Child");
+    //创建一个实例对象（使用反射调用方法必须要有实例对象）
+    Object instance = clazz1.newInstance();
+    //通过方法名称和指定的参数类型获取指定方法
+    Method method = clazz1.getDeclaredMethod("setName", String.class);
+    //调用Method对象的invoke方法执行instance对象的方法
+    method.invoke(instance,"文攀啊");
+    //通过方法名称和指定的参数类型获取指定方法
+    Method getNameMethod = clazz1.getMethod("getName");
+    //调用Method对象的invoke方法执行方法
+    String name = (String)getNameMethod.invoke(instance);
+    //输出执行方法返回的结果
+    System.out.println(name);
+}
+
+
+```
+
+##### <font style="color:rgb(79, 79, 79);">代码示例</font>
+```plain
+/*
+重点：必须掌握，通过反射机制怎么调用一个对象的方法？
+ */
+class ReflectTest10{
+    public static void main(String[] args) throws Exception {
+        // 不使用反射机制，怎么调用方法
+        // 创建对象
+        UserService userService = new UserService();
+        // 调用方法
+        System.out.println(userService.login("admin", "123") ? "登入成功！" : "登入失败！");
+
+        //使用反射机制调用方法
+        Class userServiceClass = Class.forName("javase.reflectBean.UserService");
+        // 创建对象
+        Object obj = userServiceClass.newInstance();
+        // 获取Method
+        Method loginMethod = userServiceClass.getDeclaredMethod("login", String.class, String.class);
+//        Method loginMethod = userServiceClass.getDeclaredMethod("login");//注：没有形参就不传
+        // 调用方法
+        // 四要素：loginMethod方法， obj对象，"admin","123" 实参，retValue 返回值
+        Object resValues = loginMethod.invoke(obj, "admin", "123");//注：方法返回值是void 结果是null
+        System.out.println(resValues);
+    }
+}
+
+
+```
+
+#### <font style="color:rgb(79, 79, 79);">通过方法名和方法参数类型取得对象的方法</font>
+`<font style="color:rgb(199, 37, 78);background-color:rgb(249, 242, 244);">Method method = clazz1.getDeclaredMethod(“setName”, String.class);</font>`
+
+### <font style="color:rgb(79, 79, 79);">反射Constructor【反射/反编译一个类的构造方法】</font>
+#### <font style="color:rgb(79, 79, 79);">Constructor类方法</font>
+| **<font style="color:rgb(79, 79, 79);">方法名</font>** | **<font style="color:rgb(79, 79, 79);">备注</font>** |
+| :---: | :---: |
+| <font style="color:rgb(79, 79, 79);">public String getName()</font> | <font style="color:rgb(79, 79, 79);">返回构造方法名</font> |
+| <font style="color:rgb(79, 79, 79);">public int getModifiers()</font> | <font style="color:rgb(79, 79, 79);">获取构造方法的修饰符列表,返回的修饰符是一个数字，每个数字是修饰符的代号【一般配合Modifier类的toString(int x)方法使用】</font> |
+| <font style="color:rgb(79, 79, 79);">public Class<?>[] getParameterTypes()</font> | <font style="color:rgb(79, 79, 79);">返回构造方法的修饰符列表（一个方法的参数可能会有多个。）【结果集一般配合Class类的getSimpleName()方法使用】</font> |
+| <font style="color:rgb(79, 79, 79);">public T newInstance(Object … initargs)</font> | <font style="color:rgb(79, 79, 79);">创建对象【参数为创建对象的数据】</font> |
+
+
+#### <font style="color:rgb(79, 79, 79);">取得一个类的所有构造函数</font>
+`<font style="color:rgb(199, 37, 78);background-color:rgb(249, 242, 244);">Class<?> clazz1 = Class.forName(“xxxx”);</font>`
+
+`<font style="color:rgb(199, 37, 78);background-color:rgb(249, 242, 244);">Constructor<?>[] constructors = clazz1.getConstructors();</font>`
+
+`<font style="color:rgb(199, 37, 78);background-color:rgb(249, 242, 244);">Constructor<?>[] constructors1 = clazz1.getDeclaredConstructors();</font>`
+
+#### <font style="color:rgb(79, 79, 79);">根据参数类型取得构造函数</font>
+<font style="color:rgb(77, 77, 77);">取得只有一个参数且参数类型为String的构造方法</font>
+
+`<font style="color:rgb(199, 37, 78);background-color:rgb(249, 242, 244);">Constructor<?> constructor1 = clazz1.getDeclaredConstructor(String.class);</font>`
+
+`<font style="color:rgb(199, 37, 78);background-color:rgb(249, 242, 244);">System.out.println(constructor1);</font>`
+
+#### <font style="color:rgb(79, 79, 79);">反编译一个类的构造方法Constructor</font>
+##### <font style="color:rgb(79, 79, 79);">代码示例</font>
+```plain
+/*
+反编译一个类的Constructor构造方法。
+*/
+class ReflectTest11{
+    public static void main(String[] args) throws ClassNotFoundException {
+        StringBuilder s = new StringBuilder();
+
+        Class vipClass = Class.forName("javase.reflectBean.Vip");
+
+        //public class UserService {
+        s.append(Modifier.toString(vipClass.getModifiers()));
+        s.append(" class ");
+        s.append(vipClass.getSimpleName());
+        s.append("{\n");
+
+        Constructor[] constructors = vipClass.getDeclaredConstructors();
+        for (Constructor c : constructors){
+            //public Vip(int no, String name, String birth, boolean sex) {
+            s.append("\t");
+            s.append(Modifier.toString(c.getModifiers()));
+            s.append(" ");
+//            s.append(c.getName());//包名+类名
+            s.append(vipClass.getSimpleName());//类名
+            s.append("(");
+            Class[] parameterTypes = c.getParameterTypes();
+            for (int i = 0; i < parameterTypes.length; i++){
+                s.append(parameterTypes[i].getSimpleName());
+                if (i != parameterTypes.length - 1 ) s.append(", ");
+            }
+            s.append("){}\n");
+        }
+
+        s.append("}");
+        System.out.println(s);
+    }
+}
+
+
+```
+
+#### <font style="color:rgb(79, 79, 79);">反射机制创建对象两步骤</font>
+<font style="color:rgb(77, 77, 77);">先获取到这个有参数的构造方法【用ClassgetDeclaredConstructor()方法获取】</font>
+
+<font style="color:rgb(77, 77, 77);">调用构造方法new对象【用Constructor类的newInstance()方法new对象】</font>
+
+#### <font style="color:rgb(79, 79, 79);">通过反射机制调用构造方法实例化java对象</font>
+##### <font style="color:rgb(79, 79, 79);">代码示例</font>
+```plain
+/*
+通过反射机制调用构造方法实例化java对象。（这个不是重点）
+*/
+class ReflectTest12{
+    public static void main(String[] args) throws Exception {
+        //不适用反射创建对象
+        Vip vip1 = new Vip();
+        Vip vip2 = new Vip(123, "zhangsan", "2001-10-19", false);
+
+        //使用反射机制创建对象（以前）
+        Class vipClass = Class.forName("javase.reflectBean.Vip");
+        // 调用无参数构造方法
+        Object obj1 = vipClass.newInstance();//Class类的newInstance方法
+        System.out.println(obj1);
+
+        //使用反射机制创建对象（现在）
+        // 调用有参数的构造方法怎么办？
+        // 第一步：先获取到这个有参数的构造方法
+  Constructor c1 = vipClass.getDeclaredConstructor(int.class, String.class, String.class, boolean.class);
+        // 第二步：调用构造方法new对象
+        Object obj2 = c1.newInstance(321, "lsi", "1999-10-11", true);//Constructor类的newInstance方法
+        System.out.println(obj2);
+
+        // 获取无参数构造方法
+        Constructor c2 = vipClass.getDeclaredConstructor();
+        Object obj3 = c2.newInstance();
+        System.out.println(obj3);
+    }
+}
+
+
+```
+
+<font style="color:rgb(77, 77, 77);">注： 如果需要调用无参构造方法，getDeclaredConstructor()方法形参为空即可【和Class类的newInstance()方法一样的效果】</font>
+
+#### <font style="color:rgb(79, 79, 79);">获取一个类的父类以及实现的接口</font>
+<font style="color:rgb(77, 77, 77);">两个方法【Class类中的】</font>
+
+`<font style="color:rgb(199, 37, 78);background-color:rgb(249, 242, 244);">public native Class<? super T> getSuperclass()</font>`
+
+`<font style="color:rgb(199, 37, 78);background-color:rgb(249, 242, 244);">public Class<?>[] getInterfaces()</font>`
+
+##### <font style="color:rgb(79, 79, 79);">代码示例</font>
+```plain
+/**
+ *重点：给你一个类，怎么获取这个类的父类，已经实现了哪些接口？
+ */
+class ReflectTest13{
+    public static void main(String[] args) throws Exception{
+        // String举例
+        Class vipClass = Class.forName("java.lang.String");
+		// 获取String的父类
+		Class superclass = vipClass.getSuperclass();
+		// 获取String类实现的所有接口（一个类可以实现多个接口。）
+		Class[] interfaces = vipClass.getInterfaces();
+		System.out.println(superclass.getName());
+		for (Class i : interfaces) {
+			System.out.println(i.getName());
+		}
+	}
+}
+
+
+```
+
+#### <font style="color:rgb(79, 79, 79);">反射操作注解</font>
+##### <font style="color:rgb(79, 79, 79);">通过反射获取类上的注解，类属性上的注解，代码示例</font>
+```plain
+public static void main(String[] args) throws Exception{
+	User user = new User();
+    // 取得类上的所有注解
+    Annotation[] annotations = user.getClass().getAnnotations();
+    // 获取类上指定类型的注解
+    MyAnnotation annotation = user.getClass().getAnnotation(MyAnnotation.class);
+    // 获取类的某个属性上的所有注解
+    Annotation[] allAnnotations = user.getClass().getDeclaredField("name").getAnnotations();
+    // 获取类的某个属性上指定类型的注解
+    MyAnnotation annotation1 = user.getClass().getDeclaredField("name").getAnnotation(MyAnnotation.class);
+    // 获取注解的属性
+    String value = annotation1.value();
+    String pattern = annotation1.pattern();
+}
+
+
+
+```
+
+#### <font style="color:rgb(79, 79, 79);">反射实例应用</font>
+##### <font style="color:rgb(79, 79, 79);">使用反射向一个int集合添加一个String元素</font>
+<font style="color:rgb(77, 77, 77);">原理：首先通过反射取得该List集合的add（）方法，然后使用反射调用该方法向list集合里面添加一个String类型元素</font>
+
+##### <font style="color:rgb(79, 79, 79);">代码示例</font>
+```plain
+//创建一个int类型的集合
+ArrayList<Integer> list = new ArrayList<Integer>();
+
+//取得集合的添加方法
+Method addMethod = list.getClass().getMethod("add", Object.class);
+
+//执行集合的add方法，向集合中添加一个String类型元素
+addMethod.invoke(list, "wenpan");
+System.out.println("取得元素=========================>" + list.get(0));
+
+
+```
+
+##### <font style="color:rgb(79, 79, 79);">通过反射修改数组元素的值</font>
+<font style="color:rgb(77, 77, 77);">原理：其实就是通过反射中的 Array.get() 和 Array.set()来读取和修改数组中的元素值。</font>
+
+###### <font style="color:rgb(79, 79, 79);">代码示例</font>
+```plain
+int temp[] = {1,2,3,4,5};
+System.out.println("数组第一个元素：" + Array.get(temp,0));
+Array.set(temp,0,100);
+System.out.println("修改之后数组第一个元素为：" + Array.get(temp,0));
+
+```
+
+###### <font style="color:rgb(79, 79, 79);">扩展方法</font>
+```plain
+int temp[] = {1,2,3,4,5};
+//取得数组的类型，该方法为动态扩展数组大小做铺垫
+Class<?> componentType = temp.getClass().getComponentType();
+System.out.println("数组类型：" + componentType.getName());
+System.out.println("数组长度：" + Array.getLength(temp));
+
+
+```
+
+##### <font style="color:rgb(79, 79, 79);">通过反射修改数组的大小</font>
+<font style="color:rgb(77, 77, 77);">原理：其本质就是通过反射得到原数组的类型，然后通过Array.newInstance()方法根据数组类型创造出一个指定长度的新数组，最后使用System.arraycopy()方法将原数组的值拷贝到新数组中</font>
+
+```plain
+public static Object arrayInc(Object obj, int length) {
+  //取得传入数组的类型，以便于创造出同类型的数组
+  Class<?> componentType = obj.getClass().getComponentType();
+  //根据传入的数组类型创建出新的指定长度的数组实例
+  Object newArr = Array.newInstance(componentType, length);
+  //原有的数组长度
+  int originArrLen = Array.getLength(obj);
+  //将原有的数组数据拷贝到新的数组中去
+  System.arraycopy(obj,0,newArr,0,originArrLen);
+  //返回修改大小后的数组
+  return newArr;
+}
+
+```
+
+##### <font style="color:rgb(79, 79, 79);">通过反射实现通用工厂模式</font>
+```plain
+class Factory {
+	/**
+	* 通过传入的全类名返回该类的对象
+	*  但是有一点仍然很麻烦，就是需要知道完整的包名和类名，这里可以使用properties配置文件来完成。
+	*  java读取配置文件可实现完全解耦
+	* @param className
+	* @return
+	*/
+	public static Object getInstance(String className){
+        Object instance = null;
+        try {
+            //通过反射创建对象实例
+            instance = Class.forName(className).newInstance();
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
+		return instance;
+	}
+}
+
+public static void main(String[] args) {
+    //反射工厂
+    Apple apple = (Apple)Factory.getInstance("com.wp.reflect.Apple");
+    apple.method();
+    Banana banana = (Banana)Factory.getInstance("com.wp.reflect.Banana");
+    banana.method();
+}
+
+
+```
+
+#### <font style="color:rgb(79, 79, 79);">总结注意</font>
+<font style="color:rgb(77, 77, 77);">属性最重要的是名字</font>
+
+<font style="color:rgb(77, 77, 77);">实例方法最重要的是名字和形参列表</font>
+
+<font style="color:rgb(77, 77, 77);">构造方法最重要的是形参列表</font>
+
