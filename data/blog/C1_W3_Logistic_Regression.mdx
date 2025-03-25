@@ -128,9 +128,9 @@ plt.show()
 
 逻辑回归使用Sigmoid函数将预测值映射到0到1之间：
 
-g(z) = 1 / (1 + e^(-z))
+![Sigmoid 函数](https://latex.codecogs.com/png.latex?g(z)%20=%20\frac{1}{1%20+%20e^{-z}})
 
-其中，z = w * x + b，w 是权重向量，b 是偏置。让我们编写它：
+其中，\( z = w \cdot x + b \)，\( w \)是权重向量，\( b \)是偏置。让我们编写它：
 
 ```python
 def sigmoid(z):
@@ -157,9 +157,9 @@ Sigmoid函数将任何实数映射到(0, 1)——非常适合表示概率！
 
 为了训练模型，我们需要一个成本函数来衡量预测误差：
 
-J(w, b) = (1/m) * sum_{i=0}^{m-1} [ -y^(i) * log(f(x^(i))) - (1 - y^(i)) * log(1 - f(x^(i))) ]
+![成本函数](https://latex.codecogs.com/png.latex?J(w,%20b)%20=%20\frac{1}{m}%20\sum_{i=0}^{m-1}%20\left[-y^{(i)}\log(f(x^{(i)}))%20-%20(1%20-%20y^{(i)})\log(1%20-%20f(x^{(i)}))\right])
 
-其中 f(x^(i)) = sigmoid(w * x^(i) + b)。实现它：
+其中 \( f(x^{(i)}) = \text{sigmoid}(w \cdot x^{(i)} + b) \)。实现它：
 
 ```python
 def compute_cost(X, y, w, b):
@@ -191,11 +191,11 @@ print(f"初始成本: {cost:.3f}")
 <a name="2.5"></a>
 ### 2.5 梯度下降
 
-梯度下降通过调整 w 和 b 来减小成本。梯度为：
+梯度下降通过调整 \( w \) 和 \( b \) 来减小成本。梯度为：
 
-∂J/∂b = (1/m) * sum_{i=0}^{m-1} (y^(i) - a^(i))
+![梯度 ∂J/∂b](https://latex.codecogs.com/png.latex?\frac{\partial%20J}{\partial%20b}%20=%20\frac{1}{m}%20\sum_{i=0}^{m-1}%20(y^{(i)}%20-%20a^{(i)}))
 
-∂J/∂w_j = (1/m) * sum_{i=0}^{m-1} (f(x^(i)) - y^(i)) * x_j^(i)
+![梯度 ∂J/∂w_j](https://latex.codecogs.com/png.latex?\frac{\partial%20J}{\partial%20w_j}%20=%20\frac{1}{m}%20\sum_{i=0}^{m-1}%20(f(x^{(i)})%20-%20y^{(i)})%20x_j^{(i)})
 
 编码实现：
 
@@ -397,7 +397,7 @@ print("映射后形状:", X_mapped.shape)
 
 添加惩罚项以防止过拟合：
 
-J(w, b) = [原始成本] + (lambda / (2m)) * sum_{j=0}^{n-1} w_j^2
+![正则化成本函数](https://latex.codecogs.com/png.latex?J(w,%20b)%20=%20\frac{1}{m}%20\sum_{i=0}^{m-1}%20\left[-y^{(i)}\log(f(x^{(i)}))%20-%20(1%20-%20y^{(i)})\log(1%20-%20f(x^{(i)}))\right]%20+%20\frac{\lambda}{2m}%20\sum_{j=0}^{n-1}%20w_j^2)
 
 实现它：
 
@@ -414,7 +414,7 @@ def compute_cost_reg(X, y, w, b, lambda_=1):
 
 调整梯度：
 
-∂J/∂w_j = [原始梯度] + (lambda / m) * w_j
+![正则化梯度](https://latex.codecogs.com/png.latex?\frac{\partial%20J}{\partial%20w_j}%20=%20\frac{1}{m}%20\sum_{i=0}^{m-1}%20(f(x^{(i)})%20-%20y^{(i)})%20x_j^{(i)}%20+%20\frac{\lambda}{m}%20w_j)
 
 编码：
 
