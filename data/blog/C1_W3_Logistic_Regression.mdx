@@ -6,13 +6,14 @@ draft: false
 summary: '欢迎来到这场逻辑回归的学习之旅！我们将从头构建逻辑回归模型，预测学生录取和芯片质量。结合理论、Python代码和可视化，让你轻松掌握这一核心算法。'
 authors: ['Allen']
 ---
+
 # 逻辑回归：从理论到实践
 
 欢迎来到这场逻辑回归的学习之旅！无论你是机器学习新手还是希望巩固知识，这篇博客将带你从零开始构建逻辑回归模型。我们将通过预测学生录取和芯片质量的实际问题，结合理论、Python代码和可视化，让学习变得既有趣又实用。让我们开始吧！
 
 ## 你将学到什么
 - 逻辑回归在二分类问题中的工作原理。
-- 实现核心函数，如Sigmoid、成本函数和梯度下降。
+- 实现核心函数，如 Sigmoid、成本函数和梯度下降。
 - 数据可视化和决策边界。
 - 使用正则化处理复杂数据集。
 
@@ -21,7 +22,7 @@ authors: ['Allen']
 - [2 - 逻辑回归基础](#2)
   - [2.1 问题背景](#2.1)
   - [2.2 数据探索](#2.2)
-  - [2.3 Sigmoid函数](#2.3)
+  - [2.3 Sigmoid 函数](#2.3)
   - [2.4 成本函数](#2.4)
   - [2.5 梯度下降](#2.5)
   - [2.6 训练模型](#2.6)
@@ -43,11 +44,11 @@ authors: ['Allen']
 <a name="1"></a>
 ## 1 - 准备工具包
 
-在开始之前，我们需要准备一些Python工具包，它们将帮助我们处理数据、进行计算和可视化结果。以下是你需要的内容：
+在开始之前，我们需要准备一些 Python 工具包，它们将帮助我们处理数据、进行计算和可视化结果。以下是你需要的内容：
 
 - **[NumPy](https://numpy.org/)**：用于快速数组操作。
 - **[Matplotlib](https://matplotlib.org/)**：用于绘制数据和结果。
-- **`utils.py`**：一个辅助文件，包含`load_data()`和`plot_data()`等函数。
+- **`utils.py`**：一个辅助文件，包含 `load_data()` 和 `plot_data()` 等函数。
 
 运行以下代码来设置：
 
@@ -72,7 +73,7 @@ import math
 <a name="2.1"></a>
 ### 2.1 问题背景
 
-假设你是一名大学管理员，你希望根据申请者的两次考试成绩预测他们是否会被录取。你有历史数据：考试成绩和录取结果（1表示录取，0表示未录取）。我们的目标是创建一个模型，估计录取的概率。
+假设你是一名大学管理员，你希望根据申请者的两次考试成绩预测他们是否会被录取。你有历史数据：考试成绩和录取结果（1 表示录取，0 表示未录取）。我们的目标是创建一个模型，估计录取的概率。
 
 <a name="2.2"></a>
 ### 2.2 数据探索
@@ -104,8 +105,8 @@ y_train的前五个值:
  [0. 0. 0. 1. 1.]
 ```
 
-- `X_train`：一个(100, 2)数组，包含考试成绩。
-- `y_train`：一个(100,)数组，包含录取标签。
+- `X_train`：一个 (100, 2) 数组，包含考试成绩。
+- `y_train`：一个 (100,) 数组，包含录取标签。
 
 #### 可视化数据
 
@@ -124,13 +125,13 @@ plt.show()
 录取的学生（1）往往有更高的成绩，而未录取的学生（0）则集中在较低的区域。我们的模型将绘制一条线——或边界——来分隔这些群体。
 
 <a name="2.3"></a>
-### 2.3 Sigmoid函数
+### 2.3 Sigmoid 函数
 
-逻辑回归使用Sigmoid函数将预测值映射到0到1之间：
+逻辑回归使用 Sigmoid 函数将预测值映射到 0 到 1 之间：
 
-![Sigmoid 函数](https://latex.codecogs.com/png.latex?g(z)%20=%20\frac{1}{1%20+%20e^{-z}})
+![Sigmoid 函数](https://latex.codecogs.com/png.latex?g%28z%29%20%3D%20%5Cfrac%7B1%7D%7B1%20%2B%20e%5E%7B-z%7D%7D)
 
-其中，\( z = w \cdot x + b \)，\( w \)是权重向量，\( b \)是偏置。让我们编写它：
+其中，\( z = w \cdot x + b \)，\( w \) 是权重向量，\( b \) 是偏置。让我们编写它：
 
 ```python
 def sigmoid(z):
@@ -150,14 +151,14 @@ sigmoid(0) = 0.5
 sigmoid([-1, 0, 1, 2]) = [0.26894142 0.5        0.73105858 0.88079708]
 ```
 
-Sigmoid函数将任何实数映射到(0, 1)——非常适合表示概率！
+Sigmoid 函数将任何实数映射到 (0, 1)——非常适合表示概率！
 
 <a name="2.4"></a>
 ### 2.4 成本函数
 
 为了训练模型，我们需要一个成本函数来衡量预测误差：
 
-![成本函数](https://latex.codecogs.com/png.latex?J(w,%20b)%20=%20\frac{1}{m}%20\sum_{i=0}^{m-1}%20\left[-y^{(i)}\log(f(x^{(i)}))%20-%20(1%20-%20y^{(i)})\log(1%20-%20f(x^{(i)}))\right])
+![成本函数](https://latex.codecogs.com/png.latex?J%28w%2C%20b%29%20%3D%20-%5Cfrac%7B1%7D%7Bm%7D%20%5Csum_%7Bi%3D1%7D%5E%7Bm%7D%20%5Cleft%5By%5E%7B%28i%29%7D%5Clog%28f%28x%5E%7B%28i%29%7D%29%29%20%2B%20%281%20-%20y%5E%7B%28i%29%7D%29%5Clog%281%20-%20f%28x%5E%7B%28i%29%7D%29%29%5Cright%5D)
 
 其中 \( f(x^{(i)}) = \text{sigmoid}(w \cdot x^{(i)} + b) \)。实现它：
 
@@ -193,9 +194,9 @@ print(f"初始成本: {cost:.3f}")
 
 梯度下降通过调整 \( w \) 和 \( b \) 来减小成本。梯度为：
 
-![梯度 ∂J/∂b](https://latex.codecogs.com/png.latex?\frac{\partial%20J}{\partial%20b}%20=%20\frac{1}{m}%20\sum_{i=0}^{m-1}%20(y^{(i)}%20-%20a^{(i)}))
+![梯度 ∂J/∂b](https://latex.codecogs.com/png.latex?%5Cfrac%7B%5Cpartial%20J%7D%7B%5Cpartial%20b%7D%20%3D%20%5Cfrac%7B1%7D%7Bm%7D%20%5Csum_%7Bi%3D1%7D%5E%7Bm%7D%20%28f%28x%5E%7B%28i%29%7D%29%20-%20y%5E%7B%28i%29%7D%29)
 
-![梯度 ∂J/∂w_j](https://latex.codecogs.com/png.latex?\frac{\partial%20J}{\partial%20w_j}%20=%20\frac{1}{m}%20\sum_{i=0}^{m-1}%20(f(x^{(i)})%20-%20y^{(i)})%20x_j^{(i)})
+![梯度 ∂J/∂w_j](https://latex.codecogs.com/png.latex?%5Cfrac%7B%5Cpartial%20J%7D%7B%5Cpartial%20w_j%7D%20%3D%20%5Cfrac%7B1%7D%7Bm%7D%20%5Csum_%7Bi%3D1%7D%5E%7Bm%7D%20%28f%28x%5E%7B%28i%29%7D%29%20-%20y%5E%7B%28i%29%7D%29%20x_j%5E%7B%28i%29%7D)
 
 编码实现：
 
@@ -316,12 +317,11 @@ print(f"训练准确率: {np.mean(p == y_train) * 100:.2f}%")
 训练准确率: 92.00%
 ```
 
-92%的准确率——我们的模型表现不错！
+92% 的准确率——我们的模型表现不错！
 
 ---
 
 <a name="3"></a>
-
 ## 3 - 正则化逻辑回归
 
 现在，让我们处理一个更复杂的数据集，其中直线无法有效分隔数据。
@@ -329,7 +329,7 @@ print(f"训练准确率: {np.mean(p == y_train) * 100:.2f}%")
 <a name="3.1"></a>
 ### 3.1 新问题
 
-假设你是一名工厂经理，通过两次测试来检测芯片。你希望根据测试成绩预测芯片是否通过质量检测（1表示通过，0表示未通过）。
+假设你是一名工厂经理，通过两次测试来检测芯片。你希望根据测试成绩预测芯片是否通过质量检测（1 表示通过，0 表示未通过）。
 
 <a name="3.2"></a>
 ### 3.2 数据洞察
@@ -376,7 +376,7 @@ plt.show()
 <a name="3.3"></a>
 ### 3.3 特征映射
 
-为了捕捉复杂性，我们将特征映射到最高6次的多项式：
+为了捕捉复杂性，我们将特征映射到最高 6 次的多项式：
 
 ```python
 X_mapped = map_feature(X_train[:, 0], X_train[:, 1])
@@ -390,14 +390,14 @@ print("映射后形状:", X_mapped.shape)
 映射后形状: (118, 27)
 ```
 
-从2个特征扩展到27个特征——这将有助于拟合数据，但也可能导致过拟合。
+从 2 个特征扩展到 27 个特征——这将有助于拟合数据，但也可能导致过拟合。
 
 <a name="3.4"></a>
 ### 3.4 正则化成本函数
 
 添加惩罚项以防止过拟合：
 
-![正则化成本函数](https://latex.codecogs.com/png.latex?J(w,%20b)%20=%20\frac{1}{m}%20\sum_{i=0}^{m-1}%20\left[-y^{(i)}\log(f(x^{(i)}))%20-%20(1%20-%20y^{(i)})\log(1%20-%20f(x^{(i)}))\right]%20+%20\frac{\lambda}{2m}%20\sum_{j=0}^{n-1}%20w_j^2)
+![正则化成本函数](https://latex.codecogs.com/png.latex?J%28w%2C%20b%29%20%3D%20-%5Cfrac%7B1%7D%7Bm%7D%20%5Csum_%7Bi%3D1%7D%5E%7Bm%7D%20%5Cleft%5By%5E%7B%28i%29%7D%5Clog%28f%28x%5E%7B%28i%29%7D%29%29%20%2B%20%281%20-%20y%5E%7B%28i%29%7D%29%5Clog%281%20-%20f%28x%5E%7B%28i%29%7D%29%29%5Cright%5D%20%2B%20%5Cfrac%7B%5Clambda%7D%7B2m%7D%20%5Csum_%7Bj%3D1%7D%5E%7Bn%7D%20w_j%5E2)
 
 实现它：
 
@@ -414,7 +414,7 @@ def compute_cost_reg(X, y, w, b, lambda_=1):
 
 调整梯度：
 
-![正则化梯度](https://latex.codecogs.com/png.latex?\frac{\partial%20J}{\partial%20w_j}%20=%20\frac{1}{m}%20\sum_{i=0}^{m-1}%20(f(x^{(i)})%20-%20y^{(i)})%20x_j^{(i)}%20+%20\frac{\lambda}{m}%20w_j)
+![正则化梯度](https://latex.codecogs.com/png.latex?%5Cfrac%7B%5Cpartial%20J%7D%7B%5Cpartial%20w_j%7D%20%3D%20%5Cfrac%7B1%7D%7Bm%7D%20%5Csum_%7Bi%3D1%7D%5E%7Bm%7D%20%28f%28x%5E%7B%28i%29%7D%29%20-%20y%5E%7B%28i%29%7D%29%20x_j%5E%7B%28i%29%7D%20%2B%20%5Cfrac%7B%5Clambda%7D%7Bm%7D%20w_j)
 
 编码：
 
@@ -436,7 +436,7 @@ initial_w = np.random.rand(X_mapped.shape[1]) - 0.5
 initial_b = 1.
 lambda_ = 0.01
 w, b, J_history = gradient_descent(X_mapped, y_train, initial_w, initial_b, 
-                                   compute_cost_reg, compute_gradient_reg, 0.01, 10000, lambda_)
+                                   compute_cost_reg, compute_gradient_reg, 0.01, 10000)
 ```
 
 **输出：**
@@ -481,12 +481,11 @@ print(f"训练准确率: {np.mean(p == y_train) * 100:.2f}%")
 训练准确率: 82.20%
 ```
 
-对于一个非线性问题，82%的准确率相当不错！
+对于一个非线性问题，82% 的准确率相当不错！
 
 ---
 
 <a name="wrap-up"></a>
-
 ## 总结
 
 恭喜你完成了这场逻辑回归的实践之旅！你已经学会了：
@@ -495,4 +494,4 @@ print(f"训练准确率: {np.mean(p == y_train) * 100:.2f}%")
 - 可视化结果以理解模型。
 - 使用正则化处理复杂模式。
 
-你可以尝试调整参数，如`alpha`或`lambda_`，看看模型如何变化。继续探索，快乐学习！
+你可以尝试调整参数，如 `alpha` 或 `lambda_`，看看模型如何变化。继续探索，快乐学习！！
