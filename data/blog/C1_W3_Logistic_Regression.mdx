@@ -131,7 +131,7 @@ plt.show()
 
 ![Sigmoid 函数](https://latex.codecogs.com/png.latex?g%28z%29%20%3D%20%5Cfrac%7B1%7D%7B1%20%2B%20e%5E%7B-z%7D%7D)
 
-其中，\( z = w \cdot x + b \)，\( w \) 是权重向量，\( b \) 是偏置。让我们编写它：
+其中，`z = w * x + b`，`w` 是权重向量，`b` 是偏置。让我们编写它：
 
 ```python
 def sigmoid(z):
@@ -158,18 +158,18 @@ Sigmoid 函数将任何实数映射到 (0, 1)——非常适合表示概率！
 
 为了训练模型，我们需要一个成本函数来衡量预测误差：
 
-![成本函数](https://latex.codecogs.com/png.latex?J%28w%2C%20b%29%20%3D%20-%5Cfrac%7B1%7D%7Bm%7D%20%5Csum_%7Bi%3D1%7D%5E%7Bm%7D%20%5Cleft%5By%5E%7B%28i%29%7D%5Clog%28f%28x%5E%7B%28i%29%7D%29%29%20%2B%20%281%20-%20y%5E%7B%28i%29%7D%29%5Clog%281%20-%20f%28x%5E%7B%28i%29%7D%29%29%5Cright%5D)
+![成本函数](https://latex.codecogs.com/png.latex?J%28w%2C%20b%29%20%3D%20-%5Cfrac%7B1%7D%7Bm%7D%20%5Csum_%7Bi%3D1%7D%5E%7Bm%7D%20%5B%20y%5E%7B%28i%29%7D%20%5Clog%28f%28x%5E%7B%28i%29%7D%29%29%20%2B%20%281%20-%20y%5E%7B%28i%29%7D%29%20%5Clog%28%281%20-%20f%28x%5E%7B%28i%29%7D%29%29%29%20%5D)
 
-其中 \( f(x^{(i)}) = \text{sigmoid}(w \cdot x^{(i)} + b) \)。实现它：
+其中 `f(x^(i)) = sigmoid(w * x^(i) + b)`。实现它：
 
 ```python
 def compute_cost(X, y, w, b):
     m = X.shape[0]
     cost = 0.0
-    for i in range(m):
-        z = np.dot(X[i], w) + b
+    for idx in range(m):
+        z = np.dot(X[idx], w) + b
         f_wb = sigmoid(z)
-        cost += -y[i] * np.log(f_wb) - (1 - y[i]) * np.log(1 - f_wb)
+        cost += -y[idx] * np.log(f_wb) - (1 - y[idx]) * np.log(1 - f_wb)
     return cost / m
 ```
 
@@ -177,7 +177,7 @@ def compute_cost(X, y, w, b):
 
 ```python
 initial_w = np.zeros(2)
-initial_b = 0.
+initial_b = 0.0
 cost = compute_cost(X_train, y_train, initial_w, initial_b)
 print(f"初始成本: {cost:.3f}")
 ```
@@ -192,7 +192,7 @@ print(f"初始成本: {cost:.3f}")
 <a name="2.5"></a>
 ### 2.5 梯度下降
 
-梯度下降通过调整 \( w \) 和 \( b \) 来减小成本。梯度为：
+梯度下降通过调整 `w` 和 `b` 来减小成本。梯度为：
 
 ![梯度 ∂J/∂b](https://latex.codecogs.com/png.latex?%5Cfrac%7B%5Cpartial%20J%7D%7B%5Cpartial%20b%7D%20%3D%20%5Cfrac%7B1%7D%7Bm%7D%20%5Csum_%7Bi%3D1%7D%5E%7Bm%7D%20%28f%28x%5E%7B%28i%29%7D%29%20-%20y%5E%7B%28i%29%7D%29)
 
@@ -204,13 +204,13 @@ print(f"初始成本: {cost:.3f}")
 def compute_gradient(X, y, w, b):
     m, n = X.shape
     dj_dw = np.zeros(n)
-    dj_db = 0.
-    for i in range(m):
-        z = np.dot(X[i], w) + b
+    dj_db = 0.0
+    for idx in range(m):
+        z = np.dot(X[idx], w) + b
         f_wb = sigmoid(z)
-        err = f_wb - y[i]
+        err = f_wb - y[idx]
         dj_db += err
-        dj_dw += err * X[i]
+        dj_dw += err * X[idx]
     dj_dw /= m
     dj_db /= m
     return dj_dw, dj_db
@@ -240,14 +240,14 @@ def gradient_descent(X, y, w_in, b_in, cost_function, gradient_function, alpha, 
     J_history = []
     w = w_in
     b = b_in
-    for i in range(num_iters):
+    for iter in range(num_iters):
         dj_dw, dj_db = gradient_function(X, y, w, b)
         w -= alpha * dj_dw
         b -= alpha * dj_db
         cost = cost_function(X, y, w, b)
         J_history.append(cost)
-        if i % 1000 == 0:
-            print(f"迭代 {i:4}: 成本 {cost:8.2f}")
+        if iter % 1000 == 0:
+            print(f"迭代 {iter:4}: 成本 {cost:8.2f}")
     return w, b, J_history
 ```
 
@@ -256,7 +256,7 @@ def gradient_descent(X, y, w_in, b_in, cost_function, gradient_function, alpha, 
 ```python
 np.random.seed(1)
 initial_w = 0.01 * (np.random.rand(2) - 0.5)
-initial_b = -8
+initial_b = -8.0
 w, b, J_history = gradient_descent(X_train, y_train, initial_w, initial_b, 
                                    compute_cost, compute_gradient, 0.001, 10000)
 print(f"训练后的 w, b: {w}, {b}")
@@ -298,10 +298,10 @@ plt.show()
 def predict(X, w, b):
     m = X.shape[0]
     p = np.zeros(m)
-    for i in range(m):
-        z = np.dot(X[i], w) + b
+    for idx in range(m):
+        z = np.dot(X[idx], w) + b
         f_wb = sigmoid(z)
-        p[i] = 1 if f_wb >= 0.5 else 0
+        p[idx] = 1 if f_wb >= 0.5 else 0
     return p
 ```
 
@@ -397,7 +397,7 @@ print("映射后形状:", X_mapped.shape)
 
 添加惩罚项以防止过拟合：
 
-![正则化成本函数](https://latex.codecogs.com/png.latex?J%28w%2C%20b%29%20%3D%20-%5Cfrac%7B1%7D%7Bm%7D%20%5Csum_%7Bi%3D1%7D%5E%7Bm%7D%20%5Cleft%5By%5E%7B%28i%29%7D%5Clog%28f%28x%5E%7B%28i%29%7D%29%29%20%2B%20%281%20-%20y%5E%7B%28i%29%7D%29%5Clog%281%20-%20f%28x%5E%7B%28i%29%7D%29%29%5Cright%5D%20%2B%20%5Cfrac%7B%5Clambda%7D%7B2m%7D%20%5Csum_%7Bj%3D1%7D%5E%7Bn%7D%20w_j%5E2)
+![正则化成本函数](https://latex.codecogs.com/png.latex?J%28w%2C%20b%29%20%3D%20-%5Cfrac%7B1%7D%7Bm%7D%20%5Csum_%7Bi%3D1%7D%5E%7Bm%7D%20%5B%20y%5E%7B%28i%29%7D%20%5Clog%28f%28x%5E%7B%28i%29%7D%29%29%20%2B%20%281%20-%20y%5E%7B%28i%29%7D%29%20%5Clog%28%281%20-%20f%28x%5E%7B%28i%29%7D%29%29%29%20%5D%20%2B%20%5Cfrac%7B%5Clambda%7D%7B2m%7D%20%5Csum_%7Bj%3D1%7D%5E%7Bn%7D%20w_j%5E2)
 
 实现它：
 
@@ -433,7 +433,7 @@ def compute_gradient_reg(X, y, w, b, lambda_=1):
 ```python
 np.random.seed(1)
 initial_w = np.random.rand(X_mapped.shape[1]) - 0.5
-initial_b = 1.
+initial_b = 1.0
 lambda_ = 0.01
 w, b, J_history = gradient_descent(X_mapped, y_train, initial_w, initial_b, 
                                    compute_cost_reg, compute_gradient_reg, 0.01, 10000)
@@ -494,4 +494,4 @@ print(f"训练准确率: {np.mean(p == y_train) * 100:.2f}%")
 - 可视化结果以理解模型。
 - 使用正则化处理复杂模式。
 
-你可以尝试调整参数，如 `alpha` 或 `lambda_`，看看模型如何变化。继续探索，快乐学习！！
+你可以尝试调整参数，如 `alpha` 或 `lambda_`，看看模型如何变化。继续探索，快乐学习！
