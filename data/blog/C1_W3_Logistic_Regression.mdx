@@ -166,10 +166,10 @@ Sigmoid 函数将任何实数映射到 (0, 1)——非常适合表示概率！
 def compute_cost(X, y, w, b):
     m = X.shape[0]
     cost = 0.0
-    for idx in range(m):
-        z = np.dot(X[idx], w) + b
+    for i in range(m):
+        z = np.dot(X[i], w) + b
         f_wb = sigmoid(z)
-        cost += -y[idx] * np.log(f_wb) - (1 - y[idx]) * np.log(1 - f_wb)
+        cost += -y[i] * np.log(f_wb) - (1 - y[i]) * np.log(1 - f_wb)
     return cost / m
 ```
 
@@ -205,12 +205,12 @@ def compute_gradient(X, y, w, b):
     m, n = X.shape
     dj_dw = np.zeros(n)
     dj_db = 0.0
-    for idx in range(m):
-        z = np.dot(X[idx], w) + b
+    for i in range(m):
+        z = np.dot(X[i], w) + b
         f_wb = sigmoid(z)
-        err = f_wb - y[idx]
+        err = f_wb - y[i]
         dj_db += err
-        dj_dw += err * X[idx]
+        dj_dw += err * X[i]
     dj_dw /= m
     dj_db /= m
     return dj_dw, dj_db
@@ -240,14 +240,14 @@ def gradient_descent(X, y, w_in, b_in, cost_function, gradient_function, alpha, 
     J_history = []
     w = w_in
     b = b_in
-    for iter in range(num_iters):
+    for i in range(num_iters):
         dj_dw, dj_db = gradient_function(X, y, w, b)
         w -= alpha * dj_dw
         b -= alpha * dj_db
         cost = cost_function(X, y, w, b)
         J_history.append(cost)
-        if iter % 1000 == 0:
-            print(f"迭代 {iter:4}: 成本 {cost:8.2f}")
+        if i % 1000 == 0:
+            print(f"迭代 {i:4}: 成本 {cost:8.2f}")
     return w, b, J_history
 ```
 
@@ -298,10 +298,10 @@ plt.show()
 def predict(X, w, b):
     m = X.shape[0]
     p = np.zeros(m)
-    for idx in range(m):
-        z = np.dot(X[idx], w) + b
+    for i in range(m):
+        z = np.dot(X[i], w) + b
         f_wb = sigmoid(z)
-        p[idx] = 1 if f_wb >= 0.5 else 0
+        p[i] = 1 if f_wb >= 0.5 else 0
     return p
 ```
 
