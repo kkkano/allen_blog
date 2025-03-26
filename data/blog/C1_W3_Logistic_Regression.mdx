@@ -198,9 +198,14 @@ print(f"初始成本: {cost:.3f}")
 
 梯度下降通过调整 `w` 和 `b` 来减小成本。梯度为：
 
-![梯度 ∂J/∂b](https://latex.codecogs.com/png.latex?%5Cfrac%7B%5Cpartial%20J%7D%7B%5Cpartial%20b%7D%20%3D%20%5Cfrac%7B1%7D%7Bm%7D%20%5Csum_%7Bi%3D1%7D%5E%7Bm%7D%20%28f%28x%5E%7B%28i%29%7D%29%20-%20y%5E%7B%28i%29%7D%29)
+$$
+\frac{\partial J}{\partial b} = \frac{1}{m} \sum_{i=1}^{m} \left( f(x^{(i)}) - y^{(i)} \right)
+$$
 
-![梯度 ∂J/∂w_j](https://latex.codecogs.com/png.latex?%5Cfrac%7B%5Cpartial%20J%7D%7B%5Cpartial%20w_j%7D%20%3D%20%5Cfrac%7B1%7D%7Bm%7D%20%5Csum_%7Bi%3D1%7D%5E%7Bm%7D%20%28f%28x%5E%7B%28i%29%7D%29%20-%20y%5E%7B%28i%29%7D%29%20x_j%5E%7B%28i%29%7D)
+$$
+\frac{\partial J}{\partial w_j} = \frac{1}{m} \sum_{i=1}^{m} \left( f(x^{(i)}) - y^{(i)} \right) x_j^{(i)}
+$$
+
 
 编码实现：
 
