@@ -200,12 +200,14 @@ print(f"初始成本: {cost:.3f}")
 梯度下降通过调整 `w` 和 `b` 来减小成本。梯度为：
 
 $$
-\frac{\partial J}{\partial b} = \frac{1}{m} \sum_{i=1}^{m} \left( f(x^{(i)}) - y^{(i)} \right)
+\frac{\partial J}{\partial w_j} = \frac{1}{m} \sum_{i=1}^{m} \left( f(x^{(i)}) - y^{(i)} \right) x_j^{(i)}
 $$
 
 $$
-\frac{\partial J}{\partial w_j} = \frac{1}{m} \sum_{i=1}^{m} \left( f(x^{(i)}) - y^{(i)} \right) x_j^{(i)}
+\frac{\partial J}{\partial b} = \frac{1}{m} \sum_{i=1}^{m} \left( f(x^{(i)}) - y^{(i)} \right)
 $$
+
+
 
 
 编码实现：
