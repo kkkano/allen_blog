@@ -36,6 +36,27 @@ authors: ['Allen']
   - [3.7 复杂边界的可视化](#3.7)
   - [3.8 评估正则化模型](#3.8)
 - [总结](#wrap-up)
+The matrix of regressors $\mathbf{X}$ is a $n \times k$ matrix (or each row is a $k \times 1$ vector),
+
+```latex
+\mathbf{X} = \left[\begin{array}
+  {ccccc}
+  x_{11} & . & . & . & x_{1k} \\
+  . & . & . & . & .  \\
+  . & . & . & . & .  \\
+  . & . & . & . & .  \\
+  x_{n1} & . & . & . & x_{nn}
+\end{array}\right] =
+\left[\begin{array}
+  {c}
+  \mathbf{x}'_1 \\
+  . \\
+  . \\
+  . \\
+  \mathbf{x}'_n
+\end{array}\right]
+```
+
 $$
 \mathbf{X} = \left[\begin{array}
   {ccccc}
@@ -54,8 +75,6 @@ $$
   \mathbf{x}'_n
 \end{array}\right]
 $$
-
----
 
 <a name="1"></a>
 ## 1 - 准备工具包
