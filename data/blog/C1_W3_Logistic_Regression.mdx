@@ -247,6 +247,13 @@ print(f"初始梯度: w = {dj_dw}, b = {dj_db}")
 
 以下是梯度下降算法：
 
+$$
+b = b - \alpha \frac{\partial J(w, b)}{\partial b}
+$$
+$$
+w_j = w_j - \alpha \frac{\partial J(w, b)}{\partial w_j}
+$$
+编码实现：
 ```python
 def gradient_descent(X, y, w_in, b_in, cost_function, gradient_function, alpha, num_iters):
     J_history = []
