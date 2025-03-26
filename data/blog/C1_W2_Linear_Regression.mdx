@@ -257,10 +257,27 @@ print(f'初始 w 和 b 时的成本: {cost:.3f}')
 <a name="2.5"></a>
 ### 2.5 梯度下降法
 
-**梯度下降法**通过计算成本函数的梯度，逐步调整 `w` 和 `b`，减小误差。步骤：
-1. 计算成本对 `w` 和 `b` 的偏导数（梯度）。
-2. 用学习率 `alpha` 更新参数。
-3. 重复直到成本收敛。
+梯度下降法通过计算成本函数的梯度，逐步调整参数 $w$ 和 $b$，以减小预测误差。其步骤如下：
+
+计算成本函数 $J(w, b)$ 对 $w$ 和 $b$ 的偏导数（梯度）：
+
+$$
+   \frac{\partial J}{\partial w} = \frac{1}{m} \sum_{i=1}^{m} \left( f_{w, b}(\mathbf{x}^{(i)}) - y^{(i)} \right) x^{(i)}
+   $$
+$$
+   \frac{\partial J}{\partial b} = \frac{1}{m} \sum_{i=1}^{m} \left( f_{w, b}(\mathbf{x}^{(i)}) - y^{(i)} \right)
+   $$
+
+用学习率 $\alpha$ 更新参数 $w$ 和 $b$：
+
+$$
+   w := w - \alpha \frac{\partial J}{\partial w}
+   $$
+$$
+   b := b - \alpha \frac{\partial J}{\partial b}
+   $$
+
+重复以上步骤，直到成本函数 $J(w, b)$ 收敛。
 
 <a name="ex02"></a>
 #### 练习 2：实现梯度计算
