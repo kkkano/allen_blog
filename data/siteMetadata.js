@@ -51,9 +51,10 @@ const siteMetadata = {
     // },
   },
   newsletter: {
-    // 这里填写你的Buttondown API Key
+    // supports mailchimp, buttondown, convertkit, klaviyo, revue, emailoctopus, beehive
+    // Please add your .env file and modify it according to your selection
+    username: 'carsonmalcolm253631',
     apiKey: 'f930191f-cd09-44df-aa46-3406853deafe',
-    // 设置provider为buttondown
     provider: 'buttondown',
   },
   comments: {
@@ -79,18 +80,18 @@ const siteMetadata = {
     },
   },
   search: {
-    provider: 'kbar', // kbar or algolia
-    kbarConfig: {
-      searchDocumentsPath: `${process.env.BASE_PATH || ''}/search.json`, // path to load documents to search
-    },
-    // provider: 'algolia',
-    // algoliaConfig: {
-    //   // The application ID provided by Algolia
-    //   appId: 'R2IYF7ETH7',
-    //   // Public API key: it is safe to commit it
-    //   apiKey: '599cec31baffa4868cae4e79f180729b',
-    //   indexName: 'docsearch',
+    // provider: 'kbar', // kbar or algolia
+    // kbarConfig: {
+    //   searchDocumentsPath: `${process.env.BASE_PATH || ''}/search.json`, // path to load documents to search
     // },
+    provider: 'algolia',
+    algoliaConfig: {
+      // The application ID provided by Algolia
+      appId: 'R2IYF7ETH7',
+      // Public API key: it is safe to commit it
+      apiKey: '599cec31baffa4868cae4e79f180729b',
+      indexName: 'docsearch',
+    },
   },
 }
 
