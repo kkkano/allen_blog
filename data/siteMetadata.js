@@ -51,8 +51,9 @@ const siteMetadata = {
     // },
   },
   newsletter: {
-    // supports mailchimp, buttondown, convertkit, klaviyo, revue, emailoctopus, beehive
-    // Please add your .env file and modify it according to your selection
+    // 这里填写你的Buttondown API Key
+    apiKey: 'f930191f-cd09-44df-aa46-3406853deafe',
+    // 设置provider为buttondown
     provider: 'buttondown',
   },
   comments: {
