@@ -53,8 +53,8 @@ const siteMetadata = {
   newsletter: {
     // supports mailchimp, buttondown, convertkit, klaviyo, revue, emailoctopus, beehive
     // Please add your .env file and modify it according to your selection
-    username: 'carsonmalcolm253631',
-    apiKey: 'f930191f-cd09-44df-aa46-3406853deafe',
+    username: 'allenwang',
+    apiKey: 'a0c9fb8b-41d3-4cf2-a912-3aaa1c24bfb4',
     provider: 'buttondown',
   },
   comments: {
