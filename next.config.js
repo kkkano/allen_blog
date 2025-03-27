@@ -65,11 +65,12 @@ const unoptimized = process.env.UNOPTIMIZED ? true : undefined
 module.exports = () => {
   const plugins = [withContentlayer, withBundleAnalyzer]
   return plugins.reduce((acc, next) => next(acc), {
-    env: {
-      // 客户端变量
-      NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
-      NEXT_PUBLIC_UMAMI_URL: process.env.NEXT_PUBLIC_UMAMI_URL,
+    newsletter: {
+      username: process.env.NEXT_PUBLIC_NEWSLETTER_USERNAME,
+      apiKey: process.env.NEXT_PUBLIC_NEWSLETTER_API_KEY,
+      provider: 'buttondown',
     },
+
     output,
     basePath,
     reactStrictMode: true,
