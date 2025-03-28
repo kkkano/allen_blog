@@ -18,7 +18,7 @@ const siteMetadata = {
   // twitter: 'https://twitter.com/Twitter',
   //facebook: 'https://facebook.com',
   //youtube: 'https://youtube.com',
-  //linkedin: 'https://www.linkedin.com',
+  linkedin: 'https://www.linkedin.com/in/AllenWangQWQ/',
   //threads: 'https://www.threads.net',
   //instagram: 'https://www.instagram.com',
   //medium: 'https://medium.com',
@@ -53,7 +53,7 @@ const siteMetadata = {
   newsletter: {
     // supports mailchimp, buttondown, convertkit, klaviyo, revue, emailoctopus, beehive
     // Please add your .env file and modify it according to your selection
-  // username: 'carsonmalcolm253631',
+
     apiKey: 'a0c9fb8b-41d3-4cf2-a912-3aaa1c24bfb4',
     provider: 'buttondown',
   },
