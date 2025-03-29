@@ -129,3 +129,64 @@ for i, ax in enumerate(axes.flat):
 
 > **可视化为什么重要？** 它让我们直观感受到数据的分布和复杂性，为后续模型设计提供直觉。
 
+## 3 - 模型构建：从高层到低层的双视角
+
+### 3.1 TensorFlow实现：快速上手
+
+TensorFlow的`Sequential` API让我们像搭积木一样构建模型。以下是代码：
+
+```python
+model = Sequential([
+    tf.keras.Input(shape=(400,)),
+    Dense(25, activation='sigmoid'),
+    Dense(15, activation='sigmoid'),
+    Dense(1, activation='sigmoid')
+])
+
+model.summary()
+```
+
+- **模型结构**：输入层400单元，隐藏层1（25单元）、隐藏层2（15单元），输出层1单元。
+- **激活函数**：sigmoid适合二分类，将输出压缩到[0, 1]。
+
+> **TensorFlow的优势**：自动处理反向传播和优化，适合快速原型开发。
+
+### 3.2 NumPy手写实现：理解底层原理
+
+手动实现前向传播，深入理解神经网络的工作机制：
+
+```python
+def my_dense(a_in, W, b, g):
+    units = W.shape[1]
+    a_out = np.zeros(units)
+    for j in range(units):
+        z = np.dot(a_in, W[:, j]) + b[j]
+        a_out[j] = g(z)
+    return a_out
+
+def my_sequential(x, W1, b1, W2, b2, W3, b3):
+    a1 = my_dense(x, W1, b1, sigmoid)
+    a2 = my_dense(a1, W2, b2, sigmoid)
+    return my_dense(a2, W3, b3, sigmoid)
+```
+
+> **NumPy的意义**：让我们看到神经网络的“内部工作”，如每个神经元的计算过程。
+
+### 3.3 可选：向量化NumPy实现
+
+提高效率，处理多个示例：
+
+```python
+def my_dense_v(A_in, W, b, g):
+    Z = np.dot(A_in, W) + b
+    A_out = g(Z)
+    return A_out
+
+def my_sequential_v(X, W1, b1, W2, b2, W3, b3):
+    A1 = my_dense_v(X, W1, b1, sigmoid)
+    A2 = my_dense_v(A1, W2, b2, sigmoid)
+    A3 = my_dense_v(A2, W3, b3, sigmoid)
+    return A3
+```
+
+> **向量化优势**：使用矩阵乘法避免循环，显著提升计算速度。
