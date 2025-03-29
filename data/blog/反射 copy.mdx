@@ -1,0 +1,709 @@
+---
+title: 'Java反射机制详解与应用实践'
+date: '2025-02-23'
+tags: ['Java']
+draft: false
+comments: true
+summary: '深入解析Java反射机制的核心概念、使用方法及实际应用场景。'
+authors: ['allen']
+---
+
+# Java反射机制
+
+## 反射简介
+
+### 什么是反射
+Java反射机制是在运行状态中，对于任意一个类，都能够知道这个类的所有属性和方法；对于任意一个对象，都能够调用它的任意一个方法和属性。这种动态获取信息以及动态调用对象方法的功能称为Java语言的反射机制。
+
+### Java反射的作用
+- 在运行时判断任意一个对象所属的类  
+- 在运行时构造任意一个类的对象  
+- 在运行时判断任意一个类所具有的成员变量和方法  
+- 在运行时调用任意一个对象的方法  
+
+### 反射机制有什么用
+- 通过Java语言中的反射机制可以操作字节码文件（可以读和修改字节码文件）。  
+- 通过反射机制可以操作代码片段（class文件）。  
+
+### 哪里会用到反射机制
+- Web服务器中利用反射调用了Servlet的服务方法。  
+- Eclipse等开发工具利用反射动态解析对象的类型与结构，动态提示对象的属性和方法。  
+- 模块化的开发，通过反射去调用对应的字节码。  
+- 动态代理设计模式也采用了反射机制。  
+- Spring/Hibernate等框架，也是利用CGLIB反射机制才得以实现：  
+  1. JDBC中，利用反射动态加载了数据库驱动程序。  
+  2. 很多框架都用到反射机制，注入属性，调用方法，如Spring。  
+
+### 反射机制的应用场景有哪些
+1. 在使用JDBC连接数据库时使用`Class.forName()`通过反射加载数据库的驱动程序。  
+2. Spring框架也用到很多反射机制，最经典的就是XML的配置模式。
+
+##### JDBC重点（Class.forName导致类加载）
+如果你只是希望一个类的静态代码块执行，其他代码一律不执行，可以使用：
+```java
+Class.forName("完整类名");
+```
+这个方法的执行会导致类加载，类加载时，静态代码块执行。
+
+##### Spring通过XML配置模式装载Bean的过程
+1. 将程序内所有XML或Properties配置文件加载入内存中；  
+2. Java类里面解析xml或properties里面的内容，得到对应实体类的字节码字符串以及相关的属性信息；  
+3. 使用反射机制，根据这个字符串获得某个类的Class实例；  
+4. 动态配置实例的属性。
+
+可查看数据库连接和Spring的反射案例：[面试官：说一下Java反射机制的应用场景](https://zhuanlan.zhihu.com/p/394766551)
+
+### 反射机制的优缺点
+- **优点**：运行期类型的判断，动态加载类（在运行期间根据业务功能动态执行方法、访问属性），提高代码灵活度。  
+- **缺点**：性能瓶颈：反射相当于一系列解释操作，通知JVM要做的事情，性能比直接的Java代码要慢很多。
+
+### 反射机制的相关类在哪个包下
+```java
+java.lang.reflect.*;
+```
+
+## 反射使用步骤（获取Class对象、调用对象方法）
+
+### 获取Class对象的三种方法
+1. 通过new对象实现反射机制：`对象.getClass()`  
+2. 通过路径实现反射机制：`Class.forName("完整类名带包名")` 静态方法  
+   例如：`com.mysql.jdbc.Driver` Driver类已经被加载到JVM中，并且完成了类的初始化工作。  
+3. 通过类名实现反射机制：`任何类型（类名）.class`。获取`Class<?> clz`对象  
+
+##### 代码示例
+```java
+public class Student {
+    private int id;
+    String name;
+    protected boolean sex;
+    public float score;
+}
+
+public class Get {
+    // 获取反射机制三种方式
+    public static void main(String[] args) throws ClassNotFoundException {
+        // 方式一（通过建立对象）
+        Student stu = new Student();
+        Class classobj1 = stu.getClass();
+        System.out.println(classobj1.getName());
+
+        // 方式二（所在通过路径-相对路径）
+        Class classobj2 = Class.forName("fanshe.Student");
+        System.out.println(classobj2.getName());
+
+        // 方式三（通过类名）
+        Class classobj3 = Student.class;
+        System.out.println(classobj3.getName());
+    }
+}
+```
+
+### 获取构造器对象，通过构造器new出一个对象
+```java
+Clazz.getConstructor([String.class]);
+Con.newInstance([参数]);
+```
+
+##### 通过反射Class对象创建一个实例对象
+相当于`new类名()`无参构造器：
+```java
+Cls.newInstance(); // 对象.newInstance()
+```
+注：`newInstance()`方法内部实际上调用了无参数构造方法，必须保证无参构造存在才可以。否则会抛出`java.lang.InstantiationException`异常。
+
+###### 通过Class对象的`newInstance()`方法
+```java
+Object instance = clazz1.newInstance();
+```
+
+##### 代码示例
+```java
+class ReflectTest02 {
+    public static void main(String[] args) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+        // 下面这段代码是以反射机制的方式创建对象。
+        // 通过反射机制，获取Class，通过Class来实例化对象
+        Class c = Class.forName("javase.reflectBean.User");
+        // newInstance() 这个方法会调用User这个类的无参数构造方法，完成对象的创建。
+        // 重点是：newInstance()调用的是无参构造，必须保证无参构造是存在的！
+        Object obj = c.newInstance();
+        System.out.println(obj);
+    }
+}
+```
+
+##### 通过构造方法实例化对象，代码示例
+```java
+// 取得无参构造
+Constructor<?> constructor2 = clazz1.getConstructor();
+// 通过无参构造创建一个对象
+Object child1 = constructor2.newInstance();
+
+// 取得指定参数的构造方法对象
+Constructor<?> constructor3 = clazz1.getConstructor(String.class, int.class);
+// 通过构造方法对象创建一个对象
+constructor3.newInstance("wenpan", 21);
+```
+
+### 通过Class对象获得一个属性对象
+- 获得某个类的所有的公共（public）的字段，包括父类中的字段：
+  ```java
+  Field c = cls.getFields();
+  ```
+- 获得某个类的所有声明的字段，即包括public、private和protected，但不包括父类的声明字段：
+  ```java
+  Field c = cls.getDeclaredFields();
+  ```
+
+##### 通过Class对象获得一个方法对象
+- 只能获取公共的：
+  ```java
+  Cls.getMethod("方法名", class...parameaType);
+  ```
+- 获取任意修饰的方法，不能执行私有：
+  ```java
+  Cls.getDeclaredMethod("方法名");
+  ```
+- 让私有的方法可以执行：
+  ```java
+  M.setAccessible(true);
+  ```
+
+##### 让方法执行
+```java
+Method.invoke(obj实例对象, obj可变参数); // 是有返回值的
+```
+
+### Java反射创建对象效率高还是通过new创建对象的效率高？
+`new`创建对象的效率高。  
+Java代码需要编译后在虚拟机中运行，一般是通过前端编辑器（如`javac`）将Java文件转为class文件。程序运行期间，可能会通过JIT即时编译器将字节码文件转换为计算机认识的机器码文件，或者通过AOT编译器直接将Java文件编译为本地机器码文件。JIT在程序运行期会对程序进行优化，但反射是通过动态解析的方式，因此可能无法执行某些Java虚拟机的优化。  
+下方博客有代码示例说明：[Java反射和new效率对比](https://blog.csdn.net/sunny_json/article/details/113047372)
+
+### 反射机制相关的重要的类有哪些
+| **类** | **含义** |
+| :---: | :---: |
+| `java.lang.Class` | 代表整个字节码。代表一个类型，代表整个类。 |
+| `java.lang.reflect.Method` | 代表字节码中的方法字节码。代表类中的方法。 |
+| `java.lang.reflect.Constructor` | 代表字节码中的构造方法字节码。代表类中的构造方法。 |
+| `java.lang.reflect.Field` | 代表字节码中的属性字节码。代表类中的成员变量（静态变量+实例变量）。 |
+
+注：必须先获得Class才能获取Method、Constructor、Field。
+
+##### Class代码示例
+```java
+java.lang.Class:
+public class User {
+    // Field
+    int no;
+
+    // Constructor
+    public User() {
+    }
+
+    public User(int no) {
+        this.no = no;
+    }
+
+    // Method
+    public void setNo(int no) {
+        this.no = no;
+    }
+
+    public int getNo() {
+        return no;
+    }
+}
+```
+
+## 反射Field【反射/反编译一个类的属性】
+
+### Class类方法
+| **方法名** | **备注** |
+| :---: | :---: |
+| `public T newInstance()` | 创建对象 |
+| `public String getName()` | 返回完整类名带包名 |
+| `public String getSimpleName()` | 返回类名 |
+| `public Field[] getFields()` | 返回类中`public`修饰的属性 |
+| `public Field[] getDeclaredFields()` | 返回类中所有的属性 |
+| `public Field getDeclaredField(String name)` | 根据属性名`name`获取指定的属性 |
+| `public native int getModifiers()` | 获取属性的修饰符列表，返回的修饰符是一个数字，每个数字是修饰符的代号【一般配合`Modifier`类的`toString(int x)`方法使用】 |
+| `public Method[] getDeclaredMethods()` | 返回类中所有的实例方法 |
+| `public Method getDeclaredMethod(String name, Class<?>… parameterTypes)` | 根据方法名`name`和方法形参获取指定方法 |
+| `public Constructor<?>[] getDeclaredConstructors()` | 返回类中所有的构造方法 |
+| `public Constructor getDeclaredConstructor(Class<?>… parameterTypes)` | 根据方法形参获取指定的构造方法 |
+
+##### 获取一个类的父类以及所有实现的接口
+| **方法** | **备注** |
+| :---: | :---: |
+| `public native Class<? super T> getSuperclass()` | 返回调用类的父类 |
+| `public Class<?>[] getInterfaces()` | 返回调用类实现的接口集合 |
+
+### Field类方法
+| **方法名** | **备注** |
+| :---: | :---: |
+| `public String getName()` | 返回属性名 |
+| `public int getModifiers()` | 获取属性的修饰符列表，返回的修饰符是一个数字，每个数字是修饰符的代号【一般配合`Modifier`类的`toString(int x)`方法使用】 |
+| `public Class<?> getType()` | 以`Class`类型，返回属性类型【一般配合`Class`类的`getSimpleName()`方法使用】 |
+| `public void set(Object obj, Object value)` | 设置属性值 |
+| `public Object get(Object obj)` | 读取属性值 |
+
+##### 反编译一个类的属性Field（本类的所有属性，不包含父类和接口），代码示例
+```java
+class ReflectTest06 {
+    public static void main(String[] args) throws ClassNotFoundException {
+        Class studentClass = Class.forName("javase.reflectBean.Student");
+        Modifier.toString(studentClass.getModifiers());
+        studentClass.getSimpleName();
+
+        // 获取所有的属性
+        Field[] declaredFields = clazz1.getDeclaredFields();
+        for (int i = 0; i < declaredFields.length; i++) {
+            // 属性名称
+            String fieldName = declaredFields[i].getName();
+            // 属性的类型
+            String fieldType = declaredFields[i].getType().getName();
+            // 获取属性的修饰符列表，返回的修饰符是一个数字，每个数字是修饰符的代号
+            String fieldModifier = Modifier.toString(declaredFields[i].getModifiers());
+            System.out.println(fieldModifier + " " + fieldType + " " + fieldName + ";");
+        }
+    }
+}
+```
+
+##### 取得实现的接口里的所有属性，代码示例
+```java
+Field field = clazz1.getDeclaredField("name");
+// 访问私有属性需要设置Accessible为true才可以更改或读取值（get 或 set）
+field.setAccessible(true);
+// 取得instance对象里面的属性值
+System.out.println("更改前的name值：" + field.get(instance));
+// 更改instance对象里的name属性值
+field.set(instance, "文攀啊");
+System.out.println("更改后的name属性值：" + field.get(instance));
+```
+
+### 给属性赋值三要素
+- 对象（如：`s`）  
+- 属性（如：`no`）  
+- 值（如：`1111`）  
+
+### 读属性值两个要素
+- 对象（如：`s`）  
+- 属性（如：`no`）  
+
+注：`Field`类中`set()`、`get()`使用注意事项：
+1. `属性.set(对象, 值)`  
+2. `属性.get(对象)`  
+
+##### 通过反射机制访问一个java对象的属性，代码示例
+```java
+class ReflectTest07 {
+    public static void main(String[] args) throws ClassNotFoundException, InstantiationException, IllegalAccessException, NoSuchFieldException {
+        // 不使用反射机制给属性赋值
+        Student student = new Student();
+        student.no = 1111;
+        System.out.println(student.no);
+
+        // 使用反射机制给属性赋值
+        Class studentClass = Class.forName("javase.reflectBean.Student");
+
+        Object obj = studentClass.newInstance();
+
+        Field noField = studentClass.getDeclaredField("no");
+        noField.set(obj, 22222);
+        System.out.println(noField.get(obj));
+    }
+}
+```
+
+##### `set()`可以访问私有属性吗？
+不可以，需要打破封装才可以。
+
+### Field方法
+| **方法** | **备注** |
+| :---: | :---: |
+| `public void setAccessible(boolean flag)` | 默认`false`，设置为`true`为打破封装 |
+
+##### 代码示例
+```java
+Field nameField = studentClass.getDeclaredField("name");
+nameField.setAccessible(true);
+nameField.set(obj, "xiaowu");
+System.out.println(nameField.get(obj));
+```
+
+## 反射Method【反射/反编译一个类的方法】
+
+### Method类方法
+| **方法名** | **备注** |
+| :---: | :---: |
+| `public String getName()` | 返回方法名 |
+| `public int getModifiers()` | 获取方法的修饰符列表，返回的修饰符是一个数字，每个数字是修饰符的代号【一般配合`Modifier`类的`toString(int x)`方法使用】 |
+| `public Class<?> getReturnType()` | 以`Class`类型，返回方法类型【一般配合`Class`类的`getSimpleName()`方法使用】 |
+| `public Class<?>[] getParameterTypes()` | 返回方法的修饰符列表（一个方法的参数可能会有多个）【结果集一般配合`Class`类的`getSimpleName()`方法使用】 |
+| `public Object invoke(Object obj, Object… args)` | 调用方法 |
+
+### 反编译一个类的方法Method
+```java
+class ReflectTest09 {
+    public static void main(String[] args) throws ClassNotFoundException {
+        Class userServiceClass = Class.forName("java.lang.String");
+
+        StringBuilder s = new StringBuilder();
+        s.append(Modifier.toString(userServiceClass.getModifiers()));
+        s.append(" class ");
+        s.append(userServiceClass.getSimpleName());
+        s.append(" {\n");
+
+        // 获取所有的Method（包括私有的！）
+        Method[] methods = userServiceClass.getDeclaredMethods();
+        for (Method m : methods) {
+            s.append("\t");
+            // 获取修饰符列表
+            s.append(Modifier.toString(m.getModifiers()));
+            s.append(" ");
+            // 获取方法的返回值类型
+            s.append(m.getReturnType().getSimpleName());
+            s.append(" ");
+            // 获取方法名
+            s.append(m.getName());
+            s.append("(");
+            // 方法的修饰符列表（一个方法的参数可能会有多个）
+            Class[] parameterTypes = m.getParameterTypes();
+            for (int i = 0; i < parameterTypes.length; i++) {
+                s.append(parameterTypes[i].getSimpleName());
+                if (i != parameterTypes.length - 1) s.append(", ");
+            }
+            s.append(") {}\n");
+        }
+        s.append("}");
+        System.out.println(s);
+    }
+}
+```
+
+### 调用方法四要素
+- 示例：调用对象`userService`的`login`方法  
+  1. 对象`userService`  
+  2. 方法名`login`  
+  3. 实参列表  
+  4. 返回值  
+
+注：`Method`类中`invoke()`使用注意事项：
+```java
+方法.invoke(对象, 实参);
+```
+
+### 取得一个类的所有方法（包括父类和实现的接口）
+```java
+Method[] methods = clazz1.getMethods();
+```
+
+##### 代码示例
+```java
+Method[] methods = clazz1.getMethods();
+// 输出取得的方法
+for (int i = 0; i < methods.length; i++) {
+    StringBuffer buffer = new StringBuffer();
+    // 方法修饰符
+    String modifier = Modifier.toString(methods[i].getModifiers());
+    // 返回值类型
+    String returnType = methods[i].getReturnType().getSimpleName();
+    // 方法名
+    String name = methods[i].getName();
+    // 方法参数类型
+    Class<?>[] parameterTypes = methods[i].getParameterTypes();
+    buffer.append(modifier).append(" ").append(returnType).append(" ").append(name).append("(");
+    for (int j = 0; j < parameterTypes.length; j++) {
+        buffer.append(parameterTypes[j].getSimpleName()).append(" arg").append(j);
+        if (j < parameterTypes.length - 1) {
+            buffer.append(",");
+        }
+    }
+    buffer.append(")");
+    // 方法抛出的异常信息
+    Class<?>[] exceptionTypes = methods[i].getExceptionTypes();
+    if (exceptionTypes.length > 0) {
+        buffer.append(" throws");
+    }
+    for (int k = 0; k < exceptionTypes.length; k++) {
+        buffer.append(exceptionTypes[k].getSimpleName());
+        if (k < exceptionTypes.length - 1) {
+            buffer.append(",");
+        }
+    }
+    buffer.append("{ }");
+    System.out.println(buffer);
+}
+```
+
+### 取得一个类的所有方法（不包括父类和实现的接口）
+```java
+Method[] declaredMethods = clazz1.getDeclaredMethods();
+```
+
+### 通过反射机制调用一个对象的方法
+##### 代码示例
+```java
+public static void main(String[] args) throws Exception {
+    // 使用反射将Child类的Class对象加载进来
+    Class<?> clazz1 = Class.forName("com.wp.reflect.entity.Child");
+    // 创建一个实例对象（使用反射调用方法必须要有实例对象）
+    Object instance = clazz1.newInstance();
+    // 通过方法名称和指定的参数类型获取指定方法
+    Method method = clazz1.getDeclaredMethod("setName", String.class);
+    // 调用Method对象的invoke方法执行instance对象的方法
+    method.invoke(instance, "文攀啊");
+
+    // 通过方法名称和指定的参数类型获取指定方法
+    Method getNameMethod = clazz1.getMethod("getName");
+    // 调用Method对象的invoke方法执行方法
+    String name = (String) getNameMethod.invoke(instance);
+    // 输出执行方法返回的结果
+    System.out.println(name);
+}
+```
+
+##### 代码示例
+```java
+class ReflectTest10 {
+    public static void main(String[] args) throws Exception {
+        // 不使用反射机制，怎么调用方法
+        UserService userService = new UserService();
+        System.out.println(userService.login("admin", "123") ? "登入成功！" : "登入失败！");
+
+        // 使用反射机制调用方法
+        Class userServiceClass = Class.forName("javase.reflectBean.UserService");
+        Object obj = userServiceClass.newInstance();
+        Method loginMethod = userServiceClass.getDeclaredMethod("login", String.class, String.class);
+        Object resValues = loginMethod.invoke(obj, "admin", "123");
+        System.out.println(resValues);
+    }
+}
+```
+
+### 通过方法名和方法参数类型取得对象的方法
+```java
+Method method = clazz1.getDeclaredMethod("setName", String.class);
+```
+
+## 反射Constructor【反射/反编译一个类的构造方法】
+
+### Constructor类方法
+| **方法名** | **备注** |
+| :---: | :---: |
+| `public String getName()` | 返回构造方法名 |
+| `public int getModifiers()` | 获取构造方法的修饰符列表，返回的修饰符是一个数字，每个数字是修饰符的代号【一般配合`Modifier`类的`toString(int x)`方法使用】 |
+| `public Class<?>[] getParameterTypes()` | 返回构造方法的修饰符列表（一个方法的参数可能会有多个）【结果集一般配合`Class`类的`getSimpleName()`方法使用】 |
+| `public T newInstance(Object … initargs)` | 创建对象【参数为创建对象的数据】 |
+
+### 取得一个类的所有构造函数
+```java
+Class<?> clazz1 = Class.forName("xxxx");
+Constructor<?>[] constructors = clazz1.getConstructors();
+Constructor<?>[] constructors1 = clazz1.getDeclaredConstructors();
+```
+
+### 根据参数类型取得构造函数
+```java
+Constructor<?> constructor1 = clazz1.getDeclaredConstructor(String.class);
+System.out.println(constructor1);
+```
+
+### 反编译一个类的构造方法Constructor
+##### 代码示例
+```java
+class ReflectTest11 {
+    public static void main(String[] args) throws ClassNotFoundException {
+        StringBuilder s = new StringBuilder();
+
+        Class vipClass = Class.forName("javase.reflectBean.Vip");
+
+        s.append(Modifier.toString(vipClass.getModifiers()));
+        s.append(" class ");
+        s.append(vipClass.getSimpleName());
+        s.append("{\n");
+
+        Constructor[] constructors = vipClass.getDeclaredConstructors();
+        for (Constructor c : constructors) {
+            s.append("\t");
+            s.append(Modifier.toString(c.getModifiers()));
+            s.append(" ");
+            s.append(vipClass.getSimpleName());
+            s.append("(");
+            Class[] parameterTypes = c.getParameterTypes();
+            for (int i = 0; i < parameterTypes.length; i++) {
+                s.append(parameterTypes[i].getSimpleName());
+                if (i != parameterTypes.length - 1) s.append(", ");
+            }
+            s.append("){}\n");
+        }
+
+        s.append("}");
+        System.out.println(s);
+    }
+}
+```
+
+### 反射机制创建对象两步骤
+1. 先获取到这个有参数的构造方法【用`Class.getDeclaredConstructor()`方法获取】  
+2. 调用构造方法new对象【用`Constructor`类的`newInstance()`方法new对象】  
+
+### 通过反射机制调用构造方法实例化java对象
+##### 代码示例
+```java
+class ReflectTest12 {
+    public static void main(String[] args) throws Exception {
+        // 不适用反射创建对象
+        Vip vip1 = new Vip();
+        Vip vip2 = new Vip(123, "zhangsan", "2001-10-19", false);
+
+        // 使用反射机制创建对象（以前）
+        Class vipClass = Class.forName("javase.reflectBean.Vip");
+        Object obj1 = vipClass.newInstance(); // Class类的newInstance方法
+        System.out.println(obj1);
+
+        // 使用反射机制创建对象（现在）
+        Constructor c1 = vipClass.getDeclaredConstructor(int.class, String.class, String.class, boolean.class);
+        Object obj2 = c1.newInstance(321, "lsi", "1999-10-11", true); // Constructor类的newInstance方法
+        System.out.println(obj2);
+
+        Constructor c2 = vipClass.getDeclaredConstructor();
+        Object obj3 = c2.newInstance();
+        System.out.println(obj3);
+    }
+}
+```
+
+注：如果需要调用无参构造方法，`getDeclaredConstructor()`方法形参为空即可【和`Class`类的`newInstance()`方法一样的效果】。
+
+### 获取一个类的父类以及实现的接口
+两个方法【`Class`类中的】
+```java
+public native Class<? super T> getSuperclass();
+public Class<?>[] getInterfaces();
+```
+
+##### 代码示例
+```java
+class ReflectTest13 {
+    public static void main(String[] args) throws Exception {
+        Class vipClass = Class.forName("java.lang.String");
+        Class superclass = vipClass.getSuperclass();
+        Class[] interfaces = vipClass.getInterfaces();
+        System.out.println(superclass.getName());
+        for (Class i : interfaces) {
+            System.out.println(i.getName());
+        }
+    }
+}
+```
+
+### 反射操作注解
+##### 通过反射获取类上的注解，类属性上的注解，代码示例
+```java
+public static void main(String[] args) throws Exception {
+    User user = new User();
+    // 取得类上的所有注解
+    Annotation[] annotations = user.getClass().getAnnotations();
+    // 获取类上指定类型的注解
+    MyAnnotation annotation = user.getClass().getAnnotation(MyAnnotation.class);
+    // 获取类的某个属性上的所有注解
+    Annotation[] allAnnotations = user.getClass().getDeclaredField("name").getAnnotations();
+    // 获取类的某个属性上指定类型的注解
+    MyAnnotation annotation1 = user.getClass().getDeclaredField("name").getAnnotation(MyAnnotation.class);
+    // 获取注解的属性
+    String value = annotation1.value();
+    String pattern = annotation1.pattern();
+}
+```
+
+### 反射实例应用
+##### 使用反射向一个`int`集合添加一个`String`元素
+原理：首先通过反射取得该`List`集合的`add()`方法，然后使用反射调用该方法向`list`集合里面添加一个`String`类型元素。
+
+##### 代码示例
+```java
+// 创建一个int类型的集合
+ArrayList<Integer> list = new ArrayList<Integer>();
+
+// 取得集合的添加方法
+Method addMethod = list.getClass().getMethod("add", Object.class);
+
+// 执行集合的add方法，向集合中添加一个String类型元素
+addMethod.invoke(list, "wenpan");
+System.out.println("取得元素=========================>" + list.get(0));
+```
+
+##### 通过反射修改数组元素的值
+原理：其实就是通过反射中的`Array.get()`和`Array.set()`来读取和修改数组中的元素值。
+
+###### 代码示例
+```java
+int temp[] = {1, 2, 3, 4, 5};
+System.out.println("数组第一个元素：" + Array.get(temp, 0));
+Array.set(temp, 0, 100);
+System.out.println("修改之后数组第一个元素为：" + Array.get(temp, 0));
+```
+
+###### 扩展方法
+```java
+int temp[] = {1, 2, 3, 4, 5};
+// 取得数组的类型，该方法为动态扩展数组大小做铺垫
+Class<?> componentType = temp.getClass().getComponentType();
+System.out.println("数组类型：" + componentType.getName());
+System.out.println("数组长度：" + Array.getLength(temp));
+```
+
+##### 通过反射修改数组的大小
+原理：其本质就是通过反射得到原数组的类型，然后通过`Array.newInstance()`方法根据数组类型创造出一个指定长度的新数组，最后使用`System.arraycopy()`方法将原数组的值拷贝到新数组中。
+
+```java
+public static Object arrayInc(Object obj, int length) {
+    // 取得传入数组的类型，以便于创造出同类型的数组
+    Class<?> componentType = obj.getClass().getComponentType();
+    // 根据传入的数组类型创建出新的指定长度的数组实例
+    Object newArr = Array.newInstance(componentType, length);
+    // 原有的数组长度
+    int originArrLen = Array.getLength(obj);
+    // 将原有的数组数据拷贝到新的数组中去
+    System.arraycopy(obj, 0, newArr, 0, originArrLen);
+    // 返回修改大小后的数组
+    return newArr;
+}
+```
+
+##### 通过反射实现通用工厂模式
+```java
+class Factory {
+    /**
+     * 通过传入的全类名返回该类的对象
+     * 但是有一点仍然很麻烦，就是需要知道完整的包名和类名，这里可以使用properties配置文件来完成。
+     * java读取配置文件可实现完全解耦
+     * @param className
+     * @return
+     */
+    public static Object getInstance(String className) {
+        Object instance = null;
+        try {
+            // 通过反射创建对象实例
+            instance = Class.forName(className).newInstance();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return instance;
+    }
+}
+
+public static void main(String[] args) {
+    // 反射工厂
+    Apple apple = (Apple) Factory.getInstance("com.wp.reflect.Apple");
+    apple.method();
+    Banana banana = (Banana) Factory.getInstance("com.wp.reflect.Banana");
+    banana.method();
+}
+```
+
+### 总结注意
+- 属性最重要的是名字  
+- 实例方法最重要的是名字和形参列表  
+- 构造方法最重要的是形参列表
