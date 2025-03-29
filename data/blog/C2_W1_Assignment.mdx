@@ -190,3 +190,52 @@ def my_sequential_v(X, W1, b1, W2, b2, W3, b3):
 ```
 
 > **向量化优势**：使用矩阵乘法避免循环，显著提升计算速度。
+## 4 - 训练与评估：让模型“学会”识别
+
+### 4.1 模型训练
+
+使用TensorFlow训练模型：
+
+```python
+model.compile(
+    loss=tf.keras.losses.BinaryCrossentropy(),
+    optimizer=tf.keras.optimizers.Adam(0.001)
+)
+
+model.fit(X, y, epochs=20)
+```
+
+- **损失函数**：BinaryCrossentropy，衡量预测概率与真实标签的差距。
+- **优化器**：Adam，自动调整学习率，适合非凸优化问题。
+
+> **训练过程**：损失从0.63降到0.02，说明模型逐渐学会区分0和1。
+
+### 4.2 结果可视化
+
+评估模型表现，随机可视化64个样本的预测结果：
+
+```python
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
+
+m, n = X.shape
+
+fig, axes = plt.subplots(8, 8, figsize=(8, 8))
+fig.tight_layout(pad=0.1, rect=[0, 0.03, 1, 0.92])
+
+for i, ax in enumerate(axes.flat):
+    random_index = np.random.randint(m)
+    X_random_reshaped = X[random_index].reshape((20, 20)).T
+    ax.imshow(X_random_reshaped, cmap='gray')
+    
+    prediction = model.predict(X[random_index].reshape(1, 400))
+    yhat = int(prediction >= 0.5)
+    
+    ax.set_title(f"真实:{y[random_index, 0]}\n预测:{yhat}")
+    ax.set_axis_off()
+```
+
+![数据图](/static/images/MLc2/output2.png)
+
+> **阈值选择**：0.5作为概率阈值，实际应用中可调整以平衡精确率和召回率。
+
