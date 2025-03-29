@@ -5,7 +5,6 @@ tags: ['Machine Learning', 'Neural Networks', 'Python']
 draft: false
 summary: '在这篇博客中，我们将深入探索如何使用神经网络实现手写数字0和1的二分类识别。'
 authors: ['Allen']
-
 ---
 
 # 手写数字0/1识别：神经网络实践指南
@@ -84,14 +83,15 @@ tf.autograph.set_verbosity(0)
 
 运行以下代码加载数据：
 
-```python
- X,y=load_data()
 ```
-- 输入特征`X`：一个1000X400的矩阵，每行代表一张手写数字图像。图像原为20X20像素，展平后成为400维向量。
+x,y = load_data()
+```
+
+- 输入特征`x`：一个1000X400的矩阵，每行代表一张手写数字图像。图像原为20X20像素，展平后成为400维向量。
 - 标签`y`：一个1000X1的向量，每个条目为0或1，分别对应数字0和1。
 
 ```
-print ('The shape of x is: ' + str(X.shape))
+print ('The shape of x is: ' + str(x.shape))
 print ('The shape of y is: ' + str(y.shape))
 ```
 
@@ -124,10 +124,13 @@ for i, ax in enumerate(axes.flat):
     ax.set_title(y[random_index, 0])
     ax.set_axis_off()
 ```
-
 ![数据图](/static/images/MLc2/output_13_0.png)
 
 > **可视化为什么重要？** 它让我们直观感受到数据的分布和复杂性，为后续模型设计提供直觉。
+
+
+
+<a name="3"></a>
 
 ## 3 - 模型构建：从高层到低层的双视角
 
@@ -190,6 +193,11 @@ def my_sequential_v(X, W1, b1, W2, b2, W3, b3):
 ```
 
 > **向量化优势**：使用矩阵乘法避免循环，显著提升计算速度。
+
+
+
+<a name="4"></a>
+
 ## 4 - 训练与评估：让模型“学会”识别
 
 ### 4.1 模型训练
@@ -235,17 +243,24 @@ for i, ax in enumerate(axes.flat):
     ax.set_axis_off()
 ```
 ![数据图](/static/images/MLc2/output_39_0.png)
-**阈值选择**：0.5作为概率阈值，实际应用中可调整以平衡精确率和召回率。
+
+> **阈值选择**：0.5作为概率阈值，实际应用中可调整以平衡精确率和召回率。
+
+
+
+<a name="5"></a>
+
 ## 5 - 关键技术解析
 
 ### 5.1 激活函数对比
+
 | 函数    | 公式               | 优点               | 缺点           |
 | ------- | ------------------ | ------------------ | -------------- |
 | Sigmoid | $$1/(1 + e^{-x})$$  | 输出概率化         | 梯度消失       |
 | ReLU    | $$max(0, x)$$        | 缓解梯度消失       | 神经元可能死亡 |
 
-
 > **选择依据**：sigmoid适合输出层需要概率的二分类问题。
+
 ### 5.2 参数计算原理
 
 神经网络参数包括权重和偏置，计算如下：
