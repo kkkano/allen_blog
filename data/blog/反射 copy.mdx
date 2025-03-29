@@ -83,15 +83,13 @@ tf.autograph.set_verbosity(0)
 
 运行以下代码加载数据：
 
-```python
-    x,y = load_data()
-```
+
 
 - 输入特征`x`：一个1000*400的矩阵，每行代表一张手写数字图像。图像原为20x20像素，展平后成为400维向量。
 - 标签`y`：一个1000*1的向量，每个条目为0或1，分别对应数字0和1。
 
 ```
-print ('The shape of x is: ' + str(X.shape))
+print ('The shape of x is: ' + str(x.shape))
 print ('The shape of y is: ' + str(y.shape))
 ```
 
