@@ -36,9 +36,9 @@ authors: ['Allen']
   - [5.1 激活函数对比](#5.1)
   - [5.2 参数计算原理](#5.2)
   - [5.3 可选：NumPy广播教程](#5.3)
-- [总结与展望](#wrap-up)
-  - [实现成果](#wrap-up-1)
-  - [扩展挑战](#wrap-up-2)
+- [6 - 完整代码](#6)
+- [7 - 总结与展望](#7)
+
 ---
 ## 一、环境与数据准备
 
@@ -82,7 +82,11 @@ plt.show()
 
 ---
 
+<a name="2"></a>
+
 ## 二、关键组件解析
+
+<a name="2.1"></a>
 
 ### 2.1 ReLU激活函数
 **数学定义**：
@@ -108,6 +112,8 @@ plt.title('激活函数对比')
 plt.show()
 ```
 ![数据图](/static/images/MLc2/outputc2w201.png)
+
+<a name="2.2"></a>
 
 ### 2.2 Softmax函数
 **数学定义**：
@@ -136,7 +142,11 @@ TensorFlow实现结果： [0.03 0.09 0.24 0.64]
 
 ---
 
+<a name="3"></a>
+
 ## 三、神经网络构建
+
+<a name="3.1"></a>
 
 ### 3.1 模型架构设计
 采用三层全连接网络：
@@ -167,6 +177,7 @@ _________________________________________________________________
 =================================================================
 Total params: 10,575
 ```
+<a name="3.2"></a>
 
 ### 3.2 损失函数与优化器配置
 ```python
@@ -175,6 +186,7 @@ model.compile(
     optimizer=tf.keras.optimizers.Adam(learning_rate=0.001)
 )
 ```
+<a name="3.3"></a>
 
 ### 3.3 模型训练
 ```python
@@ -194,8 +206,12 @@ plot_loss(history)
 ```
 
 ---
+<a name="4"></a>
 
 ## 四、模型评估与预测
+
+
+<a name="4.1"></a>
 
 ### 4.1 准确率计算
 ```python
@@ -204,6 +220,7 @@ predicted_labels = np.argmax(predictions, axis=1)
 accuracy = np.mean(predicted_labels == y.squeeze())
 print(f"训练集准确率：{accuracy:.2%}")
 ```
+<a name="4.2"></a>
 
 ### 4.2 结果可视化验证
 ```python
@@ -220,6 +237,8 @@ plt.tight_layout()
 plt.show()
 ```
 ![数据图](/static/images/MLc2/outputc2w2.png)
+
+<a name="4.3"></a>
 
 ### 4.3 错误分析
 ```python
@@ -246,8 +265,11 @@ display_errors(model, X, y)
 ```
 
 ---
+<a name="5"></a>
 
 ## 五、进阶优化建议
+
+<a name="5.1"></a>
 
 ### 5.1 超参数调优
 - **学习率调整**：尝试`0.0001`到`0.01`的范围
@@ -259,18 +281,24 @@ display_errors(model, X, y)
   model.add(Dropout(0.2))  # 20%神经元随机失活
   ```
 
+
+<a name="5.2"></a>
+
 ### 5.2 数据增强
 - **旋转/平移**：使用`ImageDataGenerator`进行数据增强
 - **归一化**：将像素值缩放到`[0,1]`范围：
   ```python
   X_normalized = X / 255.0
   ```
+<a name="5.3"></a>
 
 ### 5.3 模型结构改进
 - **增加层数**：尝试添加第三个隐藏层（如`Dense(10)`）
 - **调整节点数**：如`400→50→20→10`的结构
 
 ---
+
+<a name="6"></a>
 
 ## 六、完整代码整合
 
@@ -306,6 +334,8 @@ display_errors(model, X, y)
 ```
 
 ---
+
+<a name="7"></a>
 
 ## 七、总结与展望
 
