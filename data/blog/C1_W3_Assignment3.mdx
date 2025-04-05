@@ -630,7 +630,7 @@ model_r.summary()
 model_r_test(model_r, classes, X_train.shape[1]) 
 ```
 
-```
+```text
 Model: "sequential"
 _________________________________________________________________
  Layer (type)                Output Shape              Param #   
@@ -713,7 +713,7 @@ plot_iterate(lambdas, models, X_train, y_train, X_cv, y_cv)
 plt_compare(X_test, y_test, classes, model_predict_s, model_predict_r, centers)
 ```
 
-![数据图10](/static/images/MLc2/output2w3_010.png)
+![数据图10](/static/images/MLc2/output2w3_10.png)
 
 我们的测试集很小，并且似乎有许多离群点，因此分类误差很高。然而，我们优化模型的性能与理想性能相当。
 
