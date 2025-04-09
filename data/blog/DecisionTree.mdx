@@ -444,6 +444,7 @@ def build_tree_recursive(X, y, node_indices, branch_name, max_depth, current_dep
     build_tree_recursive(X, y, right_indices, "右分支", max_depth, current_depth + 1)
 
 build_tree_recursive(X_train, y_train, root_indices, "根节点", max_depth=2, current_depth=0)
+generate_tree_viz(root_indices, y_train, tree)
 ```
 
 **输出：**
