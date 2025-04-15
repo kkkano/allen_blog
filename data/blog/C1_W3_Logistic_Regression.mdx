@@ -1,0 +1,531 @@
+---
+title: '逻辑回归：从理论到实践'
+date: '2025-03-25'
+tags: ['Machine Learning', 'Logistic Regression', 'Python']
+draft: false
+summary: '欢迎来到这场逻辑回归的学习之旅！我们将从头构建逻辑回归模型，预测学生录取和芯片质量。结合理论、Python代码和可视化，让你轻松掌握这一核心算法。'
+authors: ['Allen']
+---
+
+欢迎来到这场逻辑回归的学习之旅！无论你是机器学习新手还是希望巩固知识，这篇博客将带你从零开始构建逻辑回归模型。我们将通过预测学生录取和芯片质量的实际问题，结合理论、Python代码和可视化，让学习变得既有趣又实用。让我们开始吧！
+
+## 你将学到什么
+- 逻辑回归在二分类问题中的工作原理。
+- 实现核心函数，如 Sigmoid、成本函数和梯度下降。
+- 数据可视化和决策边界。
+- 使用正则化处理复杂数据集。
+
+## 目录
+- [1 - 准备工具包](#1)
+- [2 - 逻辑回归基础](#2)
+  - [2.1 问题背景](#2.1)
+  - [2.2 数据探索](#2.2)
+  - [2.3 Sigmoid 函数](#2.3)
+  - [2.4 成本函数](#2.4)
+  - [2.5 梯度下降](#2.5)
+  - [2.6 训练模型](#2.6)
+  - [2.7 决策边界可视化](#2.7)
+  - [2.8 评估模型](#2.8)
+- [3 - 正则化逻辑回归](#3)
+  - [3.1 新问题](#3.1)
+  - [3.2 数据洞察](#3.2)
+  - [3.3 特征映射](#3.3)
+  - [3.4 正则化成本函数](#3.4)
+  - [3.5 正则化梯度](#3.5)
+  - [3.6 带正则化的训练](#3.6)
+  - [3.7 复杂边界的可视化](#3.7)
+  - [3.8 评估正则化模型](#3.8)
+- [总结](#wrap-up)
+
+
+
+
+<a name="1"></a>
+## 1 - 准备工具包
+
+在开始之前，我们需要准备一些 Python 工具包，它们将帮助我们处理数据、进行计算和可视化结果。以下是你需要的内容：
+
+- **[NumPy](https://numpy.org/)**：用于快速数组操作。
+- **[Matplotlib](https://matplotlib.org/)**：用于绘制数据和结果。
+- **`utils.py`**：一个辅助文件，包含 `load_data()` 和 `plot_data()` 等函数。
+
+运行以下代码来设置：
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from utils import *
+import copy
+import math
+%matplotlib inline
+```
+
+准备好这些工具后，我们就可以开始探索逻辑回归了！
+
+---
+
+<a name="2"></a>
+## 2 - 逻辑回归基础
+
+让我们从一个经典问题开始，逐步构建逻辑回归模型。
+
+<a name="2.1"></a>
+### 2.1 问题背景
+
+假设你是一名大学管理员，你希望根据申请者的两次考试成绩预测他们是否会被录取。你有历史数据：考试成绩和录取结果（1 表示录取，0 表示未录取）。我们的目标是创建一个模型，估计录取的概率。
+
+<a name="2.2"></a>
+### 2.2 数据探索
+
+首先，加载数据集：
+
+```python
+X_train, y_train = load_data("data/ex2data1.txt")
+```
+
+#### 查看数据
+
+让我们看看数据长什么样：
+
+```python
+print("X_train的前五行:\n", X_train[:5])
+print("y_train的前五个值:\n", y_train[:5])
+```
+
+**输出：**
+```
+X_train的前五行:
+ [[34.62365962 78.02469282]
+ [30.28671077 43.89499752]
+ [35.84740877 72.90219803]
+ [60.18259939 86.3085521]
+ [79.03273605 75.34437644]]
+y_train的前五个值:
+ [0. 0. 0. 1. 1.]
+```
+
+- `X_train`：一个 (100, 2) 数组，包含考试成绩。
+- `y_train`：一个 (100,) 数组，包含录取标签。
+
+#### 可视化数据
+
+散点图可以帮助我们理解数据：
+
+```python
+plot_data(X_train, y_train, pos_label="录取", neg_label="未录取")
+plt.ylabel('考试2成绩')
+plt.xlabel('考试1成绩')
+plt.legend(loc="upper right")
+plt.show()
+```
+
+![散点图](/static/images/MLc1/output_13_0.png)
+
+录取的学生（1）往往有更高的成绩，而未录取的学生（0）则集中在较低的区域。我们的模型将绘制一条线——或边界——来分隔这些群体。
+
+<a name="2.3"></a>
+### 2.3 Sigmoid 函数
+
+逻辑回归使用 Sigmoid 函数将预测值映射到 0 到 1 之间:
+
+
+$$g(z) = \frac{1}{1 + e^{-z}}$$
+
+其中，`z = w * x + b`，`w` 是权重向量，`b` 是偏置。让我们编写它：
+
+```python
+def sigmoid(z):
+    return 1 / (1 + np.exp(-z))
+```
+
+测试一下：
+
+```python
+print("sigmoid(0) =", sigmoid(0))
+print("sigmoid([-1, 0, 1, 2]) =", sigmoid(np.array([-1, 0, 1, 2])))
+```
+
+**输出：**
+```
+sigmoid(0) = 0.5
+sigmoid([-1, 0, 1, 2]) = [0.26894142 0.5        0.73105858 0.88079708]
+```
+
+Sigmoid 函数将任何实数映射到 (0, 1)——非常适合表示概率！
+
+<a name="2.4"></a>
+### 2.4 成本函数
+
+为了训练模型，我们需要一个成本函数来衡量预测误差：
+
+$$
+J(w, b) = - \frac{1}{m} \sum_{i=1}^{m} \left[ y^{(i)} \log(f(x^{(i)})) + (1 - y^{(i)}) \log(1 - f(x^{(i)})) \right]
+$$
+
+
+
+其中
+`f(x^(i)) = sigmoid(w * x^(i) + b)`。实现它：
+
+```python
+def compute_cost(X, y, w, b):
+    m = X.shape[0]
+    cost = 0.0
+    for i in range(m):
+        z = np.dot(X[i], w) + b
+        f_wb = sigmoid(z)
+        cost += -y[i] * np.log(f_wb) - (1 - y[i]) * np.log(1 - f_wb)
+    return cost / m
+```
+
+使用初始参数测试：
+
+```python
+initial_w = np.zeros(2)
+initial_b = 0.0
+cost = compute_cost(X_train, y_train, initial_w, initial_b)
+print(f"初始成本: {cost:.3f}")
+```
+
+**输出：**
+```
+初始成本: 0.693
+```
+
+这为我们提供了一个优化的起点。
+
+<a name="2.5"></a>
+### 2.5 梯度下降
+
+梯度下降通过调整 `w` 和 `b` 来减小成本。梯度为：
+
+$$
+\frac{\partial J}{\partial w_j} = \frac{1}{m} \sum_{i=1}^{m} \left( f(x^{(i)}) - y^{(i)} \right) x_j^{(i)}
+$$
+
+$$
+\frac{\partial J}{\partial b} = \frac{1}{m} \sum_{i=1}^{m} \left( f(x^{(i)}) - y^{(i)} \right)
+$$
+
+
+
+
+编码实现：
+
+```python
+def compute_gradient(X, y, w, b):
+    m, n = X.shape
+    dj_dw = np.zeros(n)
+    dj_db = 0.0
+    for i in range(m):
+        z = np.dot(X[i], w) + b
+        f_wb = sigmoid(z)
+        err = f_wb - y[i]
+        dj_db += err
+        dj_dw += err * X[i]
+    dj_dw /= m
+    dj_db /= m
+    return dj_dw, dj_db
+```
+
+测试：
+
+```python
+dj_dw, dj_db = compute_gradient(X_train, y_train, initial_w, initial_b)
+print(f"初始梯度: w = {dj_dw}, b = {dj_db}")
+```
+
+**输出：**
+```
+初始梯度: w = [-12.00921659 -11.26284221], b = -0.1
+```
+
+这些梯度将指导我们的优化过程。
+
+<a name="2.6"></a>
+### 2.6 训练模型
+
+以下是梯度下降算法：
+
+$$
+w_j = w_j - \alpha \frac{\partial J(w, b)}{\partial w_j}
+$$
+
+$$
+b = b - \alpha \frac{\partial J(w, b)}{\partial b}
+$$
+
+
+编码实现：
+```python
+def gradient_descent(X, y, w_in, b_in, cost_function, gradient_function, alpha, num_iters):
+    J_history = []
+    w = w_in
+    b = b_in
+    for i in range(num_iters):
+        dj_dw, dj_db = gradient_function(X, y, w, b)
+        w -= alpha * dj_dw
+        b -= alpha * dj_db
+        cost = cost_function(X, y, w, b)
+        J_history.append(cost)
+        if i % 1000 == 0:
+            print(f"迭代 {i:4}: 成本 {cost:8.2f}")
+    return w, b, J_history
+```
+
+运行它：
+
+```python
+np.random.seed(1)
+initial_w = 0.01 * (np.random.rand(2) - 0.5)
+initial_b = -8.0
+w, b, J_history = gradient_descent(X_train, y_train, initial_w, initial_b, 
+                                   compute_cost, compute_gradient, 0.001, 10000)
+print(f"训练后的 w, b: {w}, {b}")
+```
+
+**输出：**
+```
+迭代    0: 成本     0.96
+迭代 1000: 成本     0.31
+...
+训练后的 w, b: [ 0.07125356 -0.06482832], -8.188577238533804
+```
+
+成本逐渐减小，表明模型正在学习！
+
+<a name="2.7"></a>
+### 2.7 决策边界可视化
+
+可视化决策边界：
+
+```python
+plot_decision_boundary(w, b, X_train, y_train)
+plt.ylabel('考试2成绩')
+plt.xlabel('考试1成绩')
+plt.legend(loc="upper right")
+plt.show()
+```
+
+
+
+这条线很好地分隔了录取和未录取的学生。
+
+<a name="2.8"></a>
+### 2.8 评估模型
+
+定义预测函数：
+
+```python
+def predict(X, w, b):
+    m = X.shape[0]
+    p = np.zeros(m)
+    for i in range(m):
+        z = np.dot(X[i], w) + b
+        f_wb = sigmoid(z)
+        p[i] = 1 if f_wb >= 0.5 else 0
+    return p
+```
+
+计算准确率：
+
+```python
+p = predict(X_train, w, b)
+print(f"训练准确率: {np.mean(p == y_train) * 100:.2f}%")
+```
+
+**输出：**
+```
+训练准确率: 92.00%
+```
+
+92% 的准确率——我们的模型表现不错！
+
+---
+
+<a name="3"></a>
+## 3 - 正则化逻辑回归
+
+现在，让我们处理一个更复杂的数据集，其中直线无法有效分隔数据。
+
+<a name="3.1"></a>
+### 3.1 新问题
+
+假设你是一名工厂经理，通过两次测试来检测芯片。你希望根据测试成绩预测芯片是否通过质量检测（1 表示通过，0 表示未通过）。
+
+<a name="3.2"></a>
+### 3.2 数据洞察
+
+加载数据：
+
+```python
+X_train, y_train = load_data("data/ex2data2.txt")
+```
+
+查看数据：
+
+```python
+print("X_train[:5]:\n", X_train[:5])
+print("y_train[:5]:\n", y_train[:5])
+```
+
+**输出：**
+```
+X_train[:5]:
+ [[ 0.051267  0.69956 ]
+ [-0.092742  0.68494 ]
+ [-0.21371   0.69225 ]
+ [-0.375     0.50219 ]
+ [-0.51325   0.46564 ]]
+y_train[:5]:
+ [1. 1. 1. 1. 1.]
+```
+
+可视化：
+
+```python
+plot_data(X_train, y_train, pos_label="通过", neg_label="未通过")
+plt.ylabel('芯片测试2')
+plt.xlabel('芯片测试1')
+plt.legend(loc="upper right")
+plt.show()
+```
+
+![散点图](/static/images/MLc1/output_64_0.png)
+
+数据呈现非线性模式，表明我们需要一个更灵活的模型。
+
+<a name="3.3"></a>
+### 3.3 特征映射
+
+为了捕捉复杂性，我们将特征映射到最高 6 次的多项式：
+
+```python
+X_mapped = map_feature(X_train[:, 0], X_train[:, 1])
+print("原始形状:", X_train.shape)
+print("映射后形状:", X_mapped.shape)
+```
+
+**输出：**
+```
+原始形状: (118, 2)
+映射后形状: (118, 27)
+```
+
+从 2 个特征扩展到 27 个特征——这将有助于拟合数据，但也可能导致过拟合。
+
+<a name="3.4"></a>
+### 3.4 正则化成本函数
+
+添加惩罚项以防止过拟合：
+
+$$
+J(w, b) = -\frac{1}{m} \sum_{i=1}^{m} \left[ y^{(i)} \log(f(x^{(i)})) + (1 - y^{(i)}) \log(1 - f(x^{(i)})) \right] + \frac{\lambda}{2m} \sum_{j=1}^{n} w_j^2
+$$
+
+
+实现它：
+
+```python
+def compute_cost_reg(X, y, w, b, lambda_=1):
+    m = X.shape[0]
+    cost = compute_cost(X, y, w, b)
+    reg_cost = (lambda_ / (2 * m)) * np.sum(w ** 2)
+    return cost + reg_cost
+```
+
+<a name="3.5"></a>
+### 3.5 正则化梯度
+
+调整梯度：
+
+$$
+\frac{\partial J}{\partial w_j} = \frac{1}{m} \sum_{i=1}^{m} \left( f(x^{(i)}) - y^{(i)} \right) x_j^{(i)} + \frac{\lambda}{m} w_j
+$$
+
+
+编码：
+
+```python
+def compute_gradient_reg(X, y, w, b, lambda_=1):
+    dj_dw, dj_db = compute_gradient(X, y, w, b)
+    dj_dw += (lambda_ / X.shape[0]) * w
+    return dj_dw, dj_db
+```
+
+<a name="3.6"></a>
+### 3.6 带正则化的训练
+
+训练模型：
+
+```python
+np.random.seed(1)
+initial_w = np.random.rand(X_mapped.shape[1]) - 0.5
+initial_b = 1.0
+lambda_ = 0.01
+w, b, J_history = gradient_descent(X_mapped, y_train, initial_w, initial_b, 
+                                   compute_cost_reg, compute_gradient_reg, 0.01, 10000)
+```
+
+**输出：**
+```
+迭代    0: 成本     0.72
+迭代 1000: 成本     0.59
+...
+迭代 9999: 成本     0.45
+```
+
+成本稳步下降。
+
+<a name="3.7"></a>
+### 3.7 复杂边界的可视化
+
+绘制决策边界：
+
+```python
+plot_decision_boundary(w, b, X_mapped, y_train)
+plt.ylabel('芯片测试2')
+plt.xlabel('芯片测试1')
+plt.legend(loc="upper right")
+plt.show()
+```
+
+![决策边界](/static/images/MLc1/output_88_0.png)
+
+弯曲的边界很好地拟合了数据！
+
+<a name="3.8"></a>
+### 3.8 评估正则化模型
+
+检查准确率：
+
+```python
+p = predict(X_mapped, w, b)
+print(f"训练准确率: {np.mean(p == y_train) * 100:.2f}%")
+```
+
+**输出：**
+```
+训练准确率: 82.20%
+```
+
+对于一个非线性问题，82% 的准确率相当不错！
+
+---
+
+<a name="wrap-up"></a>
+## 总结
+
+恭喜你完成了这场逻辑回归的实践之旅！你已经学会了：
+
+- 使用真实数据预测二分类结果。
+- 编码核心函数并优化它们。
+- 可视化结果以理解模型。
+- 使用正则化处理复杂模式。
+
+你可以尝试调整参数，如 `alpha` 或 `lambda_`，看看模型如何变化。继续探索，快乐学习！
+
+---
+
+**本篇文章的部分内容和思想参考了 [吴恩达 (Andrew Ng)](https://www.andrewng.org/) 在 [Coursera 机器学习课程](https://www.coursera.org/learn/machine-learning) 中的讲解，感谢他对机器学习领域的卓越贡献。**
+![决策边界](/static/images/MLc1/output_46_0.png)

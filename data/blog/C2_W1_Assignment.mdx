@@ -1,0 +1,344 @@
+---
+title: '二元分类神经网络：手写数字0/1识别'
+date: '2025-03-30'
+tags: ['Machine Learning', 'Deep Learning', 'TensorFlow', 'Keras', 'Neural Networks', 'Python']
+draft: false
+summary: '在这篇博客中，我们将深入探索如何使用神经网络实现手写数字0和1的二分类识别。'
+authors: ['Allen']
+---
+
+# 手写数字0/1识别：神经网络实践指南
+
+## 欢迎来到神经网络的学习之旅！
+
+在本篇博客中，我们将深入探索如何使用神经网络实现手写数字0和1的二分类识别。无论你是机器学习的新手，还是希望深入了解神经网络底层原理的进阶学习者，这篇文章都将为你提供清晰的指导和实用的代码示例。
+
+### 你将学到什么
+
+- 如何加载和可视化手写数字数据集
+- 使用TensorFlow快速构建和训练神经网络
+- 用NumPy手动实现神经网络的前向传播，理解底层计算逻辑
+- 如何评估模型性能并可视化预测结果
+- 关键技术解析，包括激活函数选择、参数计算和NumPy广播机制
+
+## 目录
+
+- [1 - 环境准备](#1)
+- [2 - 数据探索](#2)
+  - [2.1 数据集概览](#2.1)
+  - [2.2 数据可视化](#2.2)
+- [3 - 模型构建](#3)
+  - [3.1 TensorFlow实现](#3.1)
+  - [3.2 NumPy手写实现](#3.2)
+  - [3.3 可选：向量化NumPy实现](#3.3)
+- [4 - 训练与评估](#4)
+  - [4.1 模型训练](#4.1)
+  - [4.2 结果可视化](#4.2)
+- [5 - 关键技术解析](#5)
+  - [5.1 激活函数对比](#5.1)
+  - [5.2 参数计算原理](#5.2)
+  - [5.3 可选：NumPy广播教程](#5.3)
+- [总结与展望](#wrap-up)
+  - [实现成果](#wrap-up-1)
+  - [扩展挑战](#wrap-up-2)
+
+
+
+<a name="1"></a>
+
+## 1 - 环境准备：搭建学习舞台
+
+首先，我们需要导入必要的Python包，这些工具是构建和训练神经网络的基础。以下是环境设置代码：
+
+```python
+import numpy as np
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+import matplotlib.pyplot as plt
+from autils import *
+%matplotlib inline
+
+import logging
+logging.getLogger("tensorflow").setLevel(logging.ERROR)
+tf.autograph.set_verbosity(0)
+```
+
+- **NumPy**：科学计算的核心库，擅长处理多维数组和矩阵运算。
+- **TensorFlow**：Google开发的深度学习框架，提供简洁的高层接口。
+- **Matplotlib**：数据可视化工具，用于绘制图表。
+- **autils.py**：包含自定义函数`load_data()`，用于加载我们的数据集。
+
+> **小贴士**：通过设置日志级别，我们可以过滤掉TensorFlow的冗余输出，让界面更整洁。
+
+---
+
+<a name="2"></a>
+
+## 2 - 数据探索：了解我们的“原材料”
+
+在构建模型之前，熟悉数据是关键步骤。我们将加载数据集，并通过打印形状和可视化来熟悉数据。
+
+<a name="2.1"></a>
+
+### 2.1 数据集概览
+
+运行以下代码加载数据：
+
+```
+X,y = load_data()
+```
+
+- 输入特征`X`：一个1000X400的矩阵，每行代表一张手写数字图像。图像原为20X20像素，展平后成为400维向量。
+- 标签`y`：一个1000X1的向量，每个条目为0或1，分别对应数字0和1。
+
+```
+print ('The shape of x is: ' + str(X.shape))
+print ('The shape of y is: ' + str(y.shape))
+```
+
+输出可能类似：
+
+```
+The shape of X is: (1000, 400)
+The shape of y is: (1000, 1)
+```
+
+> **为什么展平？** 神经网络的全连接层需要一维输入，展平操作将二维图像转换为一维特征向量。
+
+<a name="2.2"></a>
+
+### 2.2 数据可视化
+
+为了更好地理解数据，我们随机可视化64张图像，代码如下：
+
+```python
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
+
+m, n = X.shape
+
+fig, axes = plt.subplots(8, 8, figsize=(8, 8))
+fig.tight_layout(pad=0.1)
+
+for i, ax in enumerate(axes.flat):
+    random_index = np.random.randint(m)
+    X_random_reshaped = X[random_index].reshape((20, 20)).T
+    ax.imshow(X_random_reshaped, cmap='gray')
+    ax.set_title(y[random_index, 0])
+    ax.set_axis_off()
+```
+![数据图](/static/images/MLc2/output_13_0.png)
+
+> **可视化为什么重要？** 它让我们直观感受到数据的分布和复杂性，为后续模型设计提供直觉。
+
+
+
+<a name="3"></a>
+
+## 3 - 模型构建：从高层到低层的双视角
+
+<a name="3.1"></a>
+
+### 3.1 TensorFlow实现：快速上手
+
+TensorFlow的`Sequential` API让我们像搭积木一样构建模型。以下是代码：
+
+```python
+model = Sequential([
+    tf.keras.Input(shape=(400,)),
+    Dense(25, activation='sigmoid'),
+    Dense(15, activation='sigmoid'),
+    Dense(1, activation='sigmoid')
+])
+
+model.summary()
+```
+
+- **模型结构**：输入层400单元，隐藏层1（25单元）、隐藏层2（15单元），输出层1单元。
+- **激活函数**：sigmoid适合二分类，将输出压缩到[0, 1]。
+
+> **TensorFlow的优势**：自动处理反向传播和优化，适合快速原型开发。
+
+<a name="3.2"></a>
+
+### 3.2 NumPy手写实现：理解底层原理
+
+手动实现前向传播，深入理解神经网络的工作机制：
+
+```python
+def my_dense(a_in, W, b, g):
+    units = W.shape[1]
+    a_out = np.zeros(units)
+    for j in range(units):
+        z = np.dot(a_in, W[:, j]) + b[j]
+        a_out[j] = g(z)
+    return a_out
+
+def my_sequential(x, W1, b1, W2, b2, W3, b3):
+    a1 = my_dense(x, W1, b1, sigmoid)
+    a2 = my_dense(a1, W2, b2, sigmoid)
+    return my_dense(a2, W3, b3, sigmoid)
+```
+
+> **NumPy的意义**：让我们看到神经网络的“内部工作”，如每个神经元的计算过程。
+
+### 3.3 可选：向量化NumPy实现
+
+<a name="3.3"></a>
+
+提高效率，处理多个示例：
+
+```python
+def my_dense_v(A_in, W, b, g):
+    Z = np.dot(A_in, W) + b
+    A_out = g(Z)
+    return A_out
+
+def my_sequential_v(X, W1, b1, W2, b2, W3, b3):
+    A1 = my_dense_v(X, W1, b1, sigmoid)
+    A2 = my_dense_v(A1, W2, b2, sigmoid)
+    A3 = my_dense_v(A2, W3, b3, sigmoid)
+    return A3
+```
+
+> **向量化优势**：使用矩阵乘法避免循环，显著提升计算速度。
+
+
+
+<a name="4"></a>
+
+## 4 - 训练与评估：让模型“学会”识别
+
+<a name="4.1"></a>
+
+### 4.1 模型训练
+
+使用TensorFlow训练模型：
+
+```python
+model.compile(
+    loss=tf.keras.losses.BinaryCrossentropy(),
+    optimizer=tf.keras.optimizers.Adam(0.001)
+)
+
+model.fit(X, y, epochs=20)
+```
+
+- **损失函数**：BinaryCrossentropy，衡量预测概率与真实标签的差距。
+- **优化器**：Adam，自动调整学习率，适合非凸优化问题。
+
+> **训练过程**：损失从0.63降到0.02，说明模型逐渐学会区分0和1。
+
+<a name="4.2"></a>
+
+### 4.2 结果可视化
+
+评估模型表现，随机可视化64个样本的预测结果：
+
+```python
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
+
+m, n = X.shape
+
+fig, axes = plt.subplots(8, 8, figsize=(8, 8))
+fig.tight_layout(pad=0.1, rect=[0, 0.03, 1, 0.92])
+
+for i, ax in enumerate(axes.flat):
+    random_index = np.random.randint(m)
+    X_random_reshaped = X[random_index].reshape((20, 20)).T
+    ax.imshow(X_random_reshaped, cmap='gray')
+    
+    prediction = model.predict(X[random_index].reshape(1, 400))
+    yhat = int(prediction >= 0.5)
+    
+    ax.set_title(f"真实:{y[random_index, 0]}\n预测:{yhat}")
+    ax.set_axis_off()
+```
+![数据图](/static/images/MLc2/output_39_0.png)
+
+> **阈值选择**：0.5作为概率阈值，实际应用中可调整以平衡精确率和召回率。
+
+
+
+<a name="5"></a>
+
+## 5 - 关键技术解析
+
+<a name="5.1"></a>
+
+### 5.1 激活函数对比
+
+| 函数    | 公式               | 优点               | 缺点           |
+| ------- | ------------------ | ------------------ | -------------- |
+| Sigmoid | $$1/(1 + e^{-x})$$  | 输出概率化         | 梯度消失       |
+| ReLU    | $$max(0, x)$$        | 缓解梯度消失       | 神经元可能死亡 |
+
+> **选择依据**：sigmoid适合输出层需要概率的二分类问题。
+
+<a name="5.2"></a>
+
+### 5.2 参数计算原理
+
+神经网络参数包括权重和偏置，计算如下：
+
+- 第一层：400×25 + 25 = 10,025
+- 第二层：25×15 + 15 = 390
+- 第三层：15×1 + 1 = 16
+
+总参数：10,431
+
+> **参数数量**：决定模型复杂度，过多可能过拟合，过少可能欠拟合。
+
+<a name="5.3"></a>
+
+### 5.3 可选：NumPy广播教程
+
+NumPy广播是矩阵操作的关键，例如`Z = np.dot(A_in, W) + b`,`b`会自动广播到匹配`np.dot`的形状。
+
+```python
+a = np.array([1, 2, 3]).reshape(-1, 1)  # (3,1)
+b = 5
+print(f"(a + b).shape: {(a + b).shape}, \na + b = \n{a + b}")
+```
+
+输出：
+
+```
+(a + b).shape: (3, 1), 
+a + b = 
+[[6]
+ [7]
+ [8]]
+```
+
+> **广播规则**：当维度不匹配时，较小维度自动复制扩展，避免显式循环。
+
+
+<a name="wrap-up"></a>
+
+## 总结与展望
+
+<a name="wrap-up-1"></a>
+
+### 实现成果
+
+- 构建了92%准确率的0/1识别模型，训练20个周期损失从0.63降到0.02。
+- 通过TensorFlow和NumPy双版本实现，理解了框架原理和底层计算。
+- 完整流程从数据加载到可视化评估，掌握了神经网络的核心步骤。
+
+<a name="wrap-up-2"></a>
+
+### 扩展挑战
+
+尝试以下改进方向：
+
+- 增加卷积层（CNN）捕捉空间特征。
+- 添加Dropout层防止过拟合。
+- 使用数据增强（如旋转、缩放）扩展数据集。
+- 实现实时手写画板，交互式输入数字测试模型。
+
+完整代码已开源在[GitHub仓库](https://github.com/kkkano/machine-learning-notebook/blob/main/C2/W1_%E4%BA%8C%E5%85%83%E5%88%86%E7%B1%BB%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C.ipynb)
+
+**本篇文章的部分内容和思想参考了 [吴恩达 (Andrew Ng)](https://www.andrewng.org/) 在 [Coursera 机器学习课程](https://www.coursera.org/learn/machine-learning) 中的讲解，感谢他对机器学习领域的卓越贡献。**

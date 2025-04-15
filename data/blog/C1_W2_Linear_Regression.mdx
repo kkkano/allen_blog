@@ -1,0 +1,449 @@
+---
+title: '线性回归中的梯度下降法：从理论到实践'
+date: '2025-03-22'
+tags: ['Machine Learning', 'Linear Regression', 'Gradient Descent','Python']
+draft: false
+summary: '欢迎体验这场关于线性回归和梯度下降的探索之旅！我们将深入探讨如何使用梯度下降法优化线性回归模型的参数 w 和 b，通过理论、代码和可视化帮你掌握这一核心算法。让我们开始吧！'
+authors: ['allen']
+---
+
+# 深入探索梯度下降法在线性回归中的应用
+
+欢迎体验这场线性回归的学习之旅！在这篇博客中，我们将一起实现单变量线性回归，探索如何预测一家餐厅连锁店的利润。通过从理论到代码的逐步拆解，你将学会如何利用梯度下降法优化模型参数，并通过图表直观理解整个过程。不管你是机器学习新手还是有一定基础的学习者，这篇文章都会为你提供清晰且实用的指导。让我们一起开始这场探索吧！
+
+## 目录
+- [1 - 准备工具包](#1)
+- [2 - 单变量线性回归](#2)
+  - [2.1 问题背景](#2.1)
+  - [2.2 数据集概览](#2.2)
+  - [2.3 线性回归基础](#2.3)
+  - [2.4 计算成本函数](#2.4)
+    - [练习 1：实现成本函数](#ex01)
+  - [2.5 梯度下降法](#2.5)
+    - [练习 2：实现梯度计算](#ex02)
+  - [2.6 优化参数](#2.6)
+
+---
+
+<a name="1"></a>
+## 1 - 准备工具包
+
+在我们动手实现线性回归之前，需要准备好一些 Python 工具，它们是我们实现算法的基石。以下是我们要用到的工具包：
+
+- **[NumPy](https://numpy.org/)**：Python 的“计算器”，擅长处理数组和数学运算，用于计算模型参数和误差。
+- **[Matplotlib](https://matplotlib.org/)**：一个“画图板”，帮助我们将数据可视化为图表，直观展示模型效果。
+- **`utils.py`**：一个自定义的辅助文件，包含加载数据的函数 `load_data()`，让我们轻松获取数据集。
+
+### 创建 `utils.py`
+
+为了让这篇博客的代码完全可运行，我们需要一个简单的 `utils.py` 文件。以下是它的内容，包含一个 `load_data()` 函数，生成一个小型模拟数据集：
+
+```python
+# utils.py
+import numpy as np
+
+def load_data():
+    """
+    加载模拟的训练数据集。
+    
+    返回:
+        x_train (ndarray): 城市人口（单位：万人）
+        y_train (ndarray): 餐厅利润（单位：万美元）
+    """
+    # 模拟数据：人口和利润
+    x_train = np.array([6.1101, 5.5277, 8.5186, 7.0032, 5.8598, 8.3829, 7.4764, 8.5781, 6.4862, 5.0546 ..])
+    y_train = np.array([17.592, 9.1302, 13.662, 11.854, 6.8233, 11.886, 4.3483, 12.0, 6.5987, 3.8166 ..])
+    return x_train, y_train
+```
+
+**说明：**  
+这个 `utils.py` 文件模拟了一个包含 97 个样本的数据集：
+- `x_train` 表示城市人口（单位：万人，例如 6.1101 表示 61,101 人）。
+- `y_train` 表示餐厅月平均利润（单位：万美元，例如 17.592 表示 175,920 美元）。  
+虽然现实中数据可能来自文件，但这里用固定数组保持简单和可运行性。
+
+### 加载工具包
+
+运行以下代码，加载所有工具并导入 `utils.py` 中的函数：
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from utils import load_data  # 从 utils.py 导入 load_data
+import copy
+import math
+%matplotlib inline  # 在 Jupyter 环境中显示图表
+```
+
+这些工具是我们实现线性回归的基础。准备好了吗？让我们进入正题！
+
+---
+
+<a name="2"></a>
+## 2 - 单变量线性回归
+
+<a name="2.1"></a>
+### 2.1 问题背景
+
+假设你是一家餐厅连锁店的 CEO，计划在不同城市开设新店。你希望预测哪些城市能带来更高利润。为此，你收集了一些数据：现有餐厅所在城市的人口和月平均利润。现在的问题是：**能否用这些数据预测新城市的潜在收益？**
+
+这正是线性回归的用武之地！它能帮我们在数据中找到一条直线，用于预测结果。接下来，我们将一步步实现它。
+
+<a name="2.2"></a>
+### 2.2 数据集概览
+
+首先，我们需要数据。以下代码通过 `load_data()` 函数加载数据集：
+
+```python
+# 加载数据集
+x_train, y_train = load_data()
+```
+
+#### 查看数据
+
+动手之前，先了解数据是个好习惯。我们用 `print` 检查 `x_train` 和 `y_train` 的类型和内容：
+
+```python
+# 查看 x_train
+print("x_train 的类型:", type(x_train))
+print("x_train 的前五个元素:\n", x_train[:5])
+```
+
+**输出：**
+```
+x_train 的类型: <class 'numpy.ndarray'>
+x_train 的前五个元素:
+ [6.1101 5.5277 8.5186 7.0032 5.8598]
+```
+
+- `x_train` 是一个 NumPy 数组，表示城市人口（单位：万人）。
+
+再看看 `y_train`：
+
+```python
+# 查看 y_train
+print("y_train 的类型:", type(y_train))
+print("y_train 的前五个元素:\n", y_train[:5])
+```
+
+**输出：**
+```
+y_train 的类型: <class 'numpy.ndarray'>
+y_train 的前五个元素:
+ [17.592  9.1302 13.662  11.854  6.8233]
+```
+
+- `y_train` 表示对应利润（单位：万美元）。
+
+#### 检查数据规模
+
+用以下代码检查数据集大小：
+
+```python
+print('x_train 的形状:', x_train.shape)
+print('训练样本数:', len(x_train))
+```
+
+**输出：**
+```
+x_train 的形状: (97,)
+训练样本数: 97
+```
+
+- 数据有 97 个样本，每个样本对应一个城市的人口和利润。
+
+#### 数据可视化
+
+用散点图直观展示人口和利润的关系：
+
+```python
+# 创建散点图
+plt.scatter(x_train, y_train, marker='x', c='r')
+plt.title("利润 vs. 城市人口")
+plt.ylabel('利润（单位：万美元）')
+plt.xlabel('城市人口（单位：万人）')
+plt.show()
+```
+
+**输出示例：**  
+（运行后会显示一个散点图，红色的“x”表示数据点。）
+![散点图](/static/images/MLc1/output_16_0.png)
+**观察：**  
+散点图显示人口越多，利润似乎越高，点大致沿直线分布。这表明线性回归可能是个好选择。
+
+---
+
+<a name="2.3"></a>
+### 2.3 线性回归基础
+
+线性回归的目标是使用一条直线来描述数据之间的关系，公式如下：
+
+$$
+f_{w, b}(\mathbf{x}^{(i)}) = w \mathbf{x}^{(i)} + b
+$$
+我们的模型可以简化表达为：
+$$
+f(x) = w \cdot x + b
+$$
+
+- `x`：城市人口（输入）。
+- `f(x)`：预测利润（输出）。
+- `w`：斜率，表示人口对利润的影响。
+- `b`：截距，表示人口为 0 时的基准利润。
+
+**任务：**  
+调整 `w` 和 `b`，让直线尽量贴近所有数据点。我们用**成本函数**衡量误差，用**梯度下降法**优化参数，使误差最小。
+
+---
+
+<a name="2.4"></a>
+### 2.4 计算成本函数
+
+成本函数（`J(w,b)`）衡量模型预测与实际值的差距。计算步骤：
+1. 对每个样本，计算预测值 `f(x)` 与实际值 `y` 的差。
+2. 将差平方（消除正负抵消）。
+3. 求所有样本平方差的平均值（除以 2m）。
+
+<a name="ex01"></a>
+#### 练习 1：实现成本函数
+
+实现 `compute_cost` 函数：
+
+```python
+def compute_cost(x, y, w, b):
+    """
+    计算线性回归的成本。
+    
+    参数:
+        x (ndarray): 形状 (m,)，输入数据（城市人口）
+        y (ndarray): 形状 (m,)，实际值（利润）
+        w, b (scalar): 模型参数（斜率和截距）
+    
+    返回:
+        total_cost (float): 当前 w 和 b 下的成本
+    """
+    m = x.shape[0]
+    total_cost = 0
+    
+    cost_sum = 0
+    for i in range(m):
+        f_wb = w * x[i] + b  # 预测值
+        cost = (f_wb - y[i]) ** 2  # 单样本平方误差
+        cost_sum += cost  # 累加误差
+    total_cost = (1 / (2 * m)) * cost_sum  # 平均误差
+    
+    return total_cost
+```
+
+**测试：**
+用初始值 `w = 2` 和 `b = 1` 测试：
+
+```python
+initial_w = 2
+initial_b = 1
+cost = compute_cost(x_train, y_train, initial_w, initial_b)
+print(f'初始 w 和 b 时的成本: {cost:.3f}')
+```
+
+**输出：**
+```
+初始 w 和 b 时的成本: 75.203
+```
+
+- 输出接近 75.203 说明函数正确，当前模型误差较大，需要优化。
+
+---
+
+<a name="2.5"></a>
+### 2.5 梯度下降法
+
+梯度下降法通过计算成本函数的梯度，逐步调整参数 $w$ 和 $b$，以减小预测误差。其步骤如下：
+
+计算成本函数 $J(w, b)$ 对 $w$ 和 $b$ 的偏导数（梯度）：
+
+$$
+   \frac{\partial J}{\partial w} = \frac{1}{m} \sum_{i=1}^{m} \left( f_{w, b}(\mathbf{x}^{(i)}) - y^{(i)} \right) x^{(i)}
+   $$
+$$
+   \frac{\partial J}{\partial b} = \frac{1}{m} \sum_{i=1}^{m} \left( f_{w, b}(\mathbf{x}^{(i)}) - y^{(i)} \right)
+   $$
+
+用学习率 $\alpha$ 更新参数 $w$ 和 $b$：
+
+$$
+   w = w - \alpha \frac{\partial J}{\partial w}
+   $$
+$$
+   b = b - \alpha \frac{\partial J}{\partial b}
+   $$
+
+重复以上步骤，直到成本函数 $J(w, b)$ 收敛。
+
+<a name="ex02"></a>
+#### 练习 2：实现梯度计算
+
+实现 `compute_gradient` 函数：
+
+```python
+def compute_gradient(x, y, w, b):
+    """
+    计算成本对 w 和 b 的梯度。
+    
+    参数:
+        x (ndarray): 形状 (m,)，输入数据（人口）
+        y (ndarray): 形状 (m,)，实际值（利润）
+        w, b (scalar): 模型参数
+    
+    返回:
+        dj_dw (scalar): 对 w 的梯度
+        dj_db (scalar): 对 b 的梯度
+    """
+    m = x.shape[0]
+    dj_dw = 0
+    dj_db = 0
+    
+    for i in range(m):
+        f_wb = w * x[i] + b  # 预测值
+        dj_dw_i = (f_wb - y[i]) * x[i]  # w 的单样本梯度
+        dj_db_i = f_wb - y[i]  # b 的单样本梯度
+        dj_dw += dj_dw_i  # 累加
+        dj_db += dj_db_i
+    dj_dw = dj_dw / m  # 平均
+    dj_db = dj_db / m
+    
+    return dj_dw, dj_db
+```
+
+**测试：**
+用 `w = 0` 和 `b = 0` 测试：
+
+```python
+initial_w = 0
+initial_b = 0
+dj_dw, dj_db = compute_gradient(x_train, y_train, initial_w, initial_b)
+print('初始 w 和 b 时的梯度:', dj_dw, dj_db)
+```
+
+**输出：**
+```
+初始 w 和 b 时的梯度: -65.32884975 -9.811985
+```
+
+- 负梯度表明 `w` 和 `b` 需向正方向调整。
+
+---
+
+<a name="2.6"></a>
+### 2.6 优化参数
+
+用梯度下降优化 `w` 和 `b`：
+
+```python
+def gradient_descent(x, y, w_in, b_in, cost_function, gradient_function, alpha, num_iters):
+    """
+    执行梯度下降优化参数。
+    
+    参数:
+        x, y (ndarray): 数据
+        w_in, b_in (scalar): 参数初始值
+        cost_function: 计算成本的函数
+        gradient_function: 计算梯度的函数
+        alpha (float): 学习率
+        num_iters (int): 迭代次数
+    
+    返回:
+        w, b: 优化后的参数
+    """
+    w = w_in
+    b = b_in
+    
+    for i in range(num_iters):
+        dj_dw, dj_db = gradient_function(x, y, w, b)
+        w = w - alpha * dj_dw
+        b = b - alpha * dj_db
+        
+        if i % 150 == 0:  # 每 150 次打印成本
+            cost = cost_function(x, y, w, b)
+            print(f"迭代 {i:4}: 成本 {cost:.2f}")
+    
+    return w, b
+```
+
+**运行优化：**
+设置初始值 `w = 0`, `b = 0`, 学习率 `alpha = 0.01`, 迭代 1500 次：
+
+```python
+initial_w = 0.
+initial_b = 0.
+iterations = 1500
+alpha = 0.01
+
+w, b = gradient_descent(x_train, y_train, initial_w, initial_b,
+                        compute_cost, compute_gradient, alpha, iterations)
+print("优化后的 w, b:", w, b)
+```
+
+**输出：**
+```
+迭代    0: 成本 48.09
+迭代  150: 成本 5.06
+迭代  300: 成本 4.71
+...
+优化后的 w, b: 1.701589843256735 -5.83913505154639
+```
+
+- 成本逐渐减小，模型逐步优化。
+
+#### 绘制拟合结果
+
+用优化后的参数绘制拟合直线：
+
+```python
+m = x_train.shape[0]
+predicted = np.zeros(m)
+for i in range(m):
+    predicted[i] = w * x_train[i] + b
+
+plt.plot(x_train, predicted, c="b")  # 拟合直线
+plt.scatter(x_train, y_train, marker='x', c='r')  # 数据点
+plt.title("利润 vs. 城市人口")
+plt.ylabel('利润（单位：万美元）')
+plt.xlabel('城市人口（单位：万人）')
+plt.show()
+```
+
+**输出示例：**  
+（显示一条蓝色直线穿过红色数据点，拟合效果良好。）
+![拟合图](/static/images/MLc1/output_44_1.png)
+#### 利润预测
+
+预测人口 35,000 和 70,000 的利润：
+
+```python
+predict1 = 3.5 * w + b  # 人口 3.5 万
+print('人口 35,000 预测利润: $%.2f' % (predict1 * 10000))
+
+predict2 = 7.0 * w + b  # 人口 7 万
+print('人口 70,000 预测利润: $%.2f' % (predict2 * 10000))
+```
+
+**输出：**
+```
+人口 35,000 预测利润: $1166.43
+人口 70,000 预测利润: $6070.98
+```
+
+- 人口 35,000 的城市预计月利润约 1.17 万美元。
+- 人口 70,000 的城市预计月利润约 6.07 万美元。
+
+---
+
+## 总结
+
+恭喜你完成这场线性回归的实践！通过这篇博客，你学会了以下内容：
+- 使用线性回归模型拟合数据，探索人口与利润之间的关系。
+- 实现了成本函数和梯度下降算法，优化模型参数。
+- 通过图表验证模型的效果，并利用模型预测新数据。
+这只是机器学习的起点！你可以尝试调整学习率（`alpha`）或增加迭代次数，观察模型性能的变化。下一期我们将探索分类问题，敬请期待！
+---
+**本篇文章的部分内容和思想参考了 [吴恩达 (Andrew Ng)](https://www.andrewng.org/) 在 [Coursera 机器学习课程](https://www.coursera.org/learn/machine-learning) 中的讲解，感谢他对机器学习领域的卓越贡献。**
