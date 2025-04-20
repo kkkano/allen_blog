@@ -201,7 +201,7 @@ print("更新后的质心:", centroids)
 import matplotlib.pyplot as plt
 
 def run_kMeans(X, initial_centroids, max_iters=10, plot_progress=False):
-    """
+
     在数据集 X 上运行 K-means 算法。
     
     参数:
@@ -213,7 +213,7 @@ def run_kMeans(X, initial_centroids, max_iters=10, plot_progress=False):
     返回:
         centroids (ndarray): 最终质心
         idx (ndarray): 数据点分配
-    """
+ 
     m, n = X.shape
     K = initial_centroids.shape[0]
     centroids = initial_centroids
