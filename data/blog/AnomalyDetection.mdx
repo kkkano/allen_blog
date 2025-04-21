@@ -130,6 +130,8 @@ y_val 的形状: (307,)
 通过散点图，我们可以直观地看到数据的分布：
 
 ```python
+# Create a scatter plot of the data. To change the markers to blue "x",
+# we used the 'marker' and 'c' parameters
 plt.scatter(X_train[:, 0], X_train[:, 1], marker='x', c='b')
 plt.title("服务器延迟 vs 吞吐量")
 plt.ylabel("吞吐量 (mb/s)")
