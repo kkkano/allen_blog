@@ -1,9 +1,9 @@
 ---
-title: '从理论到实践'
-date: '2025-03-22'
-tags: ['Machine Learning']
+title: '异常检测：高斯模型在服务器异常检测中的应用'
+date: '2025-04-21'
+tags: ['Machine Learning', 'Anomaly Detection', 'Gaussian Model', 'Data Science']
 draft: false
-summary: '欢迎体验'
+summary: '本文详细讲解了异常检测算法的原理与实现，从理论基础到实际应用，通过监测服务器指标来检测网络中的异常行为。'
 authors: ['allen']
 ---
 
@@ -137,7 +137,7 @@ plt.xlabel("延迟 (ms)")
 plt.axis([0, 30, 0, 30])
 plt.show()
 ```
-
+![dataset](/static/images/MLc3/outputw1_13_0.png)
 大多数点聚集在一起，但有几个离群点可能就是异常样本。我们的任务是系统地检测它们。
 
 ---
@@ -201,8 +201,10 @@ print("每个特征的方差:", var)
 ```python
 p = multivariate_gaussian(X_train, mu, var)
 visualize_fit(X_train, mu, var)
+#Plotting code 
+visualize_fit(X_train, mu, var)
 ```
-
+![等高线图1](/static/images/MLc3/outputw1_22_0.png)
 等高线显示了概率密度——大多数点位于高概率区域，而异常点则在低概率区域。
 
 <a name="ex02"></a>
@@ -264,6 +266,8 @@ p_val = multivariate_gaussian(X_val, mu, var)
 epsilon, F1 = select_threshold(y_val, p_val)
 print("最佳 epsilon:", epsilon)
 print("最佳 F1 分数:", F1)
+# UNIT TEST
+select_threshold_test(select_threshold)
 ```
 
 **输出：**
@@ -271,7 +275,7 @@ print("最佳 F1 分数:", F1)
 最佳 epsilon: 8.990853e-05
 最佳 F1 分数: 0.875000
 ```
-
+![等高线图2](/static/images/MLc3/outputw1_31_1.png)
 #### 标记异常点
 
 使用 \(\epsilon\)，我们可以在 `X_train` 中标记异常点：
