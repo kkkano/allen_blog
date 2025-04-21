@@ -1,0 +1,346 @@
+---
+title: '从理论到实践'
+date: '2025-03-22'
+tags: ['Machine Learning']
+draft: false
+summary: '欢迎体验'
+authors: ['allen']
+---
+
+# 异常检测：从理论到实践
+
+欢迎来到这场异常检测的探索之旅！在这篇博客中，我们将一起实现异常检测算法，并将其应用于检测网络中的故障服务器。我们将逐步拆解这一过程，从理论开始，逐步过渡到实际编码和结果可视化。无论你是机器学习新手还是希望加深理解，这篇教程都将为你提供清晰的指导。让我们开始吧！
+
+## 目录
+- [1 - 准备工具包](#1)
+- [2 - 异常检测](#2)
+  - [2.1 问题背景](#2.1)
+  - [2.2 数据集概览](#2.2)
+  - [2.3 高斯分布模型](#2.3)
+    - [练习 1：估计高斯参数](#ex01)
+    - [练习 2：选择阈值](#ex02)
+  - [2.4 应用于高维数据](#2.4)
+- [总结](#summary)
+
+---
+
+<a name="1"></a>
+## 1 - 准备工具包
+
+在开始之前，我们需要准备一些 Python 工具包，它们将帮助我们处理数据、进行计算和可视化结果。
+
+- **[NumPy](https://numpy.org/)**：Python 中用于数值运算和矩阵处理的库。
+- **[Matplotlib](https://matplotlib.org/)**：一个强大的绘图库，用于生成数据可视化图表。
+- **`utils.py`**：一个辅助文件，包含本任务的预置函数（无需修改）。
+
+运行以下代码以加载这些工具：
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from utils import *
+
+%matplotlib inline
+```
+
+工具准备好后，我们正式进入异常检测的学习之旅！
+
+---
+
+<a name="2"></a>
+## 2 - 异常检测
+
+<a name="2.1"></a>
+### 2.1 问题背景
+
+假设你正在管理一个服务器网络，需要及时发现行为异常的服务器——比如故障服务器。在这个任务中，我们将构建一个异常检测算法来识别这些问题。我们的数据集包含两个关键的服务器指标：
+
+- **吞吐量 (mb/s)**：数据传输速率。
+- **延迟 (ms)**：响应时间。
+
+我们收集了 307 个服务器行为样本。大多数样本应该是“正常”的，但其中可能有一些异常样本——即故障服务器。我们的目标是使用高斯分布模型来识别这些异常样本。我们将从一个二维数据集开始，以便可视化算法的效果，然后扩展到更复杂的高维数据集。
+
+<a name="2.2"></a>
+### 2.2 数据集概览
+
+让我们加载并检查数据集。`load_data()` 函数为我们提供了三个变量：
+- **`X_train`**：训练数据，用于拟合高斯模型。
+- **`X_val`**：验证数据，用于调整阈值。
+- **`y_val`**：验证集的标签（1 = 异常，0 = 正常）。
+
+```python
+# 加载数据集
+X_train, X_val, y_val = load_data()
+```
+
+#### 初步查看数据
+
+让我们打印每个变量的前五个元素，了解数据的结构：
+
+```python
+print("X_train 的前五个元素:\n", X_train[:5])
+print("X_val 的前五个元素:\n", X_val[:5])
+print("y_val 的前五个元素:\n", y_val[:5])
+```
+
+**输出：**
+```
+X_train 的前五个元素:
+ [[13.04681517 14.74115241]
+ [13.40852019 13.7632696 ]
+ [14.19591481 15.85318113]
+ [14.91470077 16.17425987]
+ [13.57669961 14.04284944]]
+
+X_val 的前五个元素:
+ [[15.79025979 14.9210243 ]
+ [13.63961877 15.32995521]
+ [14.86589943 16.47386514]
+ [13.58467605 13.98930611]
+ [13.46404167 15.63533011]]
+
+y_val 的前五个元素:
+ [0 0 0 0 0]
+```
+
+- `X_train` 和 `X_val` 是数组，每行是一个样本，包含两个特征：延迟和吞吐量。
+- `y_val` 是标签，指示验证样本是否为异常（1）或正常（0）。
+
+#### 检查数据维度
+
+了解数据的维度有助于我们掌握数据集的规模：
+
+```python
+print("X_train 的形状:", X_train.shape)
+print("X_val 的形状:", X_val.shape)
+print("y_val 的形状:", y_val.shape)
+```
+
+**输出：**
+```
+X_train 的形状: (307, 2)
+X_val 的形状: (307, 2)
+y_val 的形状: (307,)
+```
+
+训练集和验证集各有 307 个样本，每个样本有两个特征。
+
+#### 数据可视化
+
+通过散点图，我们可以直观地看到数据的分布：
+
+```python
+plt.scatter(X_train[:, 0], X_train[:, 1], marker='x', c='b')
+plt.title("服务器延迟 vs 吞吐量")
+plt.ylabel("吞吐量 (mb/s)")
+plt.xlabel("延迟 (ms)")
+plt.axis([0, 30, 0, 30])
+plt.show()
+```
+
+大多数点聚集在一起，但有几个离群点可能就是异常样本。我们的任务是系统地检测它们。
+
+---
+
+<a name="2.3"></a>
+### 2.3 高斯分布模型
+
+为了检测异常，我们将使用高斯（正态）分布来建模数据的分布。对于每个特征 \(i\)，我们需要估计：
+- **均值 (\(\mu_i\))**: 特征的平均值。
+- **方差 (\(\sigma_i^2\))**: 特征的离散程度。
+
+高斯概率密度函数为：
+
+$$p(x ; \mu, \sigma^2) = \frac{1}{\sqrt{2 \pi \sigma^2}} \exp \left( -\frac{(x - \mu)^2}{2 \sigma^2} \right)$$
+
+<a name="ex01"></a>
+
+#### 练习 1：估计高斯参数
+
+让我们编写一个函数来计算 `X_train` 中每个特征的 \(\mu\) 和 \(\sigma^2\)：
+
+```python
+def estimate_gaussian(X):
+    """
+    计算数据集每个特征的均值和方差。
+    
+    参数:
+        X (ndarray): (m, n) 数据矩阵
+    
+    返回:
+        mu (ndarray): (n,) 每个特征的均值
+        var (ndarray): (n,) 每个特征的方差
+    """
+    m, n = X.shape
+    mu = np.mean(X, axis=0)  # 按列计算均值
+    var = np.var(X, axis=0)  # 按列计算方差
+    return mu, var
+```
+
+- `np.mean(X, axis=0)`: 计算每个特征的均值。
+- `np.var(X, axis=0)`: 计算每个特征的方差。
+
+测试一下：
+
+```python
+mu, var = estimate_gaussian(X_train)
+print("每个特征的均值:", mu)
+print("每个特征的方差:", var)
+```
+
+**输出：**
+```
+每个特征的均值: [14.11222578 14.99771051]
+每个特征的方差: [1.83263141 1.70974533]
+```
+
+#### 可视化拟合
+
+使用 `utils.py` 中的 `multivariate_gaussian` 函数计算概率，并绘制高斯拟合图：
+
+```python
+p = multivariate_gaussian(X_train, mu, var)
+visualize_fit(X_train, mu, var)
+```
+
+等高线显示了概率密度——大多数点位于高概率区域，而异常点则在低概率区域。
+
+<a name="ex02"></a>
+#### 练习 2：选择阈值
+
+接下来，我们需要一个阈值 \(\epsilon\) 来判断异常（当 \(p(x) < \epsilon\) 时）。我们将使用验证集 (`X_val`, `y_val`) 和 \(F_1\) 分数来找到最佳的 \(\epsilon\)。
+
+\(F_1\) 分数是精确率和召回率的调和平均：
+
+$$F_1 = \frac{2 \cdot \text{prec} \cdot \text{rec}}{\text{prec} + \text{rec}}$$
+
+其中：
+- $\text{prec} = \frac{\text{tp}}{\text{tp} + \text{fp}}$（精确率）
+- $\text{rec} = \frac{\text{tp}}{\text{tp} + \text{fn}}$（召回率）
+- $\text{tp}$: 真正例（正确识别的异常）
+- $\text{fp}$: 假正例（误报为异常）
+- $\text{fn}$: 假负例（漏报的异常）
+
+实现如下：
+
+```python
+def select_threshold(y_val, p_val):
+    """
+    寻找最佳阈值 (epsilon) 来检测异常。
+    
+    参数:
+        y_val (ndarray): 真实标签
+        p_val (ndarray): 预测概率
+    
+    返回:
+        epsilon (float): 最佳阈值
+        F1 (float): 最佳 F1 分数
+    """
+    best_epsilon = 0
+    best_F1 = 0
+    step_size = (max(p_val) - min(p_val)) / 1000
+    
+    for epsilon in np.arange(min(p_val), max(p_val), step_size):
+        predictions = (p_val < epsilon)  # p < epsilon 时标记为异常
+        tp = np.sum((predictions == 1) & (y_val == 1))
+        fp = np.sum((predictions == 1) & (y_val == 0))
+        fn = np.sum((predictions == 0) & (y_val == 1))
+        
+        prec = tp / (tp + fp) if (tp + fp) > 0 else 0
+        rec = tp / (tp + fn) if (tp + fn) > 0 else 0
+        F1 = 2 * prec * rec / (prec + rec) if (prec + rec) > 0 else 0
+        
+        if F1 > best_F1:
+            best_F1 = F1
+            best_epsilon = epsilon
+    
+    return best_epsilon, best_F1
+```
+
+测试：
+
+```python
+p_val = multivariate_gaussian(X_val, mu, var)
+epsilon, F1 = select_threshold(y_val, p_val)
+print("最佳 epsilon:", epsilon)
+print("最佳 F1 分数:", F1)
+```
+
+**输出：**
+```
+最佳 epsilon: 8.990853e-05
+最佳 F1 分数: 0.875000
+```
+
+#### 标记异常点
+
+使用 \(\epsilon\)，我们可以在 `X_train` 中标记异常点：
+
+```python
+outliers = p < epsilon
+visualize_fit(X_train, mu, var)
+plt.plot(X_train[outliers, 0], X_train[outliers, 1], 'ro', 
+         markersize=10, markerfacecolor='none', markeredgewidth=2)
+```
+
+红色圆圈突出了检测到的异常点——与我们的直观判断相符！
+
+---
+
+<a name="2.4"></a>
+### 2.4 应用于高维数据
+
+现在，让我们将算法应用于一个更复杂的数据集，该数据集包含 11 个特征，捕捉了更多服务器的属性。
+
+#### 加载数据
+
+```python
+X_train_high, X_val_high, y_val_high = load_data_multi()
+print("X_train_high 的形状:", X_train_high.shape)
+```
+
+**输出：**
+```
+X_train_high 的形状: (1000, 11)
+```
+
+训练集中有 1000 个样本，每个样本有 11 个特征。
+
+#### 运行异常检测
+
+重复前面的步骤：
+1. 估计高斯参数。
+2. 计算概率。
+3. 选择阈值。
+
+```python
+mu_high, var_high = estimate_gaussian(X_train_high)
+p_high = multivariate_gaussian(X_train_high, mu_high, var_high)
+p_val_high = multivariate_gaussian(X_val_high, mu_high, var_high)
+epsilon_high, F1_high = select_threshold(y_val_high, p_val_high)
+
+print("最佳 epsilon:", epsilon_high)
+print("最佳 F1 分数:", F1_high)
+print("检测到的异常数量:", sum(p_high < epsilon_high))
+```
+
+**输出：**
+```
+最佳 epsilon: 1.377229e-18
+最佳 F1 分数: 0.615385
+检测到的异常数量: 117
+```
+
+虽然 \(F_1\) 分数较低（0.615），但这反映了数据复杂性的增加。尽管如此，我们仍然检测到 117 个异常——相当不错！
+
+---
+
+<a name="summary"></a>
+## 总结
+
+恭喜你完成了这场异常检测的学习之旅！通过这篇博客，你已经：
+- 使用高斯分布构建了异常检测算法。
+- 学会了估计 \(\mu\) 和 \(\sigma^2\)，通过 \(F_1\) 分数选择 \(\epsilon\)，并可视化结果。
+- 将其应用于二维和高维数据集。
+
+这项技能在监控系统、检测欺诈或识别任何数据中的异常值时都非常有用。想深入探索？试试调整 \(\epsilon\) 或在自己的数据集上测试。敬请期待更多机器学习冒险的博客！
