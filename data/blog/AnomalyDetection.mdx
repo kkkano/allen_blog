@@ -199,8 +199,9 @@ print("每个特征的方差:", var)
 使用 `utils.py` 中的 `multivariate_gaussian` 函数计算概率，并绘制高斯拟合图：
 
 ```python
+# Returns the density of the multivariate normal
+# at each data point (row) of X_train
 p = multivariate_gaussian(X_train, mu, var)
-visualize_fit(X_train, mu, var)
 #Plotting code 
 visualize_fit(X_train, mu, var)
 ```
