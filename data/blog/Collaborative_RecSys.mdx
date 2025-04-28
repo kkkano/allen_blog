@@ -59,7 +59,7 @@ from recsys_utils import *
 | $\mathbf{R}$ | 矩阵，由 $r(i,j)$ 组成 | `R` |
 
 <a name="2"></a>
-## 2 - 推荐系统 <img align="left" src="./images/film_rating.png" style="width:40px;" />
+## 2 - 推荐系统 
 
 协同过滤是一种强大的推荐系统技术，它通过分析用户之间的相似性来预测用户对未评分项目的偏好。在本实验中，我们将实现协同过滤算法，并将其应用于电影评分数据集。
 
@@ -71,7 +71,7 @@ from recsys_utils import *
 - **预测阶段**：使用训练好的模型为用户推荐未评分的电影。
 
 <a name="3"></a>
-## 3 - 电影评分数据集 <img align="left" src="./images/film_rating.png" style="width:40px;" />
+## 3 - 电影评分数据集 
 
 本实验使用的数据集来自 [MovieLens "ml-latest-small"](https://grouplens.org/datasets/movielens/latest/) 数据集。该数据集包含了从 2000 年以来的一些电影的评分信息，共包括 $n_u = 443$ 个用户和 $n_m = 4778$ 部电影。
 
@@ -119,7 +119,7 @@ print(f"电影 1 的平均评分：{tsmean:0.3f} / 5")
 ```
 
 <a name="4"></a>
-## 4 - 协同过滤学习算法 <img align="left" src="./images/film_filter.png" style="width:40px;" />
+## 4 - 协同过滤学习算法
 
 协同过滤的核心在于学习参数 $\mathbf{X}$、$\mathbf{W}$ 和 $\mathbf{b}$，以最小化预测误差。具体来说，我们需要实现协同过滤的成本函数，并使用梯度下降法优化参数。
 
