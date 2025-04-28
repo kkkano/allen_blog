@@ -1,0 +1,495 @@
+---
+title: '构建电影推荐系统：协同过滤从理论到实践'
+date: '2025-04-28'
+tags: ['Machine Learning', 'Recommender Systems', 'Collaborative Filtering', 'TensorFlow', 'MovieLens Dataset']
+draft: false
+summary: '本文完整实现了基于协同过滤的电影推荐系统，使用TensorFlow框架在MovieLens数据集上完成了从理论推导到工程实践的全流程。通过矩阵分解方法学习用户偏好和电影特征，实现了包含正则化的成本函数和梯度下降优化，最终生成个性化Top10推荐列表。实验显示模型能准确预测用户评分并推荐高口碑电影，为推荐系统入门提供了完整的实践范例。'
+authors: ['allen']
+
+---
+
+欢迎体验这场关于协同过滤的机器学习之旅！在这篇博客中，我们将一起构建一个电影推荐系统，探索如何利用用户评分预测他们可能喜欢的电影。通过从理论到代码的逐步拆解，你将学会实现协同过滤算法，并通过代码和可视化直观理解其工作原理。无论你是机器学习新手还是有一定基础的学习者，这篇文章都将为你提供清晰且实用的指导。让我们开始吧！
+
+## 目录
+
+- [1 - 推荐系统简介](#1)
+- [2 - 协同过滤基础](#2)
+- [3 - MovieLens 数据集](#3)
+- [4 - 协同过滤算法实现](#4)
+  - [4.1 成本函数](#4.1)
+    - [练习 1：实现成本函数](#ex01)
+- [5 - 训练电影推荐模型](#5)
+- [6 - 生成推荐](#6)
+- [7 - 总结](#7)
+
+---
+
+<a name="1"></a>
+
+## 1 - 推荐系统简介
+
+推荐系统是现代互联网服务的核心，它们通过分析用户行为和偏好，预测用户可能感兴趣的内容。例如：
+
+- **Netflix**：根据你的观影历史推荐电影或剧集。
+- **Amazon**：根据你的购买记录推荐产品。
+- **Spotify**：根据你的听歌习惯推荐音乐。
+
+推荐系统主要有两种类型：
+
+- **基于内容的过滤**：根据项目的特征（如电影的类型、导演）和用户的历史偏好推荐。
+- **协同过滤**：根据用户之间的相似性或项目之间的相似性推荐。
+- **混合系统**：结合两者以提高推荐质量。
+
+在这篇文章中，我们将聚焦于**协同过滤**，具体使用矩阵分解方法，通过用户评分数据学习用户和电影的潜在特征。
+
+---
+
+<a name="2"></a>
+
+## 2 - 协同过滤基础
+
+协同过滤的核心思想是：如果两个用户对某些电影的评分相似，他们可能对其他电影也有相似的偏好。同样，如果两部电影被相似的用户群体喜欢，它们可能在某些方面相似。
+
+### 矩阵分解方法
+
+我们将使用**矩阵分解**来实现协同过滤。假设我们有一个评分矩阵，其中：
+
+- 行表示电影（如《指环王》）。
+- 列表示用户（如你或你的朋友）。
+- 每个单元格是用户对电影的评分（0.5 到 5 分，0 表示未评分）。
+
+这个矩阵通常是稀疏的，因为用户只评分了少量电影。我们的目标是“填补”这些空白，预测用户对未评分电影的评分。
+
+为此，我们将：
+
+- 为每部电影学习一个特征向量 \( \mathbf{x}^{(i)} \)，表示电影的潜在特征（如“奇幻程度”或“动作元素”）。
+- 为每个用户学习一个参数向量 \( \mathbf{w}^{(j)} \) 和偏置 \( b^{(j)} \)，表示用户的偏好。
+- 预测用户 \( j \) 对电影 \( i \) 的评分为：
+  \[
+  \hat{y}(i,j) = \mathbf{w}^{(j)} \cdot \mathbf{x}^{(i)} + b^{(j)}
+  \]
+
+### 符号表
+
+以下是本文使用的关键符号：
+
+| 符号                   | 描述                                                  | Python 变量    |
+| ---------------------- | ----------------------------------------------------- | -------------- |
+| \( r(i,j) \)           | 如果用户 \( j \) 评分了电影 \( i \)，则为 1，否则为 0 | `R[i,j]`       |
+| \( y(i,j) \)           | 用户 \( j \) 对电影 \( i \) 的评分（如果已评分）      | `Y[i,j]`       |
+| \( \mathbf{w}^{(j)} \) | 用户 \( j \) 的参数向量                               | `W[j,:]`       |
+| \( b^{(j)} \)          | 用户 \( j \) 的偏置                                   | `b[0,j]`       |
+| \( \mathbf{x}^{(i)} \) | 电影 \( i \) 的特征向量                               | `X[i,:]`       |
+| \( n_u \)              | 用户数量                                              | `num_users`    |
+| \( n_m \)              | 电影数量                                              | `num_movies`   |
+| \( n \)                | 特征数量                                              | `num_features` |
+| \( \mathbf{X} \)       | 电影特征矩阵                                          | `X`            |
+| \( \mathbf{W} \)       | 用户参数矩阵                                          | `W`            |
+| \( \mathbf{b} \)       | 用户偏置向量                                          | `b`            |
+| \( \mathbf{R} \)       | 评分指示矩阵                                          | `R`            |
+
+---
+
+<a name="3"></a>
+
+## 3 - MovieLens 数据集
+
+我们将使用 [MovieLens 小型数据集](https://grouplens.org/datasets/movielens/latest/)，这是一个广泛用于推荐系统研究的基准数据集。它包含：
+
+- **443 名用户**。
+- **4778 部电影**。
+- 超过 **10 万条评分**，评分范围为 0.5 到 5（步长为 0.5）。
+
+### 数据结构
+
+数据集包括两个主要文件：
+
+- **ratings.csv**：包含 `userId`、`movieId`、`rating` 和 `timestamp`。
+- **movies.csv**：包含 `movieId` 和 `title`。
+
+我们将主要使用评分数据，构造以下矩阵：
+
+- **Y**：评分矩阵，\( Y[i,j] \) 是用户 \( j \) 对电影 \( i \) 的评分，未评分处为 0。
+- **R**：指示矩阵，\( R[i,j] = 1 \) 表示用户 \( j \) 评分了电影 \( i \)，否则为 0。
+
+### 加载数据
+
+以下代码展示如何使用 `pandas` 加载和预处理数据：
+
+```python
+import pandas as pd
+import numpy as np
+
+# 加载评分数据
+ratings = pd.read_csv('path/to/ratings.csv')
+
+# 转换为用户-电影矩阵
+df禁止的词语: pivot_table
+df = pd.pivot_table(ratings, index='movieId', columns='userId', values='rating')
+
+# 创建 Y 和 R 矩阵
+Y = df.fillna(0).values  # 评分矩阵，未评分处为 0
+R = df.notna().astype(int).values  # 指示矩阵，1 表示已评分
+```
+
+### 数据探索
+
+让我们检查数据的形状和一些统计信息：
+
+```python
+print("Y shape:", Y.shape)  # (4778, 443)
+print("R shape:", R.shape)  # (4778, 443)
+print("Average rating for movie 1:", np.mean(Y[0, R[0, :].astype(bool)]), "/ 5")
+```
+
+**示例输出：**
+
+```
+Y shape: (4778, 443)
+R shape: (4778, 443)
+Average rating for movie 1: 3.4 / 5
+```
+
+这表明我们有 4778 部电影和 443 名用户，评分矩阵非常稀疏，因为用户只评分了少量电影。
+
+---
+
+<a name="4"></a>
+
+## 4 - 协同过滤算法实现
+
+协同过滤的目标是学习电影特征向量 \( \mathbf{x}^{(i)} \)、用户参数向量 \( \mathbf{w}^{(j)} \) 和偏置 \( b^{(j)} \)，使预测评分尽可能接近实际评分。
+
+<a name="4.1"></a>
+
+### 4.1 成本函数
+
+成本函数衡量预测评分与实际评分的差异，定义为：
+
+- **误差项**：所有已评分电影的预测误差平方和。
+- **正则化项**：防止过拟合，惩罚过大的参数值。
+
+数学上，成本函数为：
+\[
+J = \frac{1}{2} \sum_{(i,j): r(i,j)=1} (\mathbf{w}^{(j)} \cdot \mathbf{x}^{(i)} + b^{(j)} - y^{(i,j)})^2 + \frac{\lambda}{2} \left( \sum_j \sum_k (\mathbf{w}_k^{(j)})^2 + \sum_i \sum_k (\mathbf{x}_k^{(i)})^2 \right)
+\]
+其中 \( \lambda \) 是正则化参数。
+
+<a name="ex01"></a>
+
+#### 练习 1：实现成本函数
+
+以下是使用 for 循环实现的成本函数：
+
+```python
+def cofi_cost_func(X, W, b, Y, R, lambda_):
+    """
+    计算协同过滤的成本函数。
+    
+    参数:
+        X: 电影特征矩阵 (n_m x n)
+        W: 用户参数矩阵 (n_u x n)
+        b: 用户偏置向量 (1 x n_u)
+        Y: 用户评分矩阵 (n_m x n_u)
+        R: 指示矩阵 (n_m x n_u)
+        lambda_: 正则化参数
+    
+    返回:
+        J: 总成本
+    """
+    nm, nu = Y.shape
+    J = 0
+    
+    # 计算误差项
+    for j in range(nu):
+        w = W[j, :]
+        b_j = b[0, j]
+        for i in range(nm):
+            x = X[i, :]
+            y = Y[i, j]
+            r = R[i, j]
+            J += r * (np.dot(w, x) + b_j - y) ** 2
+    
+    J = J / 2  # 除以 2
+    J += (lambda_ / 2) * (np.sum(W ** 2) + np.sum(X ** 2))  # 正则化
+    
+    return J
+```
+
+**代码解释：**
+
+- `nm, nu`：电影和用户数量。
+- 双重循环遍历所有用户和电影，仅当 \( R[i,j] = 1 \) 时计算误差。
+- `np.dot(w, x) + b_j`：预测评分。
+- `(np.dot(w, x) + b_j - y) ** 2`：平方误差。
+- `r * ...`：仅累加已评分项。
+- `J / 2`：误差项除以 2。
+- `(lambda_ / 2) * (np.sum(W ** 2) + np.sum(X ** 2))`：正则化项。
+
+#### 向量化实现
+
+for 循环在大型数据集上效率较低。我们使用 TensorFlow 实现向量化版本：
+
+```python
+import tensorflow as tf
+
+def cofi_cost_func_v(X, W, b, Y, R, lambda_):
+    """
+    使用 TensorFlow 的向量化成本函数。
+    """
+    j = (tf.linalg.matmul(X, tf.transpose(W)) + b - Y) * R
+    J = 0.5 * tf.reduce_sum(j ** 2) + (lambda_ / 2) * (tf.reduce_sum(X ** 2) + tf.reduce_sum(W ** 2))
+    return J
+```
+
+**向量化解释：**
+
+- `tf.linalg.matmul(X, tf.transpose(W))`：计算所有预测评分的矩阵。
+- `+ b`：广播偏置到每个用户。
+- `* R`：仅保留已评分项。
+- `tf.reduce_sum(j ** 2)`：计算所有误差的平方和。
+- 正则化项使用 `tf.reduce_sum(X ** 2)` 和 `tf.reduce_sum(W ** 2)`。
+
+---
+
+<a name="5"></a>
+
+## 5 - 训练电影推荐模型
+
+我们使用梯度下降最小化成本函数，学习 \( \mathbf{X} \)、\( \mathbf{W} \) 和 \( \mathbf{b} \)。由于模型不是标准神经网络，我们使用 TensorFlow 的自定义训练循环。
+
+### 归一化评分
+
+在训练前，归一化评分以使每部电影的评分均值为 0：
+
+```python
+def normalizeRatings(Y, R):
+    """
+    归一化评分，减去每部电影的平均评分。
+    """
+    Ymean = (R * Y).sum(1) / R.sum(1)
+    Ymean = Ymean.reshape(-1, 1)
+    Ynorm = Y - Ymean
+    return Ynorm, Ymean
+```
+
+```python
+Ynorm, Ymean = normalizeRatings(Y, R)
+```
+
+### 初始化参数
+
+随机初始化 \( \mathbf{X} \)、\( \mathbf{W} \) 和 \( \mathbf{b} \)：
+
+```python
+num_movies, num_users = Y.shape
+num_features = 100  # 特征数量
+
+tf.random.set_seed(1234)
+X = tf.Variable(tf.random.normal((num_movies, num_features), dtype=tf.float64), name='X')
+W = tf.Variable(tf.random.normal((num_users, num_features), dtype=tf.float64), name='W')
+b = tf.Variable(tf.random.normal((1, num_users), dtype=tf.float64), name='b')
+```
+
+### 训练循环
+
+使用 Adam 优化器和 `GradientTape` 进行梯度下降：
+
+```python
+optimizer = tf.keras.optimizers.Adam(learning_rate=1e-1)
+iterations = 200
+lambda_ = 1
+
+for iter in range(iterations):
+    with tf.GradientTape() as tape:
+        cost_value = cofi_cost_func_v(X, W, b, Ynorm, R, lambda_)
+    
+    grads = tape.gradient(cost_value, [X, W, b])
+    optimizer.apply_gradients(zip(grads, [X, W, b]))
+    
+    if iter % 20 == 0:
+        print(f"训练损失（迭代 {iter}）：{cost_value.numpy():0.1f}")
+```
+
+**示例输出：**
+
+```
+训练损失（迭代 0）：2321191.3
+训练损失（迭代 20）：136168.7
+...
+训练损失（迭代 180）：2902.1
+```
+
+成本逐渐下降，表明模型正在学习更好的参数。
+
+---
+
+<a name="6"></a>
+
+## 6 - 生成推荐
+
+训练完成后，我们可以为新用户生成推荐。以下是为自己添加评分并生成推荐的步骤。
+
+### 添加新用户评分
+
+假设你为一些电影评分（评分范围 0.5 到 5）：
+
+```python
+movieList, movieList_df = load_Movie_List_pd()  # 假设加载电影列表
+my_ratings = np.zeros(num_movies)
+
+# 示例评分
+my_ratings[2700] = 5  # Toy Story 3 (2010)
+my_ratings[2609] = 2  # Persuasion (2007)
+my_ratings[929] = 5   # Lord of the Rings: The Return of the King
+my_ratings[246] = 5   # Shrek (2001)
+my_ratings[2716] = 3  # Inception
+my_ratings[1150] = 5  # The Incredibles (2004)
+my_ratings[382] = 2   # Amelie
+my_ratings[366] = 5   # Harry Potter and the Sorcerer's Stone
+my_ratings[622] = 5   # Harry Potter and the Chamber of Secrets
+my_ratings[988] = 3   # Eternal Sunshine of the Spotless Mind
+my_ratings[2925] = 1  # Louis Theroux: Law & Disorder
+my_ratings[2937] = 1  # Nothing to Declare
+my_ratings[793] = 5   # Pirates of the Caribbean
+
+my_rated = [i for i in range(len(my_ratings)) if my_ratings[i] > 0]
+```
+
+### 更新数据集
+
+将新用户评分添加到 \( Y \) 和 \( R \)：
+
+```python
+Y = np.c_[my_ratings, Y]
+R = np.c_[(my_ratings != 0).astype(int), R]
+Ynorm, Ymean = normalizeRatings(Y, R)
+```
+
+### 重新训练模型
+
+使用更新后的数据集重新初始化和训练模型：
+
+```python
+num_movies, num_users = Y.shape
+num_features = 100
+
+tf.random.set_seed(1234)
+X = tf.Variable(tf.random.normal((num_movies, num_features), dtype=tf.float64), name='X')
+W = tf.Variable(tf.random.normal((num_users, num_features), dtype=tf.float64), name='W')
+b = tf.Variable(tf.random.normal((1, num_users), dtype=tf.float64), name='b')
+
+optimizer = tf.keras.optimizers.Adam(learning_rate=1e-1)
+for iter in range(iterations):
+    with tf.GradientTape() as tape:
+        cost_value = cofi_cost_func_v(X, W, b, Ynorm, R, lambda_)
+    grads = tape.gradient(cost_value, [X, W, b])
+    optimizer.apply_gradients(zip(grads, [X, W, b]))
+    if iter % 20 == 0:
+        print(f"训练损失（迭代 {iter}）：{cost_value.numpy():0.1f}")
+```
+
+### 预测评分
+
+使用训练好的参数预测所有评分：
+
+```python
+p = np.matmul(X.numpy(), np.transpose(W.numpy())) + b.numpy()
+pm = p + Ymean  # 恢复均值
+my_predictions = pm[:, 0]  # 新用户的预测评分
+```
+
+### 生成推荐
+
+按预测评分排序，推荐未评分的电影：
+
+```python
+ix = tf.argsort(my_predictions, direction='DESCENDING')
+for i in range(17):
+    j = ix[i]
+    if j not in my_rated:
+        print(f'预测评分 {my_predictions[j]:0.2f}：{movieList[j]}')
+```
+
+**示例输出：**
+
+```
+预测评分 4.49：My Sassy Girl (2001)
+预测评分 4.48：Memento (2000)
+预测评分 4.47：Laggies (2014)
+...
+```
+
+### 比较预测与实际评分
+
+检查模型对已评分电影的预测准确性：
+
+```python
+print('\n原始评分 vs 预测评分：\n')
+for i in range(len(my_ratings)):
+    if my_ratings[i] > 0:
+        print(f'原始 {my_ratings[i]}，预测 {my_predictions[i]:0.2f}：{movieList[i]}')
+```
+
+**示例输出：**
+
+```
+原始 5.0，预测 4.90：Shrek (2001)
+原始 5.0，预测 4.84：Harry Potter and the Sorcerer's Stone
+原始 2.0，预测 2.13：Amelie
+...
+```
+
+### 过滤高质量推荐
+
+为了确保推荐的电影更可靠，我们可以过滤掉评分数量少的电影：
+
+```python
+filter = (movieList_df["number of ratings"] > 20)
+movieList_df["pred"] = my_predictions
+movieList_df = movieList_df.reindex(columns=["pred", "mean rating", "number of ratings", "title"])
+movieList_df.loc[ix[:300]].loc[filter].sort_values("mean rating", ascending=False)
+```
+
+**示例输出：**
+
+| 电影ID | 预测评分 | 平均评分 | 评分数量 | 标题                    |
+| ------ | -------- | -------- | -------- | ----------------------- |
+| 1743   | 4.03     | 4.25     | 107      | Departed, The (2006)    |
+| 2112   | 3.99     | 4.24     | 149      | Dark Knight, The (2008) |
+| 211    | 4.48     | 4.12     | 159      | Memento (2000)          |
+| ...    | ...      | ...      | ...      | ...                     |
+
+这表明模型推荐了高评分且受欢迎的电影，如《The Departed》和《The Dark Knight》。
+
+---
+
+<a name="7"></a>
+
+## 7 - 总结
+
+恭喜你完成了这场协同过滤的实践之旅！通过这篇文章，你学会了：
+
+- 协同过滤如何通过矩阵分解预测用户评分。
+- 如何使用 MovieLens 数据集构建推荐系统。
+- 实现和优化协同过滤的成本函数。
+- 使用 TensorFlow 训练模型并生成个性化推荐。
+
+### 下一步
+
+- 尝试调整超参数（如特征数量 `num_features` 或学习率）。
+- 探索冷启动问题（新用户或新电影的推荐）。
+- 研究更高级的推荐技术，如深度学习或混合推荐系统。
+
+想深入学习？查看以下资源：
+
+- [MovieLens 数据集](https://grouplens.org/datasets/movielens/latest/)
+- [TensorFlow 自定义训练循环](https://www.tensorflow.org/guide/keras/writing_a_training_loop_from_scratch)
+- [MovieLens 数据集论文](https://doi.org/10.1145/2827872)
+
+希望这篇文章为你打开了推荐系统的大门！快去为你的朋友推荐一部电影吧！🎬✨
+---
+
+完整代码已开源在[GitHub仓库](https://github.com/kkkano/machine-learning-notebook/blob/main/C3/W2_RecSysNN_Assignment.ipynb)
+
+**本篇文章的部分内容和思想参考了 [吴恩达 (Andrew Ng)](https://www.andrewng.org/) 在 [Coursera 机器学习课程](https://www.coursera.org/learn/machine-learning) 中的讲解，感谢他对机器学习领域的卓越贡献。**
