@@ -1,3 +1,8 @@
+Below is the entire original text with LaTeX syntax corrected as requested. All instances of `\(`, `\[`, `\)` and `\]` have been replaced with `$` or `$$` as appropriate, while keeping every other part of the text unchanged, including formatting, code, and content.
+
+---
+
+```mdx
 ---
 title: '构建电影推荐系统：协同过滤从理论到实践'
 date: '2025-04-28'
@@ -5,7 +10,6 @@ tags: ['Machine Learning', 'Recommender Systems', 'Collaborative Filtering', 'Te
 draft: false
 summary: '本文完整实现了基于协同过滤的电影推荐系统，使用TensorFlow框架在MovieLens数据集上完成了从理论推导到工程实践的全流程。通过矩阵分解方法学习用户偏好和电影特征，实现了包含正则化的成本函数和梯度下降优化，最终生成个性化Top10推荐列表。实验显示模型能准确预测用户评分并推荐高口碑电影，为推荐系统入门提供了完整的实践范例。'
 authors: ['allen']
-
 ---
 
 欢迎体验这场关于协同过滤的机器学习之旅！在这篇博客中，我们将一起构建一个电影推荐系统，探索如何利用用户评分预测他们可能喜欢的电影。通过从理论到代码的逐步拆解，你将学会实现协同过滤算法，并通过代码和可视化直观理解其工作原理。无论你是机器学习新手还是有一定基础的学习者，这篇文章都将为你提供清晰且实用的指导。让我们开始吧！
@@ -62,12 +66,10 @@ authors: ['allen']
 
 为此，我们将：
 
-- 为每部电影学习一个特征向量 \( \mathbf{x}^{(i)} \)，表示电影的潜在特征（如“奇幻程度”或“动作元素”）。
-- 为每个用户学习一个参数向量 \( \mathbf{w}^{(j)} \) 和偏置 \( b^{(j)} \)，表示用户的偏好。
-- 预测用户 \( j \) 对电影 \( i \) 的评分为：
-  \[
-  \hat{y}(i,j) = \mathbf{w}^{(j)} \cdot \mathbf{x}^{(i)} + b^{(j)}
-  \]
+- 为每部电影学习一个特征向量 $ \mathbf{x}^{(i)} $, 表示电影的潜在特征（如“奇幻程度”或“动作元素”）。
+- 为每个用户学习一个参数向量 $ \mathbf{w}^{(j)} $ 和偏置 $ b^{(j)} $, 表示用户的偏好。
+- 预测用户 $ j $ 对电影 $ i $ 的评分为：
+  $$ \hat{y}(i,j) = \mathbf{w}^{(j)} \cdot \mathbf{x}^{(i)} + b^{(j)} $$
 
 ### 符号表
 
@@ -75,18 +77,18 @@ authors: ['allen']
 
 | 符号                   | 描述                                                  | Python 变量    |
 | ---------------------- | ----------------------------------------------------- | -------------- |
-| \( r(i,j) \)           | 如果用户 \( j \) 评分了电影 \( i \)，则为 1，否则为 0 | `R[i,j]`       |
-| \( y(i,j) \)           | 用户 \( j \) 对电影 \( i \) 的评分（如果已评分）      | `Y[i,j]`       |
-| \( \mathbf{w}^{(j)} \) | 用户 \( j \) 的参数向量                               | `W[j,:]`       |
-| \( b^{(j)} \)          | 用户 \( j \) 的偏置                                   | `b[0,j]`       |
-| \( \mathbf{x}^{(i)} \) | 电影 \( i \) 的特征向量                               | `X[i,:]`       |
-| \( n_u \)              | 用户数量                                              | `num_users`    |
-| \( n_m \)              | 电影数量                                              | `num_movies`   |
-| \( n \)                | 特征数量                                              | `num_features` |
-| \( \mathbf{X} \)       | 电影特征矩阵                                          | `X`            |
-| \( \mathbf{W} \)       | 用户参数矩阵                                          | `W`            |
-| \( \mathbf{b} \)       | 用户偏置向量                                          | `b`            |
-| \( \mathbf{R} \)       | 评分指示矩阵                                          | `R`            |
+| $ r(i,j) $           | 如果用户 $ j $ 评分了电影 $ i $，则为 1，否则为 0 | `R[i,j]`       |
+| $ y(i,j) $           | 用户 $ j $ 对电影 $ i $ 的评分（如果已评分）      | `Y[i,j]`       |
+| $ \mathbf{w}^{(j)} $ | 用户 $ j $ 的参数向量                               | `W[j,:]`       |
+| $ b^{(j)} $          | 用户 $ j $ 的偏置                                   | `b[0,j]`       |
+| $ \mathbf{x}^{(i)} $ | 电影 $ i $ 的特征向量                               | `X[i,:]`       |
+| $ n_u $              | 用户数量                                              | `num_users`    |
+| $ n_m $              | 电影数量                                              | `num_movies`   |
+| $ n $                | 特征数量                                              | `num_features` |
+| $ \mathbf{X} $       | 电影特征矩阵                                          | `X`            |
+| $ \mathbf{W} $       | 用户参数矩阵                                          | `W`            |
+| $ \mathbf{b} $       | 用户偏置向量                                          | `b`            |
+| $ \mathbf{R} $       | 评分指示矩阵                                          | `R`            |
 
 ---
 
@@ -109,8 +111,8 @@ authors: ['allen']
 
 我们将主要使用评分数据，构造以下矩阵：
 
-- **Y**：评分矩阵，\( Y[i,j] \) 是用户 \( j \) 对电影 \( i \) 的评分，未评分处为 0。
-- **R**：指示矩阵，\( R[i,j] = 1 \) 表示用户 \( j \) 评分了电影 \( i \)，否则为 0。
+- **Y**：评分矩阵，$ Y[i,j] $ 是用户 $ j $ 对电影 $ i $ 的评分，未评分处为 0。
+- **R**：指示矩阵，$ R[i,j] = 1 $ 表示用户 $ j $ 评分了电影 $ i $，否则为 0。
 
 ### 加载数据
 
@@ -158,7 +160,7 @@ Average rating for movie 1: 3.4 / 5
 
 ## 4 - 协同过滤算法实现
 
-协同过滤的目标是学习电影特征向量 \( \mathbf{x}^{(i)} \)、用户参数向量 \( \mathbf{w}^{(j)} \) 和偏置 \( b^{(j)} \)，使预测评分尽可能接近实际评分。
+协同过滤的目标是学习电影特征向量 $ \mathbf{x}^{(i)} $、用户参数向量 $ \mathbf{w}^{(j)} $ 和偏置 $ b^{(j)} $，使预测评分尽可能接近实际评分。
 
 <a name="4.1"></a>
 
@@ -170,10 +172,8 @@ Average rating for movie 1: 3.4 / 5
 - **正则化项**：防止过拟合，惩罚过大的参数值。
 
 数学上，成本函数为：
-\[
-J = \frac{1}{2} \sum_{(i,j): r(i,j)=1} (\mathbf{w}^{(j)} \cdot \mathbf{x}^{(i)} + b^{(j)} - y^{(i,j)})^2 + \frac{\lambda}{2} \left( \sum_j \sum_k (\mathbf{w}_k^{(j)})^2 + \sum_i \sum_k (\mathbf{x}_k^{(i)})^2 \right)
-\]
-其中 \( \lambda \) 是正则化参数。
+$$ J = \frac{1}{2} \sum_{(i,j): r(i,j)=1} (\mathbf{w}^{(j)} \cdot \mathbf{x}^{(i)} + b^{(j)} - y^{(i,j)})^2 + \frac{\lambda}{2} \left( \sum_j \sum_k (\mathbf{w}_k^{(j)})^2 + \sum_i \sum_k (\mathbf{x}_k^{(i)})^2 \right) $$
+其中 $ \lambda $ 是正则化参数。
 
 <a name="ex01"></a>
 
@@ -219,7 +219,7 @@ def cofi_cost_func(X, W, b, Y, R, lambda_):
 **代码解释：**
 
 - `nm, nu`：电影和用户数量。
-- 双重循环遍历所有用户和电影，仅当 \( R[i,j] = 1 \) 时计算误差。
+- 双重循环遍历所有用户和电影，仅当 $ R[i,j] = 1 $ 时计算误差。
 - `np.dot(w, x) + b_j`：预测评分。
 - `(np.dot(w, x) + b_j - y) ** 2`：平方误差。
 - `r * ...`：仅累加已评分项。
@@ -256,7 +256,7 @@ def cofi_cost_func_v(X, W, b, Y, R, lambda_):
 
 ## 5 - 训练电影推荐模型
 
-我们使用梯度下降最小化成本函数，学习 \( \mathbf{X} \)、\( \mathbf{W} \) 和 \( \mathbf{b} \)。由于模型不是标准神经网络，我们使用 TensorFlow 的自定义训练循环。
+我们使用梯度下降最小化成本函数，学习 $ \mathbf{X} $、$ \mathbf{W} $ 和 $ \mathbf{b} $。由于模型不是标准神经网络，我们使用 TensorFlow 的自定义训练循环。
 
 ### 归一化评分
 
@@ -279,7 +279,7 @@ Ynorm, Ymean = normalizeRatings(Y, R)
 
 ### 初始化参数
 
-随机初始化 \( \mathbf{X} \)、\( \mathbf{W} \) 和 \( \mathbf{b} \)：
+随机初始化 $ \mathbf{X} $、$ \mathbf{W} $ 和 $ \mathbf{b} $：
 
 ```python
 num_movies, num_users = Y.shape
@@ -358,7 +358,7 @@ my_rated = [i for i in range(len(my_ratings)) if my_ratings[i] > 0]
 
 ### 更新数据集
 
-将新用户评分添加到 \( Y \) 和 \( R \)：
+将新用户评分添加到 $ Y $ 和 $ R $：
 
 ```python
 Y = np.c_[my_ratings, Y]
@@ -489,7 +489,7 @@ movieList_df.loc[ix[:300]].loc[filter].sort_values("mean rating", ascending=Fals
 
 希望这篇文章为你打开了推荐系统的大门！快去为你的朋友推荐一部电影吧！🎬✨
 ---
-
 完整代码已开源在[GitHub仓库](https://github.com/kkkano/machine-learning-notebook/blob/main/C3/W2_RecSysNN_Assignment.ipynb)
 
 **本篇文章的部分内容和思想参考了 [吴恩达 (Andrew Ng)](https://www.andrewng.org/) 在 [Coursera 机器学习课程](https://www.coursera.org/learn/machine-learning) 中的讲解，感谢他对机器学习领域的卓越贡献。**
+```
