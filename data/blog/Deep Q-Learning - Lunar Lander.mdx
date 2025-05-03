@@ -1,3 +1,4 @@
+```mdx
 ---
 title: '基于深度Q学习的月球着陆：训练智能体征服Lunar Lander环境'
 date: '2025-05-04'
@@ -6,9 +7,7 @@ draft: false
 summary: '跟随本教程，学习如何应用深度Q学习（DQN）、经验回放和目标网络，从零开始训练一个能成功完成OpenAI Gym月球着陆器（Lunar Lander）任务的智能体。包含理论讲解、代码实现与结果展示。'
 authors: ['allen']
 ---
-
 # 基于深度Q学习的月球着陆
-
 ### 关键点
 -   研究表明，深度 Q 学习（Deep Q-Learning）结合经验回放（Experience Replay）和目标网络（Target Network）是一种有效的强化学习方法，用于训练智能体安全着陆月球着陆器。
 -   证据显示，这种方法在连续状态空间问题中表现良好，但训练稳定性可能因超参数选择而异。
@@ -24,27 +23,19 @@ authors: ['allen']
 -   **训练过程**：采用 ε-贪婪策略进行动作选择，ε 值从 1.0 逐渐衰减至 0.01，以平衡探索与利用。智能体与环境交互产生的经验存储在经验回放缓冲区中。每隔一定步数，从缓冲区中采样一个小批量（mini-batch）的经验，计算损失（均方误差 MSE），并更新 Q 网络的权重。目标网络的权重则通过软更新（soft update）方式缓慢向 Q 网络靠拢。
 ### 训练与结果
 训练智能体最多 2000 个回合（episodes），每个回合最多 1000 步（timesteps）。设置初始探索率 ε = 1.0，并随回合数增加而指数衰减至 0.01。当最近 100 个回合的平均奖励达到 200 分时，认为环境已解决，训练提前结束。训练完成后，应绘制奖励历史图以展示学习曲线，并生成智能体成功着陆的视频。
-
-
 ## 详细报告
-
 ### 引言
-
 欢迎来到基于深度 Q 学习（Deep Q-Learning, DQN）的月球着陆探索之旅！在本博客中，我们将深入探讨如何使用 DQN 训练一个智能体，使其能够熟练地将月球着陆器安全降落在月球表面的指定着陆台上。我们将利用 OpenAI Gym 提供的 `LunarLander-v2` 环境，并结合经验回放（Experience Replay）和目标网络（Target Network）这两项关键技术，来确保训练过程的稳定性和效率。无论您是强化学习的新手，还是已有一定基础的学习者，这篇文章都将为您提供清晰、详尽且实用的指导。
-<br /> 
-
+<br />
 <figure>
-  <img src="static/images/MLc3/lunar_lander.gif" width="40%" alt="月球着陆器环境动画" /> 
-  <figcaption style="text-align: center; font-style: italic;">图 1. 月球着陆器环境示意图。</figcaption>
+  <img src="static/images/MLc3/lunar_lander.gif" width="40%" alt="月球着陆器环境动画" />
+  <figcaption style={{ textAlign: 'center', fontStyle: 'italic' }}>图 1. 月球着陆器环境示意图。</figcaption>
 </figure>
-
-<br /> 
-
+<br />
 ### 环境描述
 #### Lunar Lander 环境概览
 `LunarLander-v2` 是一个经典的强化学习控制任务。其核心目标是训练一个智能体，通过控制着陆器的引擎推力，使其从空中平稳、安全地降落在月球表面标记好的着陆平台（landing pad）上。着陆平台由两根旗杆标出，中心点位于坐标 (0,0)。虽然目标是降落在平台内，但在平台外安全着陆有时也能获得部分奖励。着陆器从环境顶部的中心位置开始，初始时会受到一个随机的推力作用，模拟不确定的初始状态。好消息是，着陆器拥有无限燃料。当智能体在连续 100 个回合中获得的平均总奖励达到 200 分或更高时，我们认为该环境已被“解决”（solved）。
 以下是环境的关键组成部分的详细说明：
-
 #### 动作空间 (Action Space)
 智能体在每个时间步可以选择执行 4 种离散动作中的一种：
 -   0: **无操作 (Do nothing)** - 不启动任何引擎。
@@ -141,11 +132,9 @@ initial_state = env.reset()
 # 渲染环境的第一帧并显示
 # PIL.Image.fromarray(env.render(mode='rgb_array'))
 ```
-*![第一帧](/static/images/MLc3/firstframe.png)
-
+*
 *(环境初始状态渲染图)*
 为了构建适应环境的神经网络，我们需要知道状态向量的大小（观察空间的维度）和可用离散动作的数量（动作空间的维度）。
-
 ```python
 state_size = env.observation_space.shape
 num_actions = env.action_space.n
@@ -160,13 +149,12 @@ Number of actions: 4
 这告诉我们状态是 8 维的，有 4 个可选动作。
 #### 与环境交互
 Gym 环境遵循标准的“智能体-环境”交互循环范式。
-<br /> 
+<br />
 <center>
 <video src = "/static/images/MLc3/rl_formalism.m4v" width="840" height="480" controls autoplay loop poster="/static/images/MLc3/rl_formalism.png"> </video>
-<figcaption style = "text-align:center; font-style:italic">图 2. 智能体-环境交互循环。</figcaption>
+<figcaption style={{ textAlign: 'center', fontStyle: 'italic' }}>图 2. 智能体-环境交互循环。</figcaption>
 </center>
-
-<br /> 
+<br />
 在每个时间步 $t$，智能体根据当前状态 $S_t$ 和其策略 $\pi$ 选择一个动作 $A_t$。环境接收动作 $A_t$ 后，转移到下一个状态 $S_{t+1}$，并返回一个奖励 $R_t$。这个过程持续进行，直到达到终止状态。
 在 Gym 中，我们使用 `.step(action)` 方法来执行一个时间步的交互。该方法接收一个动作作为输入，并返回一个包含四个元素的元组：
 -   `observation` (状态 $S_{t+1}$): 环境的新状态。
@@ -187,11 +175,8 @@ next_state, reward, done, info = env.step(action)
 current_state = next_state
 ```
 *(一个表格会显示状态转换的详细信息)
-
-*![状态转换详细信息](/static/images/MLc3/statechangeinformation.png)
-
+*!
 在训练中，智能体会通过循环调用 `.step()` 来与环境进行连续交互。
-
 #### 创建 Q 网络和目标网络
 我们使用 TensorFlow Keras 来构建 Q 网络和目标网络。根据之前环境的分析，网络结构设定如下：
 -   **输入层 (Input Layer)**: 接收维度为 `state_size` (即 8) 的状态向量。
@@ -294,13 +279,12 @@ def agent_learn(experiences, gamma):
 `utils.update_target_network` 函数会根据软更新规则 $ w^- \leftarrow \tau w + (1 - \tau) w^- $ 来更新目标网络的权重。
 ### 训练智能体
 现在，我们将整合所有部分，实现完整的 DQN 训练循环。
-<br /> 
+<br />
 <figure>
-  <img src = "/static/images/MLc3/deep_q_algorithm.png" width = "90%" style = "border: thin silver solid; padding: 0px" /> {/* <-- 添加 / */}
-      <figcaption style = "text-align: center; font-style: italic">图 3. 带经验回放的深度 Q 学习算法流程。</figcaption>
+  <img src = "/static/images/MLc3/deep_q_algorithm.png" width = "90%" style={{ border: 'thin silver solid', padding: '0px' }} />
+      <figcaption style={{ textAlign: 'center', fontStyle: 'italic' }}>图 3. 带经验回放的深度 Q 学习算法流程。</figcaption>
 </figure>
-<br /> 
-
+<br />
 训练过程严格遵循上图所示的算法步骤：
 1.  **初始化**:
     -   初始化经验回放缓冲区 `memory_buffer` (一个 `deque`)，容量为 `MEMORY_SIZE`。
@@ -430,9 +414,8 @@ utils.create_video(filename, env, q_network) # 假设 utils.create_video 实现�
 utils.embed_mp4(filename) # 假设 utils.embed_mp4 实现嵌入逻辑
 ```
 <video width="840" height="480" controls>
-  <source src="/static/images/MLc3/lunar_lander.mp4" type="video/mp4" /> 
+  <source src="/static/images/MLc3/lunar_lander.mp4" type="video/mp4" />
 </video>
-
 *(视频 1. 训练好的智能体成功着陆月球着陆器)*
 视频展示了智能体利用学到的策略，稳定地控制着陆器，最终安全降落在着陆台上。
 ### 结论
@@ -441,3 +424,4 @@ utils.embed_mp4(filename) # 假设 utils.embed_mp4 实现嵌入逻辑
 -   Mnih, V., Kavukcuoglu, K., Silver, D. et al. Human-level control through deep reinforcement learning. Nature 518, 529–533 (2015).
 -   Mnih, V., Kavukcuoglu, K., Silver, D. et al. Playing Atari with Deep Reinforcement Learning. arXiv e-prints. arXiv:1312.5602 (2013).
 -   Lillicrap, T. P., Hunt, J. J., Pritzel, A., et al. Continuous Control with Deep Reinforcement Learning. ICLR (2016). (虽然本文处理的是离散动作空间，但这篇论文是处理连续控制问题的重要参考)
+```
