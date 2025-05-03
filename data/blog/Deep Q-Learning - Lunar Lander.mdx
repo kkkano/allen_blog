@@ -1,0 +1,442 @@
+---
+title: '基于深度Q学习的月球着陆：训练智能体征服Lunar Lander环境'
+date: '2025-05-04'
+tags: ['Reinforcement Learning', 'Deep Q-Learning', 'DQN', 'Experience Replay', 'Target Network', 'OpenAI Gym', 'Lunar Lander']
+draft: false
+summary: '跟随本教程，学习如何应用深度Q学习（DQN）、经验回放和目标网络，从零开始训练一个能成功完成OpenAI Gym月球着陆器（Lunar Lander）任务的智能体。包含理论讲解、代码实现与结果展示。'
+authors: ['Allen']
+---
+
+# 基于深度Q学习的月球着陆
+
+### 关键点
+-   研究表明，深度 Q 学习（Deep Q-Learning）结合经验回放（Experience Replay）和目标网络（Target Network）是一种有效的强化学习方法，用于训练智能体安全着陆月球着陆器。
+-   证据显示，这种方法在连续状态空间问题中表现良好，但训练稳定性可能因超参数选择而异。
+### 环境介绍
+月球着陆器（Lunar Lander）环境的目标是让智能体控制着陆器安全降落在月球表面的着陆台上。着陆台由两个旗杆标示，中心在坐标 (0,0)，着陆器可选择在着陆台内或外着陆。初始状态为顶部中心，施加随机初始力，燃料无限。解决环境的标准是智能体在过去 100 个回合中获得平均 200 分的奖励。
+-   **动作空间**：有 4 个离散动作：无操作（0）、点燃右侧引擎（1）、点燃主引擎（2）、点燃左侧引擎（3）。
+-   **观察空间**：状态向量包含 8 个变量：x、y 坐标，x、y 方向线速度，角度 $\theta$，角速度 $\dot \theta$，左右腿是否接触地面的布尔值。
+-   **奖励**：每步奖励基于距离着陆台远近、速度快慢、倾斜角度、腿接触地面（每条腿 +10 分）、引擎点火惩罚（侧引擎每帧 -0.03，主引擎每帧 -0.3），坠毁额外 -100 分，安全着陆额外 +100 分。
+-   **回合终止**：当着陆器坠毁或其 x 坐标绝对值大于 1 时结束。
+### 实现深度 Q 学习
+深度 Q 学习使用神经网络近似最优动作值函数 $ Q(s,a) \approx Q^*(s,a) $。为了稳定训练过程，采用了目标网络和经验回放技术。目标网络的权重更新缓慢，而经验回放则存储经验元组 $(s, a, r, s', done)$ 并从中随机采样，以打破数据间的相关性。
+-   **网络结构**：Q 网络和目标网络均为 3 层全连接神经网络。输入层接收 8 维状态向量，接着是两个各有 64 个单元的 ReLU 激活隐藏层，最后是一个具有 4 个单元（对应动作数量）的线性激活输出层。
+-   **训练过程**：采用 ε-贪婪策略进行动作选择，ε 值从 1.0 逐渐衰减至 0.01，以平衡探索与利用。智能体与环境交互产生的经验存储在经验回放缓冲区中。每隔一定步数，从缓冲区中采样一个小批量（mini-batch）的经验，计算损失（均方误差 MSE），并更新 Q 网络的权重。目标网络的权重则通过软更新（soft update）方式缓慢向 Q 网络靠拢。
+### 训练与结果
+训练智能体最多 2000 个回合（episodes），每个回合最多 1000 步（timesteps）。设置初始探索率 ε = 1.0，并随回合数增加而指数衰减至 0.01。当最近 100 个回合的平均奖励达到 200 分时，认为环境已解决，训练提前结束。训练完成后，应绘制奖励历史图以展示学习曲线，并生成智能体成功着陆的视频。
+
+
+## 详细报告
+
+### 引言
+
+欢迎来到基于深度 Q 学习（Deep Q-Learning, DQN）的月球着陆探索之旅！在本博客中，我们将深入探讨如何使用 DQN 训练一个智能体，使其能够熟练地将月球着陆器安全降落在月球表面的指定着陆台上。我们将利用 OpenAI Gym 提供的 `LunarLander-v2` 环境，并结合经验回放（Experience Replay）和目标网络（Target Network）这两项关键技术，来确保训练过程的稳定性和效率。无论您是强化学习的新手，还是已有一定基础的学习者，这篇文章都将为您提供清晰、详尽且实用的指导。
+<br>
+
+<figure>
+  <img src = "static\images\MLc3\lunar_lander.gif" width = 40%>
+      <figcaption style = "text-align: center; font-style: italic">图 1. 月球着陆器环境示意图。</figcaption>
+</figure>
+
+<br>
+
+### 环境描述
+#### Lunar Lander 环境概览
+`LunarLander-v2` 是一个经典的强化学习控制任务。其核心目标是训练一个智能体，通过控制着陆器的引擎推力，使其从空中平稳、安全地降落在月球表面标记好的着陆平台（landing pad）上。着陆平台由两根旗杆标出，中心点位于坐标 (0,0)。虽然目标是降落在平台内，但在平台外安全着陆有时也能获得部分奖励。着陆器从环境顶部的中心位置开始，初始时会受到一个随机的推力作用，模拟不确定的初始状态。好消息是，着陆器拥有无限燃料。当智能体在连续 100 个回合中获得的平均总奖励达到 200 分或更高时，我们认为该环境已被“解决”（solved）。
+以下是环境的关键组成部分的详细说明：
+
+#### 动作空间 (Action Space)
+智能体在每个时间步可以选择执行 4 种离散动作中的一种：
+-   0: **无操作 (Do nothing)** - 不启动任何引擎。
+-   1: **点燃右侧引擎 (Fire right engine)** - 提供向左的推力并可能引起旋转。
+-   2: **点燃主引擎 (Fire main engine)** - 提供向上的推力，减缓下降速度或使其上升。
+-   3: **点燃左侧引擎 (Fire left engine)** - 提供向右的推力并可能引起旋转。
+这些动作直接影响着陆器的线速度、角速度和姿态。
+#### 观察空间 (Observation Space)
+环境在每个时间步向智能体提供一个包含 8 个连续值的状态向量（state vector），用以描述着陆器的当前状态。这 8 个变量分别是：
+-   **x 坐标**: 着陆器的水平位置。着陆台中心为 x=0。
+-   **y 坐标**: 着陆器的垂直位置。着陆台中心为 y=0。
+-   **x 方向线速度 ($\dot x$)**: 水平移动速度。
+-   **y 方向线速度 ($\dot y$)**: 垂直移动速度。
+-   **角度 $\theta$**: 着陆器的倾斜角度，单位为弧度。水平姿态时 $\theta=0$。
+-   **角速度 $\dot \theta$**: 角度的变化率。
+-   **左腿触地 (l)**: 布尔值（0 或 1），表示左侧着陆腿是否接触地面。
+-   **右腿触地 (r)**: 布尔值（0 或 1），表示右侧着陆腿是否接触地面。
+智能体需要根据这个 8 维的状态向量来决策下一步应该采取哪个动作。
+#### 奖励机制 (Rewards)
+智能体在环境中每执行一个动作后，都会收到一个数值奖励（reward），这个奖励反映了该动作的好坏程度。一个回合（episode）的总奖励是该回合内所有时间步奖励的总和。奖励的具体规则如下：
+-   **接近奖励**: 着陆器越接近着陆台（(0,0)点），奖励越高；越远则奖励越低（可能是负值）。
+-   **速度惩罚**: 着陆器速度越快，奖励越低；速度越慢（尤其是接近着陆时），奖励越高。
+-   **角度惩罚**: 着陆器倾斜角度越大（偏离水平姿态越远），奖励越低。
+-   **触地奖励**: 每条着陆腿接触地面，奖励增加 10 分。
+-   **燃料消耗惩罚**:
+    -   每帧（时间步）点燃侧引擎（动作 1 或 3），奖励减少 0.03 分。
+    -   每帧点燃主引擎（动作 2），奖励减少 0.3 分。
+-   **结局奖励**:
+    -   如果着陆器安全着陆（速度足够慢，姿态接近水平，且最终静止在地面上），额外获得 +100 分。
+    -   如果着陆器坠毁（主体撞击地面），额外获得 -100 分。
+    这个奖励设计旨在鼓励智能体平稳、缓慢地接近着陆台中心，保持水平姿态，并尽可能节省燃料，最终实现软着陆。
+#### 回合终止条件 (Episode Termination)
+一个回合在以下任一情况发生时结束：
+1.  **着陆器坠毁**: 着陆器的主体（非着陆腿）接触到月球表面。
+2.  **飞出边界**: 着陆器的 x 坐标绝对值大于 1，即飞出了环境的左右边界。
+3.  **成功着陆**: 着陆器安全地停在地面上（即使在着陆台外，只要是安全静止状态也可能触发，但奖励会有所不同）。
+回合结束后，环境会自动重置，开始新的回合。
+您可以参考  获取关于此环境更全面的信息和版本历史。
+### 深度 Q 学习概览
+#### 深度 Q 学习原理
+在传统的强化学习中，如果状态空间和动作空间都是离散且有限的，我们可以使用表格方法，通过贝尔曼方程（Bellman equation）迭代地估计每个状态-动作对的价值（即动作值函数 Q(s,a)）：
+$$ Q_{i+1}(s,a) = R + \gamma \max_{a'} Q_i(s',a') $$
+其中：
+-   $s$ 是当前状态 (current state)
+-   $a$ 是在状态 $s$ 下采取的动作 (action)
+-   $R$ 是执行动作 $a$ 后获得的即时奖励 (immediate reward)
+-   $\gamma$ 是折扣因子 (discount factor, 0 ≤ γ ≤ 1)，用于衡量未来奖励的重要性
+-   $s'$ 是执行动作 $a$ 后转移到的下一个状态 (next state)
+-   $a'$ 是在下一个状态 $s'$ 下可能采取的所有动作
+-   $\max_{a'} Q_i(s',a')$ 表示在状态 $s'$ 下采取最优动作能获得的最大预期未来奖励（基于第 i 次迭代的 Q 函数估计）
+这个迭代过程理论上会收敛到最优动作值函数 $Q^*(s,a)$。然而，当状态空间是连续的（如此处的 Lunar Lander 环境，其状态由 8 个连续变量描述）或者非常大时，使用表格来存储和更新所有状态-动作对的 Q 值变得不切实际甚至不可能。
+深度 Q 学习（DQN）通过引入深度神经网络来解决这个问题。我们使用一个神经网络（称为 Q 网络）来近似动作值函数 $Q(s,a) \approx Q^*(s,a)$。这个网络以状态 $s$ 作为输入，输出对应每个可能动作 $a$ 的 Q 值估计。
+#### 训练稳定性问题
+直接使用神经网络来近似 Q 函数并进行训练可能会遇到严重的稳定性问题，导致训练过程振荡甚至发散。这主要是因为：
+1.  **数据相关性**: 强化学习中智能体收集到的经验 $(s, a, R, s')$ 通常是按时间顺序产生的，前后高度相关。如果直接按顺序用这些数据训练网络，会违反许多机器学习算法关于样本独立同分布（i.i.d.）的假设，导致训练效率低下且不稳定。
+2.  **目标值非平稳**: 在 Q 学习的更新规则中，目标值 $y = R + \gamma \max_{a'}Q(s',a';w)$ 依赖于当前 Q 网络的权重 $w$。这意味着在每次更新权重 $w$ 后，目标值 $y$ 也会随之改变。这种“追逐移动目标”的情况容易导致训练过程振荡。
+为了解决这些问题，DQN 引入了两项关键技术：目标网络（Target Network）和经验回放（Experience Replay）。
+#### 目标网络 (Target Network)
+为了解决目标值非平稳的问题，DQN 使用了一个独立的**目标网络** $\hat Q$，其结构与主 Q 网络完全相同，但权重 $w^-$ 更新得更慢。在计算目标值 $y$ 时，我们使用目标网络 $\hat Q$ 而不是主 Q 网络 $Q$：
+$$ y = R + \gamma \max_{a'} \hat Q(s',a'; w^-) $$
+这样，在一段训练时间内，目标值 $y$ 是相对稳定的，因为它依赖于较旧、变化缓慢的权重 $w^-$。主 Q 网络的训练目标是最小化以下损失（通常是均方误差 MSE）：
+$$ \text{Loss} = \mathbb{E} \left[ \left( \overbrace{R + \gamma \max_{a'}\hat{Q}(s',a'; w^-)}^{\text{y target}} - Q(s,a;w) \right)^2 \right] $$
+目标网络 $\hat Q$ 的权重 $w^-$ 不是通过梯度下降直接训练的。通常有两种更新方式：
+1.  **硬更新**: 每隔 $C$ 个时间步，将主 Q 网络的权重 $w$ 完全复制给目标网络的权重 $w^-$。
+2.  **软更新 (Soft Update)**: 在每次主 Q 网络更新后，按以下规则缓慢更新目标网络权重：
+    $$ w^- \leftarrow \tau w + (1 - \tau) w^- $$
+    其中 $\tau$ 是一个很小的正数（例如 0.001 或 0.005），称为软更新系数。这种方式使得目标网络权重平滑地追踪主网络权重，进一步提高了训练的稳定性。
+#### 经验回放 (Experience Replay)
+为了打破数据相关性并提高数据利用率，DQN 采用了经验回放机制。智能体在与环境交互过程中产生的每个经验“元组”（transition）$(s_t, a_t, R_t, s_{t+1}, done_t)$ 都被存储到一个固定大小的缓冲区（称为经验回放缓冲区或记忆库，memory buffer）中。其中 $done_t$ 是一个布尔值，指示状态 $s_{t+1}$ 是否是一个回合的终止状态。
+在训练时，不是使用刚刚产生的经验，而是从经验回放缓冲区中**随机采样**一个小批量（mini-batch）的经验元组。然后使用这个小批量数据来计算损失并更新 Q 网络的权重。
+这种做法有几个好处：
+-   **打破相关性**: 随机采样使得训练样本近似满足 i.i.d. 假设，减少了训练的方差，提高了稳定性。
+-   **提高数据效率**: 同一个经验可能被采样多次用于训练，使得智能体能更充分地从过去的经验中学习。
+-   **平滑学习**: 混合了来自不同时期、不同策略下的经验，有助于平滑学习过程。
+我们通常使用 `collections.deque` 来实现这个固定大小的缓冲区，并使用 `collections.namedtuple` 来方便地组织和访问经验元组中的各个元素。
+```python
+# 使用 namedtuple 定义经验元组的结构
+experience = namedtuple("Experience", field_names=["state", "action", "reward", "next_state", "done"])
+```
+### 实现细节
+#### 加载与检视环境
+首先，我们使用 `gym` 库加载 `LunarLander-v2` 环境。推荐使用这个版本，因为它是 Lunar Lander 环境的最新稳定版。
+```python
+import gym
+import numpy as np
+import tensorflow as tf
+import PIL.Image
+from pyvirtualdisplay import Display
+# 设置虚拟显示，以便在无头服务器（如 Colab）上渲染环境
+Display(visible=0, size=(840, 480)).start();
+env = gym.make('LunarLander-v2')
+# 重置环境到初始状态，并获取初始观测值
+initial_state = env.reset()
+# 渲染环境的第一帧并显示
+# PIL.Image.fromarray(env.render(mode='rgb_array'))
+```
+*![第一帧](/static/images/MLc3/firstframe.png)
+
+*(环境初始状态渲染图)*
+为了构建适应环境的神经网络，我们需要知道状态向量的大小（观察空间的维度）和可用离散动作的数量（动作空间的维度）。
+
+```python
+state_size = env.observation_space.shape
+num_actions = env.action_space.n
+print('State Shape:', state_size)
+print('Number of actions:', num_actions)
+```
+输出：
+```
+State Shape: (8,)
+Number of actions: 4
+```
+这告诉我们状态是 8 维的，有 4 个可选动作。
+#### 与环境交互
+Gym 环境遵循标准的“智能体-环境”交互循环范式。
+<br>
+<center>
+<video src = "/static/images/MLc3/rl_formalism.m4v" width="840" height="480" controls autoplay loop poster="/static/images/MLc3/rl_formalism.png"> </video>
+<figcaption style = "text-align:center; font-style:italic">图 2. 智能体-环境交互循环。</figcaption>
+</center>
+
+<br>
+在每个时间步 $t$，智能体根据当前状态 $S_t$ 和其策略 $\pi$ 选择一个动作 $A_t$。环境接收动作 $A_t$ 后，转移到下一个状态 $S_{t+1}$，并返回一个奖励 $R_t$。这个过程持续进行，直到达到终止状态。
+在 Gym 中，我们使用 `.step(action)` 方法来执行一个时间步的交互。该方法接收一个动作作为输入，并返回一个包含四个元素的元组：
+-   `observation` (状态 $S_{t+1}$): 环境的新状态。
+-   `reward` (奖励 $R_t$): 执行动作后获得的奖励。
+-   `done` (终止标志): 一个布尔值，如果回合结束则为 `True`，否则为 `False`。
+-   `info` (调试信息): 一个包含额外调试信息的字典，在此任务中通常不使用。
+我们通过 `.reset()` 方法开始一个新回合。
+```python
+# 假设 current_state 是当前状态
+current_state = env.reset() # 或者从上一步的 next_state 继承
+# 选择一个动作（这里以“无操作”为例）
+action = 0
+# 执行动作，获取反馈
+next_state, reward, done, info = env.step(action)
+# (可选) 使用辅助函数展示交互结果
+# utils.display_table(current_state, action, next_state, reward, done)
+# 更新当前状态，为下一步做准备
+current_state = next_state
+```
+*(一个表格会显示状态转换的详细信息)
+
+*![状态转换详细信息](/static/images/MLc3/statechangeinformation.png)
+
+在训练中，智能体会通过循环调用 `.step()` 来与环境进行连续交互。
+
+#### 创建 Q 网络和目标网络
+我们使用 TensorFlow Keras 来构建 Q 网络和目标网络。根据之前环境的分析，网络结构设定如下：
+-   **输入层 (Input Layer)**: 接收维度为 `state_size` (即 8) 的状态向量。
+-   **隐藏层 1 (Hidden Layer 1)**: 全连接层 (Dense)，包含 64 个神经元，使用 ReLU 激活函数。
+-   **隐藏层 2 (Hidden Layer 2)**: 全连接层 (Dense)，包含 64 个神经元，使用 ReLU 激活函数。
+-   **输出层 (Output Layer)**: 全连接层 (Dense)，包含 `num_actions` (即 4) 个神经元，使用线性激活函数。每个输出神经元对应一个动作的 Q 值估计。
+```python
+from tensorflow.keras.layers import Dense, Input
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.optimizers import Adam
+ALPHA = 1e-3  # 定义学习率
+# 创建 Q 网络
+q_network = Sequential([
+    Input(shape=state_size),
+    Dense(units=64, activation='relu'),
+    Dense(units=64, activation='relu'),
+    Dense(units=num_actions, activation='linear'),
+])
+# 创建目标 Q 网络 (结构相同)
+target_q_network = Sequential([
+    Input(shape=state_size),
+    Dense(units=64, activation='relu'),
+    Dense(units=64, activation='relu'),
+    Dense(units=num_actions, activation='linear'),
+])
+# 定义优化器
+optimizer = Adam(learning_rate=ALPHA)
+```
+两个网络结构完全一致，但它们的权重将在训练中独立（或半独立）更新。
+#### 计算损失 (Loss Computation)
+损失函数衡量的是当前 Q 网络预测值 $Q(s,a;w)$ 与目标值 $y$ 之间的差距。目标值 $y$ 的计算基于贝尔曼方程和目标网络 $\hat Q$：
+$$
+\begin{equation}
+    y_j =
+    \begin{cases}
+      R_j & \text{如果回合在步骤 } j+1 \text{ 终止 (done=True)}\\
+      R_j + \gamma \max_{a'}\hat{Q}(s_{j+1}, a'; w^-) & \text{否则 (done=False)}\\
+    \end{cases}
+\end{equation}
+$$
+我们实现 `compute_loss` 函数来完成这个计算。注意，这个函数处理的是一个小批量（mini-batch）的经验。
+```python
+from tensorflow.keras.losses import MeanSquaredError as MSE
+def compute_loss(experiences, gamma, q_network, target_q_network):
+    """
+    计算 DQN 的损失值。
+    Args:
+      experiences: (tuple) 包含 state, action, reward, next_state, done 张量的元组。
+      gamma: (float) 折扣因子。
+      q_network: (tf.keras.Model) 主 Q 网络。
+      target_q_network: (tf.keras.Model) 目标 Q 网络。
+    Returns:
+      loss: (tf.Tensor) 计算得到的均方误差损失。
+    """
+    states, actions, rewards, next_states, done_vals = experiences
+    # 1. 使用目标网络计算下一状态的最大 Q 值：max_a' Q^(s', a')
+    #   target_q_network(next_states) 输出形状为 (batch_size, num_actions)
+    #   tf.reduce_max(..., axis=-1) 沿着最后一个轴（动作轴）取最大值，得到形状 (batch_size,)
+    max_qsa = tf.reduce_max(target_q_network(next_states), axis=-1)
+    # 2. 计算目标 y 值
+    #   如果 done_vals[j] 为 1 (True)，表示回合结束，y_j = rewards[j]
+    #   如果 done_vals[j] 为 0 (False)，表示回合未结束，y_j = rewards[j] + gamma * max_qsa[j]
+    #   使用 (1 - done_vals) 作为因子可以简洁地实现这个条件逻辑
+    y_targets = rewards + (gamma * max_qsa * (1 - done_vals))
+    # 3. 使用主 Q 网络计算当前状态下所采取动作的 Q 值：Q(s, a)
+    #   q_network(states) 输出形状为 (batch_size, num_actions)
+    #   我们需要提取实际采取的动作 actions[j] 对应的 Q 值
+    #   tf.stack 创建一个索引张量，形状为 (batch_size, 2)，每行是 [batch_index, action_index]
+    #   tf.gather_nd 根据索引提取对应元素，得到形状 (batch_size,) 的 Q(s,a) 值
+    q_values = q_network(states)
+    action_indices = tf.stack([tf.range(q_values.shape[0]), tf.cast(actions, tf.int32)], axis=1)
+    q_s_a = tf.gather_nd(q_values, action_indices)
+    # 4. 计算 y_targets 和 q_s_a 之间的均方误差损失
+    loss = MSE(y_targets, q_s_a)
+    return loss
+```
+#### 更新网络权重
+我们定义 `agent_learn` 函数来执行一步学习更新，包括计算损失、获取梯度、更新 Q 网络权重以及软更新目标网络权重。使用 `@tf.function` 装饰器可以将 Python 函数编译成 TensorFlow 图，提高执行效率。
+```python
+import utils # 假设 utils 模块包含 update_target_network 函数
+@tf.function
+def agent_learn(experiences, gamma):
+    """
+    执行一步学习更新。
+    Args:
+      experiences: (tuple) 从经验回放中采样的小批量经验。
+      gamma: (float) 折扣因子。
+    """
+    # 使用 tf.GradientTape 记录计算过程以自动计算梯度
+    with tf.GradientTape() as tape:
+        # 计算损失
+        loss = compute_loss(experiences, gamma, q_network, target_q_network)
+    # 计算损失相对于 Q 网络可训练变量的梯度
+    gradients = tape.gradient(loss, q_network.trainable_variables)
+    # 使用优化器将梯度应用于 Q 网络的权重
+    optimizer.apply_gradients(zip(gradients, q_network.trainable_variables))
+    # 使用软更新方式更新目标网络的权重
+    utils.update_target_network(q_network, target_q_network) # 假设 utils.update_target_network 实现 w_target = tau*w_q + (1-tau)*w_target
+```
+`utils.update_target_network` 函数会根据软更新规则 $ w^- \leftarrow \tau w + (1 - \tau) w^- $ 来更新目标网络的权重。
+### 训练智能体
+现在，我们将整合所有部分，实现完整的 DQN 训练循环。
+<br>
+<figure>
+  <img src = "/static/images/MLc3/deep_q_algorithm.png" width = 90% style = "border: thin silver solid; padding: 0px">
+      <figcaption style = "text-align: center; font-style: italic">图 3. 带经验回放的深度 Q 学习算法流程。</figcaption>
+</figure>
+<br>
+训练过程严格遵循上图所示的算法步骤：
+1.  **初始化**:
+    -   初始化经验回放缓冲区 `memory_buffer` (一个 `deque`)，容量为 `MEMORY_SIZE`。
+    -   初始化主 Q 网络 `q_network` (已完成)。
+    -   初始化目标网络 `target_q_network`，将其权重设置为与主 Q 网络相同。
+    -   设置探索率 $\epsilon$ 的初始值 `epsilon = 1.0`。
+2.  **外层循环 (回合 Episodes)**: 对每个回合 `i` 从 1 到 `num_episodes` (设为 2000):
+    a.  **重置环境**: 调用 `env.reset()` 获取初始状态 `state`。初始化回合总奖励 `total_points = 0`。
+    b.  **内层循环 (时间步 Timesteps)**: 对每个时间步 `t` 从 1 到 `max_num_timesteps` (设为 1000):
+        i.  **选择动作**: 根据当前状态 `state` 和当前探索率 $\epsilon$，使用 ε-贪婪策略选择动作 `action`。这通常意味着以 $1-\epsilon$ 的概率选择 Q 网络认为最优的动作（`argmax Q(state, a)`），以 $\epsilon$ 的概率随机选择一个动作。我们使用 `utils.get_action` 函数实现。
+        ii. **执行动作**: 调用 `env.step(action)` 与环境交互，获得 `next_state`, `reward`, `done`, `info`。
+        iii. **存储经验**: 将经验元组 `(state, action, reward, next_state, done)` 添加到 `memory_buffer`。
+        iv. **学习更新**: 检查是否满足更新条件（例如，已经过了 `NUM_STEPS_FOR_UPDATE = 4` 步，并且 `memory_buffer` 中有足够的经验（大于 `BATCH_SIZE`））。如果满足条件（`update = True`）：
+            -   从 `memory_buffer` 中随机采样一个小批量经验 `experiences` (使用 `utils.get_experiences`)。
+            -   调用 `agent_learn(experiences, GAMMA)` 函数，使用采样到的经验进行一次网络权重更新。
+        v.  **状态转移**: 更新当前状态 `state = next_state.copy()`。累加奖励 `total_points += reward`。
+        vi. **检查终止**: 如果 `done` 为 `True`，表示回合结束，跳出内层循环。
+    c.  **回合结束处理**:
+        -   记录当前回合的总奖励 `total_points` 到 `total_point_history` 列表中。
+        -   计算最近 `num_p_av = 100` 个回合的平均奖励 `av_latest_points`。
+        -   **更新探索率 $\epsilon$**: 根据预设的衰减规则（如指数衰减 `epsilon = max(EPSILON_END, EPSILON_DECAY * epsilon)`）降低 $\epsilon$ 值 (使用 `utils.get_new_eps`)。
+        -   打印当前回合数和最近 100 回合的平均奖励。
+        -   **检查是否解决**: 如果 `av_latest_points >= 200.0`，则认为环境已解决，打印成功信息，保存训练好的 Q 网络模型 (`q_network.save`)，并提前终止训练。
+3.  **训练结束**: 记录并打印总训练时长。
+```python
+import time
+from collections import deque, namedtuple
+import numpy as np
+import utils # 假设 utils 包含 get_action, get_experiences, check_update_conditions, get_new_eps, update_target_network 等函数
+# 超参数 (已在前面定义或在此处设定)
+MEMORY_SIZE = 100_000
+GAMMA = 0.995
+ALPHA = 1e-3
+NUM_STEPS_FOR_UPDATE = 4
+BATCH_SIZE = 64           # 小批量大小
+EPSILON_START = 1.0       # 初始 epsilon
+EPSILON_END = 0.01        # 最终 epsilon
+EPSILON_DECAY = 0.995     # epsilon 衰减率
+start = time.time()
+num_episodes = 2000
+max_num_timesteps = 1000
+total_point_history = []
+num_p_av = 100  # 用于计算平均奖励的回合数
+epsilon = EPSILON_START
+# 1. 初始化经验回放缓冲区
+memory_buffer = deque(maxlen=MEMORY_SIZE)
+# 3. 初始化目标网络权重
+target_q_network.set_weights(q_network.get_weights())
+# 4. 外层循环 (回合)
+for i in range(num_episodes):
+    # 5. 重置环境
+    state = env.reset()
+    total_points = 0
+    # 6. 内层循环 (时间步)
+    for t in range(max_num_timesteps):
+        # 7. 选择动作 (ε-贪婪)
+        state_qn = np.expand_dims(state, axis=0) # 调整状态形状以适应网络输入
+        q_values = q_network(state_qn)
+        action = utils.get_action(q_values, epsilon) # 假设 utils.get_action 实现 ε-贪婪
+        # 8. 执行动作
+        next_state, reward, done, _ = env.step(action)
+        # 9. 存储经验
+        memory_buffer.append(experience(state, action, reward, next_state, done))
+        # 10. 检查是否更新网络
+        update = utils.check_update_conditions(t, NUM_STEPS_FOR_UPDATE, memory_buffer) # 假设 utils.check_update_conditions 实现检查逻辑
+        # 11-14. 如果更新
+        if update:
+            # 采样小批量经验
+            experiences = utils.get_experiences(memory_buffer) # 假设 utils.get_experiences 实现采样和格式转换
+            # 执行学习步骤
+            agent_learn(experiences, GAMMA)
+        # 15. 状态转移和检查终止
+        state = next_state.copy()
+        total_points += reward
+        if done:
+            break
+    # 16. 回合结束处理
+    total_point_history.append(total_points)
+    av_latest_points = np.mean(total_point_history[-num_p_av:])
+    # 更新 epsilon
+    epsilon = utils.get_new_eps(epsilon) # 假设 utils.get_new_eps 实现衰减逻辑
+    print(f"\rEpisode {i+1} | Total point average of the last {num_p_av} episodes: {av_latest_points:.2f}", end="")
+    if (i+1) % num_p_av == 0:
+        print(f"\rEpisode {i+1} | Total point average of the last {num_p_av} episodes: {av_latest_points:.2f}")
+    # 检查是否解决
+    if av_latest_points >= 200.0:
+        print(f"\n\nEnvironment solved in {i+1} episodes!")
+        q_network.save('lunar_lander_model.h5') # 保存模型
+        break
+tot_time = time.time() - start
+print(f"\nTotal Runtime: {tot_time:.2f} s ({(tot_time/60):.2f} min)")
+```
+使用默认参数，训练通常需要 10 到 15 分钟。典型的输出可能如下：
+```
+Episode 100 | Total point average of the last 100 episodes: -150.85
+Episode 200 | Total point average of the last 100 episodes: -106.11
+...
+Episode 500 | Total point average of the last 100 episodes: 159.91
+Episode 534 | Total point average of the last 100 episodes: 201.37
+Environment solved in 534 episodes!
+Total Runtime: 742.99 s (12.38 min)
+```
+#### 可视化训练结果
+训练完成后，绘制每个回合的总奖励以及最近 100 回合的移动平均奖励曲线，可以直观地看到智能体的学习进步过程。
+```python
+import matplotlib.pyplot as plt
+import utils # 假设 utils 包含 plot_history 函数
+# 绘制奖励历史
+utils.plot_history(total_point_history) # 假设 utils.plot_history 实现绘图逻辑
+```
+![png](static\images\MLc3\output_38_0.png)
+*(图 4. 训练过程中的奖励历史和移动平均线)*
+从图中可以看出，随着训练的进行，回合总奖励的移动平均值稳步上升，最终超过 200 分的解决标准。
+#### 观看训练好的智能体
+最后，我们可以加载训练好的 Q 网络模型，让智能体在环境中执行任务，并将过程录制成视频，以检验其性能。由于环境的初始状态有随机性，每次运行看到的着陆过程可能会略有不同，但一个训练良好的智能体应该能够在各种初始条件下都成功、安全地着陆。
+```python
+import logging
+import utils # 假设 utils 包含 create_video 和 embed_mp4 函数
+# (可选) 抑制 imageio 库可能产生的警告信息
+logging.getLogger().setLevel(logging.ERROR)
+# 定义视频保存路径和文件名
+filename = "./videos/lunar_lander.mp4"
+# 创建视频 (加载已保存的 q_network 模型)
+# q_network = tf.keras.models.load_model('lunar_lander_model.h5') # 如果需要重新加载
+utils.create_video(filename, env, q_network) # 假设 utils.create_video 实现录制逻辑
+# (可选) 在 Jupyter Notebook 中嵌入并播放视频
+utils.embed_mp4(filename) # 假设 utils.embed_mp4 实现嵌入逻辑
+```
+<video width="840" height="480" controls>
+<source src="\static\images\MLc3\lunar_lander.mp4" type="video/mp4">
+</video>
+
+*(视频 1. 训练好的智能体成功着陆月球着陆器)*
+视频展示了智能体利用学到的策略，稳定地控制着陆器，最终安全降落在着陆台上。
+### 结论
+通过本篇博客，我们详细介绍了如何应用深度 Q 学习（DQN）算法，并结合经验回放和目标网络技术，成功训练了一个能够解决 OpenAI Gym 中 Lunar Lander 环境的智能体。我们探讨了 DQN 的基本原理、解决训练稳定性的关键技术，并展示了具体的实现细节和训练过程。结果表明，DQN 是处理具有连续状态空间和离散动作空间的强化学习问题的有效方法。希望这篇文章能帮助您理解 DQN 的核心概念和实践步骤。如果您对此感兴趣，可以尝试调整超参数（如学习率、$\epsilon$ 衰减率、网络结构、缓冲区大小等）进行实验，或将这些技术应用到其他有趣的强化学习环境中。
+### 参考文献
+-   Mnih, V., Kavukcuoglu, K., Silver, D. et al. Human-level control through deep reinforcement learning. Nature 518, 529–533 (2015).
+-   Mnih, V., Kavukcuoglu, K., Silver, D. et al. Playing Atari with Deep Reinforcement Learning. arXiv e-prints. arXiv:1312.5602 (2013).
+-   Lillicrap, T. P., Hunt, J. J., Pritzel, A., et al. Continuous Control with Deep Reinforcement Learning. ICLR (2016). (虽然本文处理的是离散动作空间，但这篇论文是处理连续控制问题的重要参考)
