@@ -160,13 +160,13 @@ Number of actions: 4
 这告诉我们状态是 8 维的，有 4 个可选动作。
 #### 与环境交互
 Gym 环境遵循标准的“智能体-环境”交互循环范式。
-<br>
+<br /> 
 <center>
 <video src = "/static/images/MLc3/rl_formalism.m4v" width="840" height="480" controls autoplay loop poster="/static/images/MLc3/rl_formalism.png"> </video>
 <figcaption style = "text-align:center; font-style:italic">图 2. 智能体-环境交互循环。</figcaption>
 </center>
 
-<br>
+<br /> 
 在每个时间步 $t$，智能体根据当前状态 $S_t$ 和其策略 $\pi$ 选择一个动作 $A_t$。环境接收动作 $A_t$ 后，转移到下一个状态 $S_{t+1}$，并返回一个奖励 $R_t$。这个过程持续进行，直到达到终止状态。
 在 Gym 中，我们使用 `.step(action)` 方法来执行一个时间步的交互。该方法接收一个动作作为输入，并返回一个包含四个元素的元组：
 -   `observation` (状态 $S_{t+1}$): 环境的新状态。
