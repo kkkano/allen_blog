@@ -27,8 +27,17 @@ authors: ['allen']
 欢迎来到基于深度 Q 学习（Deep Q-Learning, DQN）的月球着陆探索之旅！在本博客中，我们将深入探讨如何使用 DQN 训练一个智能体，使其能够熟练地将月球着陆器安全降落在月球表面的指定着陆台上。我们将利用 OpenAI Gym 提供的 `LunarLander-v2` 环境，并结合经验回放（Experience Replay）和目标网络（Target Network）这两项关键技术，来确保训练过程的稳定性和效率。无论您是强化学习的新手，还是已有一定基础的学习者，这篇文章都将为您提供清晰、详尽且实用的指导。
 <br />
 <figure>
-  <img src="/static/images/MLc3/lunar_lander.gif" width="40%" alt="月球着陆器环境动画" />
-  <figcaption style={{ textAlign: 'center', fontStyle: 'italic' }}>图 1. 月球着陆器环境示意图。</figcaption>
+  {/* 给 img 元素添加样式 */}
+  <img
+    src="/static/images/MLc3/lunar_lander.gif"
+    width="40%"
+    alt="月球着陆器环境动画"
+    style={{ display: 'block', margin: '0 auto' }} // 设置为块级并自动边距
+  />
+  {/* figcaption 仍然需要 textAlign: 'center' 来居中其内部文字 */}
+  <figcaption style={{ textAlign: 'center', fontStyle: 'italic' }}>
+    图 1. 月球着陆器环境示意图。
+  </figcaption>
 </figure>
 <br />
 ### 环境描述
