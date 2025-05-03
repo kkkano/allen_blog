@@ -175,7 +175,7 @@ next_state, reward, done, info = env.step(action)
 current_state = next_state
 ```
 *(一个表格会显示状态转换的详细信息)
-*!
+*![状态转换详细信息](/static/images/MLc3/statechangeinformation.png)
 在训练中，智能体会通过循环调用 `.step()` 来与环境进行连续交互。
 #### 创建 Q 网络和目标网络
 我们使用 TensorFlow Keras 来构建 Q 网络和目标网络。根据之前环境的分析，网络结构设定如下：
