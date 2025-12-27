@@ -65,11 +65,6 @@ const unoptimized = process.env.UNOPTIMIZED ? true : undefined
 module.exports = () => {
   const plugins = [withContentlayer, withBundleAnalyzer]
   return plugins.reduce((acc, next) => next(acc), {
-    newsletter: {
-      apiKey: '0c9fb8b-41d3-4cf2-a912-3aaa1c24bfb4',
-      provider: 'buttondown',
-    },
-
     output,
     basePath,
     reactStrictMode: true,
