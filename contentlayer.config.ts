@@ -159,7 +159,8 @@ export default makeSource({
       remarkCodeTitles,
       remarkMath,
       remarkImgToJsx,
-      remarkAlert,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      remarkAlert as any,
     ],
     rehypePlugins: [
       rehypeSlug,
@@ -176,7 +177,8 @@ export default makeSource({
       rehypeKatex,
       rehypeKatexNoTranslate,
       [rehypeCitation, { path: path.join(root, 'data') }],
-      [rehypePrismPlus, { defaultLanguage: 'js', ignoreMissing: true }],
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      [rehypePrismPlus as any, { defaultLanguage: 'js', ignoreMissing: true }],
       rehypePresetMinify,
     ],
   },
