@@ -69,6 +69,8 @@ module.exports = () => {
     basePath,
     reactStrictMode: true,
     pageExtensions: ['ts', 'tsx', 'js', 'jsx', 'md', 'mdx'],
+    // Ensure Turbopack is explicitly configured for Next 16+ (silences default turbopack/webpack conflict)
+    turbopack: {},
     eslint: {
       dirs: ['app', 'components', 'layouts', 'scripts'],
     },
