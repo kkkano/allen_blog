@@ -17,7 +17,7 @@ export default function TOCSidebar({ toc }: TOCSidebarProps) {
 
   useEffect(() => {
     const headings = toc.map((item) => item.url.slice(1))
-    
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
