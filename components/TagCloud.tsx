@@ -20,11 +20,11 @@ const tagColors = [
 export default function TagCloud({ tagCounts }: TagCloudProps) {
   const tagKeys = Object.keys(tagCounts)
   const sortedTags = tagKeys.sort((a, b) => tagCounts[b] - tagCounts[a])
-  
+
   // Calculate size based on count
   const maxCount = Math.max(...Object.values(tagCounts))
   const minCount = Math.min(...Object.values(tagCounts))
-  
+
   const getTagSize = (count: number) => {
     if (maxCount === minCount) return 'text-base'
     const ratio = (count - minCount) / (maxCount - minCount)
@@ -45,7 +45,7 @@ export default function TagCloud({ tagCounts }: TagCloudProps) {
         const count = tagCounts[tag]
         const size = getTagSize(count)
         const color = getTagColor(index)
-        
+
         return (
           <Link
             key={tag}
