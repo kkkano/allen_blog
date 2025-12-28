@@ -71,7 +71,7 @@ function Pagination({ totalPages, currentPage }: PaginationProps) {
           </Link>
         )}
         <span
-          className={`rounded-lg bg-gradient-to-r ${gradientPalette} px-4 py-2 font-medium text-white`}
+          className={`rounded-lg border-2 border-cyan-500 bg-cyan-50 px-4 py-2 font-medium text-cyan-700 dark:border-cyan-400 dark:bg-cyan-900/30 dark:text-cyan-300`}
         >
           {currentPage} / {totalPages}
         </span>
@@ -129,7 +129,7 @@ export default function ListLayoutWithTags({
             <div className="px-6 py-4">
               {pathname.startsWith('/blog') ? (
                 <h3
-                  className={`inline-flex rounded-lg bg-gradient-to-r ${gradientPalette} px-3 py-2 text-sm font-bold uppercase text-white shadow-sm`}
+                  className={`inline-flex rounded-lg border-2 border-cyan-500 bg-cyan-50 px-3 py-2 text-sm font-bold uppercase text-cyan-700 dark:border-cyan-400 dark:bg-cyan-900/30 dark:text-cyan-300`}
                 >
                   All Posts
                 </h3>
@@ -147,7 +147,7 @@ export default function ListLayoutWithTags({
                     <li key={t} className="my-3">
                       {decodeURI(pathname.split('/tags/')[1]) === slug(t) ? (
                         <h3
-                          className={`inline-flex rounded-lg bg-gradient-to-r ${gradientPalette} px-3 py-2 text-sm font-bold uppercase text-white shadow-sm`}
+                          className={`inline-flex rounded-lg border-2 border-cyan-500 bg-cyan-50 px-3 py-2 text-sm font-bold uppercase text-cyan-700 dark:border-cyan-400 dark:bg-cyan-900/30 dark:text-cyan-300`}
                         >
                           {`${t} (${tagCounts[t]})`}
                         </h3>
