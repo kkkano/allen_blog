@@ -85,9 +85,7 @@ export default function Pre({ children, className, ...props }: PreProps) {
     return <Mermaid chart={childElement.props.children} />
   }
 
-  const displayLanguage = language
-    ? languageNames[language.toLowerCase()] || language
-    : 'Code'
+  const displayLanguage = language ? languageNames[language.toLowerCase()] || language : 'Code'
 
   const handleCopy = async () => {
     if (preRef.current) {
