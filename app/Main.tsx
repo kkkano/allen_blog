@@ -32,7 +32,7 @@ export default function Home({ posts }: { posts: Post[] }) {
         {/* Hero Section with Typewriter */}
         <div className="space-y-6 pb-10 pt-8 md:space-y-8">
           {/* Animated gradient background */}
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 p-8 dark:from-gray-800 dark:to-gray-900 md:p-12">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 p-8 dark:from-gray-900 dark:to-gray-950 md:p-12 [.gradient_&]:from-cyan-50 [.gradient_&]:via-sky-50 [.gradient_&]:to-blue-50 dark:[.gradient_&]:from-gray-950 dark:[.gradient_&]:via-gray-950 dark:[.gradient_&]:to-gray-900">
             <div className="bg-grid-pattern absolute inset-0 opacity-5" />
             <div className="absolute -right-20 -top-20 h-60 w-60 rounded-full bg-gradient-to-br from-cyan-400/30 to-blue-500/30 blur-3xl" />
             <div className="absolute -bottom-20 -left-20 h-60 w-60 rounded-full bg-gradient-to-br from-purple-400/30 to-pink-500/30 blur-3xl" />

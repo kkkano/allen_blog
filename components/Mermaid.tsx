@@ -13,9 +13,10 @@ export default function Mermaid({ chart }: MermaidProps) {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    const isDark = document.documentElement.classList.contains('dark')
     mermaid.initialize({
       startOnLoad: false,
-      theme: 'default',
+      theme: isDark ? 'dark' : 'default',
       securityLevel: 'loose',
       fontFamily: 'inherit',
       flowchart: {
@@ -23,22 +24,17 @@ export default function Mermaid({ chart }: MermaidProps) {
         htmlLabels: true,
         curve: 'basis',
       },
-      themeVariables: {
-        primaryColor: '#3b82f6',
-        primaryTextColor: '#1f2937',
-        primaryBorderColor: '#60a5fa',
-        lineColor: '#6b7280',
-        secondaryColor: '#f3f4f6',
-        tertiaryColor: '#fef3c7',
-      },
     })
 
     const renderChart = async () => {
       if (!containerRef.current) return
 
+      const trimmed = chart.trim()
+      if (!trimmed) return
+
       try {
         const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`
-        const { svg: renderedSvg } = await mermaid.render(id, chart)
+        const { svg: renderedSvg } = await mermaid.render(id, trimmed)
         setSvg(renderedSvg)
         setError(null)
       } catch (err) {

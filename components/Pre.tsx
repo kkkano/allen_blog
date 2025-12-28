@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, ReactNode } from 'react'
+import { isValidElement, useRef, useState, type ReactNode } from 'react'
 import Mermaid from './Mermaid'
 
 interface PreProps {
@@ -70,6 +70,14 @@ export default function Pre({ children, className, ...props }: PreProps) {
   const [copied, setCopied] = useState(false)
   const preRef = useRef<HTMLPreElement>(null)
 
+  const extractText = (node: ReactNode): string => {
+    if (node === null || node === undefined || typeof node === 'boolean') return ''
+    if (typeof node === 'string' || typeof node === 'number') return String(node)
+    if (Array.isArray(node)) return node.map(extractText).join('')
+    if (isValidElement(node)) return extractText(node.props?.children)
+    return ''
+  }
+
   // Extract language from className (e.g., "language-javascript")
   let language = ''
   const childElement = children as React.ReactElement<{ className?: string; children?: string }>
@@ -82,10 +90,18 @@ export default function Pre({ children, className, ...props }: PreProps) {
 
   // Check if this is a mermaid code block
   if (language === 'mermaid' && childElement?.props?.children) {
-    // Ensure chart is a string (children might be an array)
-    const chartContent = Array.isArray(childElement.props.children)
-      ? childElement.props.children.join('')
-      : String(childElement.props.children)
+    const raw = childElement.props.children as ReactNode
+    const chartContent =
+      Array.isArray(raw) &&
+      raw.length > 0 &&
+      raw.every((n) => {
+        if (!isValidElement(n)) return false
+        const props = n.props as { className?: unknown }
+        return typeof props.className === 'string' && props.className.includes('line')
+      })
+        ? raw.map((line) => extractText(line)).join('\n')
+        : extractText(raw)
+
     return <Mermaid chart={chartContent.trim()} />
   }
 

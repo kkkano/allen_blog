@@ -66,7 +66,17 @@ const ThemeSwitch = () => {
       <Menu as="div" className="relative inline-block text-left">
         <div className="flex items-center justify-center hover:text-primary-500 dark:hover:text-primary-400">
           <MenuButton aria-label="Theme switcher">
-            {mounted ? resolvedTheme === 'dark' ? <Moon /> : <Sun /> : <Blank />}
+            {mounted ? (
+              theme === 'gradient' ? (
+                <Sun />
+              ) : resolvedTheme === 'dark' ? (
+                <Moon />
+              ) : (
+                <Sun />
+              )
+            ) : (
+              <Blank />
+            )}
           </MenuButton>
         </div>
         <Transition
@@ -123,6 +133,22 @@ const ThemeSwitch = () => {
                           <Monitor />
                         </div>
                         System
+                      </button>
+                    )}
+                  </MenuItem>
+                </Radio>
+                <Radio value="gradient">
+                  <MenuItem>
+                    {({ focus }) => (
+                      <button
+                        className={`${
+                          focus ? 'bg-primary-600 text-white' : ''
+                        } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                      >
+                        <div className="mr-2">
+                          <Sun />
+                        </div>
+                        Gradient
                       </button>
                     )}
                   </MenuItem>
