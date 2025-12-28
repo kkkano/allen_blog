@@ -8,9 +8,6 @@ import NewsletterForm from 'pliny/ui/NewsletterForm'
 import TypeWriter from '@/components/TypeWriter'
 
 const MAX_DISPLAY = 5
-const accentGradient =
-  'from-cyan-500 to-blue-500 dark:from-cyan-400 dark:to-blue-500 [.gradient_&]:from-[#5eead4] [.gradient_&]:via-[#6366f1] [.gradient_&]:to-[#f472b6] dark:[.gradient_&]:from-[#0d9488] dark:[.gradient_&]:to-[#c084fc]'
-
 interface Post {
   slug: string
   date: string
@@ -160,10 +157,10 @@ export default function Home({ posts }: { posts: Post[] }) {
         <div className="flex justify-end pt-6 text-base font-medium leading-6">
           <Link
             href="/blog"
-            className={`group inline-flex items-center space-x-2 rounded-2xl bg-gradient-to-r ${accentGradient} px-6 py-3 text-white shadow-2xl transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_20px_45px_rgba(45,212,191,0.35)]`}
+            className="group inline-flex items-center space-x-2 font-semibold text-pink-500 transition-colors duration-300 hover:text-pink-600 dark:text-pink-400 dark:hover:text-pink-300"
             aria-label="All posts"
           >
-            <span>View All Posts</span>
+            <span>All Posts</span>
             <svg
               className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"
               fill="none"
