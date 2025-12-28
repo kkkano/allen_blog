@@ -1,3 +1,6 @@
+'use client'
+
+import { useState, useEffect } from 'react'
 import siteMetadata from '@/data/siteMetadata'
 import headerNavLinks from '@/data/headerNavLinks'
 import Logo from '@/data/logo.svg'
@@ -7,20 +10,33 @@ import ThemeSwitch from './ThemeSwitch'
 import SearchButton from './SearchButton'
 
 const Header = () => {
-  let headerClass = 'flex items-center w-full bg-white dark:bg-gray-950 justify-between py-10'
-  if (siteMetadata.stickyNav) {
-    headerClass += ' sticky top-0 z-50'
-  }
+  const [isScrolled, setIsScrolled] = useState(false)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10)
+    }
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  const headerClass = `flex items-center w-full justify-between py-4 transition-all duration-300 ${
+    siteMetadata.stickyNav ? 'sticky top-0 z-50' : ''
+  } ${
+    isScrolled
+      ? 'bg-white/80 backdrop-blur-lg shadow-lg dark:bg-gray-950/80'
+      : 'bg-white dark:bg-gray-950'
+  }`
 
   return (
     <header className={headerClass}>
       <Link href="/" aria-label={siteMetadata.headerTitle}>
-        <div className="flex items-center justify-between">
-          <div className="mr-3">
-            <Logo />
+        <div className="group flex items-center justify-between">
+          <div className="mr-3 transition-transform duration-300 group-hover:scale-110">
+            <Logo className="h-10 w-10" />
           </div>
           {typeof siteMetadata.headerTitle === 'string' ? (
-            <div className="hidden h-6 text-2xl font-semibold sm:block">
+            <div className="hidden bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-2xl font-bold text-transparent transition-all duration-300 group-hover:from-cyan-600 group-hover:to-blue-600 dark:from-white dark:to-gray-300 dark:group-hover:from-cyan-400 dark:group-hover:to-blue-400 sm:block">
               {siteMetadata.headerTitle}
             </div>
           ) : (
@@ -28,23 +44,25 @@ const Header = () => {
           )}
         </div>
       </Link>
-      <div className="flex items-center space-x-4 leading-5 sm:space-x-6">
-        <div className="no-scrollbar hidden max-w-40 items-center space-x-4 overflow-x-auto pr-2 sm:flex sm:space-x-6 md:max-w-72 lg:max-w-96">
+      <div className="flex items-center space-x-3 leading-5 sm:space-x-5">
+        <nav className="no-scrollbar hidden max-w-40 items-center space-x-1 overflow-x-auto sm:flex md:max-w-72 lg:max-w-96">
           {headerNavLinks
             .filter((link) => link.href !== '/')
             .map((link) => (
               <Link
                 key={link.title}
                 href={link.href}
-                className="m-1 block font-medium text-gray-900 hover:text-primary-500 dark:text-gray-100 dark:hover:text-primary-400"
+                className="relative rounded-lg px-3 py-2 font-medium text-gray-700 transition-all duration-300 hover:bg-gray-100 hover:text-cyan-600 dark:text-gray-200 dark:hover:bg-gray-800 dark:hover:text-cyan-400"
               >
                 {link.title}
               </Link>
             ))}
+        </nav>
+        <div className="flex items-center space-x-2">
+          <SearchButton />
+          <ThemeSwitch />
+          <MobileNav />
         </div>
-        <SearchButton />
-        <ThemeSwitch />
-        <MobileNav />
       </div>
     </header>
   )

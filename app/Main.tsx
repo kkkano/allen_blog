@@ -1,66 +1,152 @@
+'use client'
+
 import Link from '@/components/Link'
 import Tag from '@/components/Tag'
 import siteMetadata from '@/data/siteMetadata'
 import { formatDate } from 'pliny/utils/formatDate'
 import NewsletterForm from 'pliny/ui/NewsletterForm'
+import TypeWriter from '@/components/TypeWriter'
 
 const MAX_DISPLAY = 5
 
-export default function Home({ posts }) {
+interface Post {
+  slug: string
+  date: string
+  title: string
+  summary?: string
+  tags: string[]
+}
+
+export default function Home({ posts }: { posts: Post[] }) {
+  const typewriterWords = [
+    'Machine Learning',
+    'Deep Learning',
+    'Neural Networks',
+    'Data Science',
+    'AI Engineering',
+  ]
+
   return (
     <>
       <div className="divide-y divide-gray-200 dark:divide-gray-700">
-        <div className="space-y-2 pb-8 pt-6 md:space-y-5">
-          <h1 className="text-3xl font-extrabold leading-9 tracking-tight text-gray-900 dark:text-gray-100 sm:text-4xl sm:leading-10 md:text-6xl md:leading-14">
-            Latest
-          </h1>
-          <p className="text-lg leading-7 text-gray-500 dark:text-gray-400">
-            {siteMetadata.description}
-          </p>
+        {/* Hero Section with Typewriter */}
+        <div className="space-y-6 pb-10 pt-8 md:space-y-8">
+          {/* Animated gradient background */}
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 p-8 dark:from-gray-800 dark:to-gray-900 md:p-12">
+            <div className="bg-grid-pattern absolute inset-0 opacity-5" />
+            <div className="absolute -right-20 -top-20 h-60 w-60 rounded-full bg-gradient-to-br from-cyan-400/30 to-blue-500/30 blur-3xl" />
+            <div className="absolute -bottom-20 -left-20 h-60 w-60 rounded-full bg-gradient-to-br from-purple-400/30 to-pink-500/30 blur-3xl" />
+
+            <div className="relative z-10">
+              <h1 className="bg-gradient-to-r from-gray-900 via-gray-700 to-gray-900 bg-clip-text text-4xl font-extrabold leading-tight tracking-tight text-transparent dark:from-white dark:via-gray-200 dark:to-white sm:text-5xl md:text-6xl">
+                Welcome to{' '}
+                <span className="bg-gradient-to-r from-cyan-500 to-blue-500 bg-clip-text text-transparent">
+                  {siteMetadata.headerTitle || 'My Blog'}
+                </span>
+              </h1>
+              <div className="mt-4 text-xl text-gray-600 dark:text-gray-300 md:text-2xl">
+                Exploring{' '}
+                <TypeWriter
+                  words={typewriterWords}
+                  typeSpeed={80}
+                  deleteSpeed={40}
+                  delayBetweenWords={2500}
+                  className="font-semibold text-cyan-600 dark:text-cyan-400"
+                />
+              </div>
+              <p className="mt-6 max-w-2xl text-lg leading-relaxed text-gray-500 dark:text-gray-400">
+                {siteMetadata.description}
+              </p>
+            </div>
+          </div>
+
+          {/* Section title */}
+          <div className="flex items-center space-x-4">
+            <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100 md:text-3xl">
+              Latest Posts
+            </h2>
+            <div className="h-px flex-1 bg-gradient-to-r from-gray-200 to-transparent dark:from-gray-700" />
+          </div>
         </div>
+
+        {/* Posts List with hover effects */}
         <ul className="divide-y divide-gray-200 dark:divide-gray-700">
           {!posts.length && 'No posts found.'}
           {posts.slice(0, MAX_DISPLAY).map((post) => {
             const { slug, date, title, summary, tags } = post
             return (
-              <li key={slug} className="py-12">
-                <article>
-                  <div className="space-y-2 xl:grid xl:grid-cols-4 xl:items-baseline xl:space-y-0">
-                    <dl>
-                      <dt className="sr-only">Published on</dt>
-                      <dd className="text-base font-medium leading-6 text-gray-500 dark:text-gray-400">
-                        <time dateTime={date}>{formatDate(date, siteMetadata.locale)}</time>
-                      </dd>
-                    </dl>
-                    <div className="space-y-5 xl:col-span-3">
-                      <div className="space-y-6">
-                        <div>
-                          <h2 className="text-2xl font-bold leading-8 tracking-tight">
-                            <Link
-                              href={`/blog/${slug}`}
-                              className="text-gray-900 dark:text-gray-100"
+              <li key={slug} className="py-6">
+                <article className="group relative">
+                  {/* Hover background effect */}
+                  <div className="absolute -inset-4 z-0 rounded-2xl bg-gradient-to-r from-cyan-500/0 via-blue-500/0 to-purple-500/0 opacity-0 blur transition-all duration-500 group-hover:from-cyan-500/10 group-hover:via-blue-500/10 group-hover:to-purple-500/10 group-hover:opacity-100" />
+
+                  {/* Card content */}
+                  <div className="relative z-10 rounded-xl bg-white/50 p-6 backdrop-blur-sm transition-all duration-300 group-hover:bg-white/80 group-hover:shadow-lg dark:bg-gray-900/50 dark:group-hover:bg-gray-900/80">
+                    <div className="space-y-2 xl:grid xl:grid-cols-4 xl:items-baseline xl:space-y-0">
+                      <dl>
+                        <dt className="sr-only">Published on</dt>
+                        <dd className="text-base font-medium leading-6 text-gray-500 dark:text-gray-400">
+                          <time dateTime={date} className="flex items-center space-x-2">
+                            <svg
+                              className="h-4 w-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
                             >
-                              {title}
-                            </Link>
-                          </h2>
-                          <div className="flex flex-wrap">
-                            {tags.map((tag) => (
-                              <Tag key={tag} text={tag} />
-                            ))}
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                              />
+                            </svg>
+                            <span>{formatDate(date, siteMetadata.locale)}</span>
+                          </time>
+                        </dd>
+                      </dl>
+                      <div className="space-y-4 xl:col-span-3">
+                        <div className="space-y-3">
+                          <div>
+                            <h3 className="text-2xl font-bold leading-8 tracking-tight">
+                              <Link
+                                href={`/blog/${slug}`}
+                                className="text-gray-900 transition-colors duration-300 group-hover:text-cyan-600 dark:text-gray-100 dark:group-hover:text-cyan-400"
+                              >
+                                {title}
+                              </Link>
+                            </h3>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {tags.map((tag) => (
+                                <Tag key={tag} text={tag} />
+                              ))}
+                            </div>
+                          </div>
+                          <div className="prose max-w-none text-gray-500 dark:text-gray-400">
+                            {summary}
                           </div>
                         </div>
-                        <div className="prose max-w-none text-gray-500 dark:text-gray-400">
-                          {summary}
+                        <div className="text-base font-medium leading-6">
+                          <Link
+                            href={`/blog/${slug}`}
+                            className="inline-flex items-center space-x-2 text-cyan-600 transition-all duration-300 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300"
+                            aria-label={`Read more: "${title}"`}
+                          >
+                            <span>Read more</span>
+                            <svg
+                              className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M17 8l4 4m0 0l-4 4m4-4H3"
+                              />
+                            </svg>
+                          </Link>
                         </div>
-                      </div>
-                      <div className="text-base font-medium leading-6">
-                        <Link
-                          href={`/blog/${slug}`}
-                          className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
-                          aria-label={`Read more: "${title}"`}
-                        >
-                          Read more &rarr;
-                        </Link>
                       </div>
                     </div>
                   </div>
@@ -70,20 +156,40 @@ export default function Home({ posts }) {
           })}
         </ul>
       </div>
+
       {posts.length > MAX_DISPLAY && (
-        <div className="flex justify-end text-base font-medium leading-6">
+        <div className="flex justify-end pt-6 text-base font-medium leading-6">
           <Link
             href="/blog"
-            className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
+            className="group inline-flex items-center space-x-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 px-6 py-3 text-white shadow-lg transition-all duration-300 hover:from-cyan-600 hover:to-blue-600 hover:shadow-xl"
             aria-label="All posts"
           >
-            All Posts &rarr;
+            <span>View All Posts</span>
+            <svg
+              className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17 8l4 4m0 0l-4 4m4-4H3"
+              />
+            </svg>
           </Link>
         </div>
       )}
+
       {siteMetadata.newsletter?.provider && (
-        <div className="flex items-center justify-center pt-4">
-          <NewsletterForm />
+        <div className="mt-12 flex items-center justify-center">
+          <div className="w-full max-w-md rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 p-8 dark:from-gray-800 dark:to-gray-900">
+            <h3 className="mb-4 text-center text-xl font-bold text-gray-900 dark:text-gray-100">
+              Subscribe to Newsletter
+            </h3>
+            <NewsletterForm />
+          </div>
         </div>
       )}
     </>

@@ -82,7 +82,11 @@ export default function Pre({ children, className, ...props }: PreProps) {
 
   // Check if this is a mermaid code block
   if (language === 'mermaid' && childElement?.props?.children) {
-    return <Mermaid chart={childElement.props.children} />
+    // Ensure chart is a string (children might be an array)
+    const chartContent = Array.isArray(childElement.props.children)
+      ? childElement.props.children.join('')
+      : String(childElement.props.children)
+    return <Mermaid chart={chartContent.trim()} />
   }
 
   const displayLanguage = language ? languageNames[language.toLowerCase()] || language : 'Code'
