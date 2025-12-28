@@ -32,7 +32,7 @@ export default function Home({ posts }: { posts: Post[] }) {
         <div className="space-y-6 pb-10 pt-8 md:space-y-8">
           {/* Animated gradient background */}
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#fdf4ff] via-[#eef5ff] to-[#e8f0ff] p-8 dark:from-[#030711] dark:via-[#0c1221] dark:to-[#111725] md:p-12 [.gradient_&]:from-[#f7fbff] [.gradient_&]:via-[#eef4ff] [.gradient_&]:to-[#ecf1ff] dark:[.gradient_&]:from-[#05060f] dark:[.gradient_&]:via-[#0d1425] dark:[.gradient_&]:to-[#151b31]">
-            <div className="bg-grid-pattern opacity-3 absolute inset-0 dark:opacity-5" />
+            <div className="bg-grid-pattern absolute inset-0 opacity-5" />
             <div className="absolute -right-20 -top-20 h-60 w-60 rounded-full bg-gradient-to-br from-cyan-400/30 to-blue-500/30 blur-3xl" />
             <div className="absolute -bottom-20 -left-20 h-60 w-60 rounded-full bg-gradient-to-br from-purple-400/30 to-pink-500/30 blur-3xl" />
 
@@ -124,7 +124,7 @@ export default function Home({ posts }: { posts: Post[] }) {
                         <div className="text-base font-medium leading-6">
                           <Link
                             href={`/blog/${slug}`}
-                            className="inline-flex items-center space-x-2 text-pink-500 transition-all duration-300 hover:text-pink-600 dark:text-pink-400 dark:hover:text-pink-300"
+                            className="inline-flex items-center space-x-2 text-cyan-600 transition-all duration-300 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300"
                             aria-label={`Read more: "${title}"`}
                           >
                             <span>Read more</span>
