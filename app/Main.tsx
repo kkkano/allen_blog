@@ -8,6 +8,7 @@ import NewsletterForm from 'pliny/ui/NewsletterForm'
 import TypeWriter from '@/components/TypeWriter'
 
 const MAX_DISPLAY = 5
+const accentGradient = 'from-[#2dd4bf] via-[#6366f1] to-[#f472b6]'
 
 interface Post {
   slug: string
@@ -32,7 +33,7 @@ export default function Home({ posts }: { posts: Post[] }) {
         {/* Hero Section with Typewriter */}
         <div className="space-y-6 pb-10 pt-8 md:space-y-8">
           {/* Animated gradient background */}
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 p-8 dark:from-gray-900 dark:to-gray-950 md:p-12 [.gradient_&]:from-cyan-50 [.gradient_&]:via-sky-50 [.gradient_&]:to-blue-50 dark:[.gradient_&]:from-gray-950 dark:[.gradient_&]:via-gray-950 dark:[.gradient_&]:to-gray-900">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#fdf4ff] via-[#eef5ff] to-[#e8f0ff] p-8 dark:from-[#030711] dark:via-[#0c1221] dark:to-[#111725] md:p-12 [.gradient_&]:from-[#f7fbff] [.gradient_&]:via-[#eef4ff] [.gradient_&]:to-[#ecf1ff] dark:[.gradient_&]:from-[#05060f] dark:[.gradient_&]:via-[#0d1425] dark:[.gradient_&]:to-[#151b31]">
             <div className="bg-grid-pattern absolute inset-0 opacity-5" />
             <div className="absolute -right-20 -top-20 h-60 w-60 rounded-full bg-gradient-to-br from-cyan-400/30 to-blue-500/30 blur-3xl" />
             <div className="absolute -bottom-20 -left-20 h-60 w-60 rounded-full bg-gradient-to-br from-purple-400/30 to-pink-500/30 blur-3xl" />
@@ -158,7 +159,7 @@ export default function Home({ posts }: { posts: Post[] }) {
         <div className="flex justify-end pt-6 text-base font-medium leading-6">
           <Link
             href="/blog"
-            className="group inline-flex items-center space-x-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 px-6 py-3 text-white shadow-lg transition-all duration-300 hover:from-cyan-600 hover:to-blue-600 hover:shadow-xl"
+            className={`group inline-flex items-center space-x-2 rounded-2xl bg-gradient-to-r ${accentGradient} px-6 py-3 text-white shadow-2xl transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_20px_45px_rgba(45,212,191,0.35)]`}
             aria-label="All posts"
           >
             <span>View All Posts</span>
@@ -181,7 +182,7 @@ export default function Home({ posts }: { posts: Post[] }) {
 
       {siteMetadata.newsletter?.provider && (
         <div className="mt-12 flex items-center justify-center">
-          <div className="w-full max-w-md rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 p-8 dark:from-gray-800 dark:to-gray-900">
+          <div className="w-full max-w-md rounded-[28px] bg-gradient-to-br from-[#fef3ff] via-[#eef3ff] to-[#e0f7ff] p-8 shadow-2xl dark:from-[#080b18] dark:via-[#10142f] dark:to-[#1d1f3d]">
             <h3 className="mb-4 text-center text-xl font-bold text-gray-900 dark:text-gray-100">
               Subscribe to Newsletter
             </h3>
