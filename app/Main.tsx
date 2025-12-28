@@ -8,7 +8,8 @@ import NewsletterForm from 'pliny/ui/NewsletterForm'
 import TypeWriter from '@/components/TypeWriter'
 
 const MAX_DISPLAY = 5
-const accentGradient = 'from-[#2dd4bf] via-[#6366f1] to-[#f472b6]'
+const accentGradient =
+  'from-cyan-500 to-blue-500 dark:from-cyan-400 dark:to-blue-500 [.gradient_&]:from-[#5eead4] [.gradient_&]:via-[#6366f1] [.gradient_&]:to-[#f472b6] dark:[.gradient_&]:from-[#0d9488] dark:[.gradient_&]:to-[#c084fc]'
 
 interface Post {
   slug: string

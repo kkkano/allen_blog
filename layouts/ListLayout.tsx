@@ -20,7 +20,8 @@ interface ListLayoutProps {
   pagination?: PaginationProps
 }
 
-const accentGradient = 'from-[#2dd4bf] via-[#6366f1] to-[#f472b6]'
+const gradientPalette =
+  'from-cyan-500 to-blue-500 dark:from-cyan-400 dark:to-blue-500 [.gradient_&]:from-[#5eead4] [.gradient_&]:via-[#6366f1] [.gradient_&]:to-[#f472b6] dark:[.gradient_&]:from-[#0d9488] dark:[.gradient_&]:to-[#c084fc]'
 
 function Pagination({ totalPages, currentPage }: PaginationProps) {
   const pathname = usePathname()
@@ -67,7 +68,7 @@ function Pagination({ totalPages, currentPage }: PaginationProps) {
           </Link>
         )}
         <span
-          className={`rounded-lg bg-gradient-to-r ${accentGradient} px-4 py-2 font-medium text-white shadow-sm`}
+          className={`rounded-lg bg-gradient-to-r ${gradientPalette} px-4 py-2 font-medium text-white shadow-sm`}
         >
           {currentPage} / {totalPages}
         </span>
@@ -157,7 +158,7 @@ export default function ListLayout({
               <li key={path} className="py-4">
                 <article className="group relative rounded-xl p-4 transition-all duration-300 hover:bg-gray-50 hover:shadow-lg dark:hover:bg-gray-800/50">
                   <div
-                    className={`absolute inset-0 rounded-xl bg-gradient-to-r ${accentGradient} opacity-0 transition-all duration-300 group-hover:opacity-90`}
+                    className={`absolute inset-0 rounded-xl bg-gradient-to-r ${gradientPalette} opacity-0 transition-all duration-300 group-hover:opacity-90`}
                     style={{ padding: '1px' }}
                   />
                   <div className="relative rounded-xl bg-white p-4 dark:bg-gray-900">

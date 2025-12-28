@@ -21,6 +21,9 @@ interface ListLayoutProps {
   pagination?: PaginationProps
 }
 
+const gradientPalette =
+  'from-cyan-500 to-blue-500 dark:from-cyan-400 dark:to-blue-500 [.gradient_&]:from-[#5eead4] [.gradient_&]:via-[#6366f1] [.gradient_&]:to-[#f472b6] dark:[.gradient_&]:from-[#0d9488] dark:[.gradient_&]:to-[#c084fc]'
+
 function Pagination({ totalPages, currentPage }: PaginationProps) {
   const pathname = usePathname()
   const segments = pathname.split('/')
@@ -67,7 +70,9 @@ function Pagination({ totalPages, currentPage }: PaginationProps) {
             <span>上一页</span>
           </Link>
         )}
-        <span className="rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-2 font-medium text-white">
+        <span
+          className={`rounded-lg bg-gradient-to-r ${gradientPalette} px-4 py-2 font-medium text-white`}
+        >
           {currentPage} / {totalPages}
         </span>
         {!nextPage && (
@@ -123,7 +128,9 @@ export default function ListLayoutWithTags({
           <div className="hidden h-full max-h-screen min-w-[280px] max-w-[280px] flex-wrap overflow-auto rounded bg-gray-50 pt-5 shadow-md dark:bg-gray-900/70 dark:shadow-gray-800/40 sm:flex">
             <div className="px-6 py-4">
               {pathname.startsWith('/blog') ? (
-                <h3 className="inline-flex rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 px-3 py-2 text-sm font-bold uppercase text-white shadow-sm">
+                <h3
+                  className={`inline-flex rounded-lg bg-gradient-to-r ${gradientPalette} px-3 py-2 text-sm font-bold uppercase text-white shadow-sm`}
+                >
                   All Posts
                 </h3>
               ) : (
@@ -139,7 +146,9 @@ export default function ListLayoutWithTags({
                   return (
                     <li key={t} className="my-3">
                       {decodeURI(pathname.split('/tags/')[1]) === slug(t) ? (
-                        <h3 className="inline-flex rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 px-3 py-2 text-sm font-bold uppercase text-white shadow-sm">
+                        <h3
+                          className={`inline-flex rounded-lg bg-gradient-to-r ${gradientPalette} px-3 py-2 text-sm font-bold uppercase text-white shadow-sm`}
+                        >
                           {`${t} (${tagCounts[t]})`}
                         </h3>
                       ) : (
@@ -165,7 +174,10 @@ export default function ListLayoutWithTags({
                   <li key={path} className="py-5">
                     <article className="group relative rounded-xl p-4 transition-all duration-300 hover:bg-gray-50 hover:shadow-lg dark:hover:bg-gray-800/50">
                       {/* Hover gradient border effect */}
-                      <div className="absolute -inset-px rounded-xl bg-gradient-to-r from-cyan-500/0 via-blue-500/0 to-purple-500/0 opacity-0 transition-all duration-300 group-hover:from-cyan-500/20 group-hover:via-blue-500/20 group-hover:to-purple-500/20 group-hover:opacity-100" />
+                      <div
+                        className={`absolute -inset-px rounded-xl bg-gradient-to-r ${gradientPalette} opacity-0 transition-all duration-300 group-hover:opacity-90`}
+                        style={{ padding: '1px' }}
+                      />
                       <div className="relative">
                         <dl>
                           <dt className="sr-only">Published on</dt>
