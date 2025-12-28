@@ -175,7 +175,7 @@ export default function ListLayoutWithTags({
                     <article className="group relative rounded-xl p-4 transition-all duration-300 hover:bg-gray-50 hover:shadow-lg dark:hover:bg-gray-800/50">
                       {/* Hover gradient border effect */}
                       <div
-                        className={`absolute -inset-px rounded-xl bg-gradient-to-r ${gradientPalette} opacity-0 transition-all duration-300 group-hover:opacity-90`}
+                        className={`absolute -inset-px rounded-xl bg-gradient-to-r ${gradientPalette} opacity-0 transition-all duration-300 group-hover:opacity-60`}
                         style={{ padding: '1px' }}
                       />
                       <div className="relative">
