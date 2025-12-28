@@ -9,13 +9,8 @@ import Image from '@/components/Image'
 import Tag from '@/components/Tag'
 import siteMetadata from '@/data/siteMetadata'
 import ScrollTopAndComment from '@/components/ScrollTopAndComment'
-import ReadingProgress from '@/components/ReadingProgress'
-import TOCSidebar from '@/components/TOCSidebar'
-import Giscus from '@giscus/react'
 
-const editUrl = (path) => `${siteMetadata.siteRepo}/blob/main/data/${path}`
-const discussUrl = (path) =>
-  `https://mobile.twitter.com/search?q=${encodeURIComponent(`${siteMetadata.siteUrl}/${path}`)}`
+const editUrl = (path: string) => `${siteMetadata.siteRepo}/blob/main/data/${path}`
 
 const postDateTemplate: Intl.DateTimeFormatOptions = {
   weekday: 'long',
@@ -33,12 +28,11 @@ interface LayoutProps {
 }
 
 export default function PostLayout({ content, authorDetails, next, prev, children }: LayoutProps) {
-  const { filePath, path, slug, date, title, tags, toc } = content
+  const { filePath, path, date, title, tags } = content
   const basePath = path.split('/')[0]
 
   return (
     <SectionContainer>
-      <ReadingProgress />
       <ScrollTopAndComment />
       <article>
         <div className="xl:divide-y xl:divide-gray-200 xl:dark:divide-gray-700">
@@ -96,20 +90,10 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
                   ))}
                 </ul>
               </dd>
-              {/* TOC Sidebar for large screens */}
-              {toc && toc.length > 0 && (
-                <div className="mt-8 hidden xl:block">
-                  <TOCSidebar toc={toc} />
-                </div>
-              )}
             </dl>
             <div className="divide-y divide-gray-200 dark:divide-gray-700 xl:col-span-3 xl:row-span-2 xl:pb-0">
               <div className="prose max-w-none pb-8 pt-10 dark:prose-invert">{children}</div>
               <div className="pb-6 pt-6 text-sm text-gray-700 dark:text-gray-300">
-                {/* <Link href={discussUrl(path)} rel="nofollow">
-                  Discuss on Twitter
-                </Link>
-                {` • `} */}
                 <Link href={editUrl(filePath)}>View on GitHub</Link>
               </div>
               {siteMetadata.comments && (
@@ -131,7 +115,8 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
                     <div className="flex flex-wrap">
                       {tags.map((tag) => (
                         <Tag key={tag} text={tag} />
-                      ))}n                    </div>
+                      ))}
+                    </div>
                   </div>
                 )}
                 {(next || prev) && (
