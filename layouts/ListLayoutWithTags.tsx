@@ -50,14 +50,14 @@ function Pagination({ totalPages, currentPage }: PaginationProps) {
                 d="M15 19l-7-7 7-7"
               />
             </svg>
-            <span>上一页</span>
+            <span>Previous</span>
           </button>
         )}
         {prevPage && (
           <Link
             href={currentPage - 1 === 1 ? `/${basePath}/` : `/${basePath}/page/${currentPage - 1}`}
             rel="prev"
-            className="flex items-center space-x-2 rounded-lg bg-gray-100 px-4 py-2 text-gray-700 transition-all duration-300 hover:bg-cyan-500 hover:text-white dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-cyan-600"
+            className="flex items-center space-x-2 rounded-lg bg-gray-100 px-4 py-2 text-gray-700 transition-all duration-300 hover:bg-gradient-to-r hover:from-cyan-400/10 hover:via-blue-400/10 hover:to-purple-400/10 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gradient-to-r dark:hover:from-cyan-400/10 dark:hover:via-blue-400/10 dark:hover:to-purple-400/10"
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path
@@ -67,7 +67,7 @@ function Pagination({ totalPages, currentPage }: PaginationProps) {
                 d="M15 19l-7-7 7-7"
               />
             </svg>
-            <span>上一页</span>
+            <span>Previous</span>
           </Link>
         )}
         <span className="px-4 py-2 font-medium text-gray-700 dark:text-gray-300">
@@ -78,7 +78,7 @@ function Pagination({ totalPages, currentPage }: PaginationProps) {
             className="flex cursor-not-allowed items-center space-x-2 rounded-lg px-4 py-2 text-gray-400 dark:text-gray-500"
             disabled={!nextPage}
           >
-            <span>下一页</span>
+            <span>Next</span>
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
@@ -88,9 +88,9 @@ function Pagination({ totalPages, currentPage }: PaginationProps) {
           <Link
             href={`/${basePath}/page/${currentPage + 1}`}
             rel="next"
-            className="flex items-center space-x-2 rounded-lg bg-gray-100 px-4 py-2 text-gray-700 transition-all duration-300 hover:bg-cyan-500 hover:text-white dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-cyan-600"
+            className="flex items-center space-x-2 rounded-lg bg-gray-100 px-4 py-2 text-gray-700 transition-all duration-300 hover:bg-gradient-to-r hover:from-cyan-400/10 hover:via-blue-400/10 hover:to-purple-400/10 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gradient-to-r dark:hover:from-cyan-400/10 dark:hover:via-blue-400/10 dark:hover:to-purple-400/10"
           >
-            <span>下一页</span>
+            <span>Next</span>
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>

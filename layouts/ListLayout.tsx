@@ -54,7 +54,7 @@ function Pagination({ totalPages, currentPage }: PaginationProps) {
           <Link
             href={currentPage - 1 === 1 ? `/${basePath}/` : `/${basePath}/page/${currentPage - 1}`}
             rel="prev"
-            className="flex items-center space-x-2 rounded-lg bg-gray-100 px-4 py-2 text-gray-700 transition-all duration-300 hover:bg-cyan-500 hover:text-white dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-cyan-600"
+            className="flex items-center space-x-2 rounded-lg bg-gray-100 px-4 py-2 text-gray-700 transition-all duration-300 hover:bg-gradient-to-r hover:from-cyan-400/10 hover:via-blue-400/10 hover:to-purple-400/10 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gradient-to-r dark:hover:from-cyan-400/10 dark:hover:via-blue-400/10 dark:hover:to-purple-400/10"
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path
@@ -85,7 +85,7 @@ function Pagination({ totalPages, currentPage }: PaginationProps) {
           <Link
             href={`/${basePath}/page/${currentPage + 1}`}
             rel="next"
-            className="flex items-center space-x-2 rounded-lg bg-gray-100 px-4 py-2 text-gray-700 transition-all duration-300 hover:bg-cyan-500 hover:text-white dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-cyan-600"
+            className="flex items-center space-x-2 rounded-lg bg-gray-100 px-4 py-2 text-gray-700 transition-all duration-300 hover:bg-gradient-to-r hover:from-cyan-400/10 hover:via-blue-400/10 hover:to-purple-400/10 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gradient-to-r dark:hover:from-cyan-400/10 dark:hover:via-blue-400/10 dark:hover:to-purple-400/10"
           >
             <span>Next</span>
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
