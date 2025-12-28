@@ -9,6 +9,8 @@ import Image from '@/components/Image'
 import Tag from '@/components/Tag'
 import siteMetadata from '@/data/siteMetadata'
 import ScrollTopAndComment from '@/components/ScrollTopAndComment'
+import ReadingProgress from '@/components/ReadingProgress'
+import TOCSidebar from '@/components/TOCSidebar'
 import Giscus from '@giscus/react'
 
 const editUrl = (path) => `${siteMetadata.siteRepo}/blob/main/data/${path}`
@@ -31,11 +33,12 @@ interface LayoutProps {
 }
 
 export default function PostLayout({ content, authorDetails, next, prev, children }: LayoutProps) {
-  const { filePath, path, slug, date, title, tags } = content
+  const { filePath, path, slug, date, title, tags, toc } = content
   const basePath = path.split('/')[0]
 
   return (
     <SectionContainer>
+      <ReadingProgress />
       <ScrollTopAndComment />
       <article>
         <div className="xl:divide-y xl:divide-gray-200 xl:dark:divide-gray-700">
@@ -93,6 +96,12 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
                   ))}
                 </ul>
               </dd>
+              {/* TOC Sidebar for large screens */}
+              {toc && toc.length > 0 && (
+                <div className="mt-8 hidden xl:block">
+                  <TOCSidebar toc={toc} />
+                </div>
+              )}
             </dl>
             <div className="divide-y divide-gray-200 dark:divide-gray-700 xl:col-span-3 xl:row-span-2 xl:pb-0">
               <div className="prose max-w-none pb-8 pt-10 dark:prose-invert">{children}</div>
@@ -122,8 +131,7 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
                     <div className="flex flex-wrap">
                       {tags.map((tag) => (
                         <Tag key={tag} text={tag} />
-                      ))}
-                    </div>
+                      ))}n                    </div>
                   </div>
                 )}
                 {(next || prev) && (
