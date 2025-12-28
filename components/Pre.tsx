@@ -1,16 +1,14 @@
 'use client'
 
-import { useState, useRef, ReactNode, ReactElement, isValidElement } from 'react'
-import dynamic from 'next/dynamic'
-
-// 动态加载 Mermaid 组件以避免 SSR 问题
-const Mermaid = dynamic(() => import('./Mermaid'), { ssr: false })
+import { useState, useRef, ReactNode } from 'react'
+import Mermaid from './Mermaid'
 
 interface PreProps {
-  children: ReactNode
+  children?: ReactNode
+  className?: string
+  [key: string]: unknown
 }
 
-// 语言显示名称映射
 const languageNames: Record<string, string> = {
   js: 'JavaScript',
   javascript: 'JavaScript',
@@ -21,8 +19,9 @@ const languageNames: Record<string, string> = {
   py: 'Python',
   python: 'Python',
   java: 'Java',
-  cpp: 'C++',
   c: 'C',
+  cpp: 'C++',
+  'c++': 'C++',
   cs: 'C#',
   csharp: 'C#',
   go: 'Go',
@@ -33,108 +32,118 @@ const languageNames: Record<string, string> = {
   swift: 'Swift',
   kotlin: 'Kotlin',
   sql: 'SQL',
-  bash: 'Bash',
-  sh: 'Shell',
-  shell: 'Shell',
-  powershell: 'PowerShell',
-  json: 'JSON',
-  yaml: 'YAML',
-  yml: 'YAML',
-  xml: 'XML',
   html: 'HTML',
   css: 'CSS',
   scss: 'SCSS',
   sass: 'Sass',
   less: 'Less',
+  json: 'JSON',
+  yaml: 'YAML',
+  yml: 'YAML',
+  xml: 'XML',
   md: 'Markdown',
   markdown: 'Markdown',
+  mdx: 'MDX',
+  sh: 'Shell',
+  bash: 'Bash',
+  zsh: 'Zsh',
+  powershell: 'PowerShell',
+  ps1: 'PowerShell',
   dockerfile: 'Dockerfile',
   docker: 'Docker',
-  plaintext: 'Plain Text',
-  text: 'Plain Text',
+  graphql: 'GraphQL',
+  vue: 'Vue',
+  svelte: 'Svelte',
+  r: 'R',
+  scala: 'Scala',
+  perl: 'Perl',
+  lua: 'Lua',
+  dart: 'Dart',
+  elixir: 'Elixir',
+  erlang: 'Erlang',
+  haskell: 'Haskell',
+  clojure: 'Clojure',
   mermaid: 'Mermaid',
 }
 
-function extractTextFromChildren(children: ReactNode): string {
-  if (typeof children === 'string') {
-    return children
-  }
-  if (Array.isArray(children)) {
-    return children.map(extractTextFromChildren).join('')
-  }
-  if (isValidElement(children)) {
-    const element = children as ReactElement<{ children?: ReactNode }>
-    return extractTextFromChildren(element.props.children)
-  }
-  return ''
-}
-
-function getLanguageFromClassName(children: ReactNode): string | null {
-  if (isValidElement(children)) {
-    const element = children as ReactElement<{ className?: string }>
-    const className = element.props.className || ''
-    const match = className.match(/language-(\w+)/)
-    return match ? match[1] : null
-  }
-  return null
-}
-
-export default function Pre({ children }: PreProps) {
+export default function Pre({ children, className, ...props }: PreProps) {
   const [copied, setCopied] = useState(false)
   const preRef = useRef<HTMLPreElement>(null)
 
-  const language = getLanguageFromClassName(children)
-  const codeContent = extractTextFromChildren(children)
-  const displayLanguage = language ? (languageNames[language.toLowerCase()] || language) : 'Code'
-
-  // 检测是否为 mermaid 代码块
-  if (language === 'mermaid') {
-    return <Mermaid chart={codeContent.trim()} />
+  // Extract language from className (e.g., "language-javascript")
+  let language = ''
+  const childElement = children as React.ReactElement<{ className?: string; children?: string }>
+  if (childElement?.props?.className) {
+    const match = childElement.props.className.match(/language-(\w+)/)
+    if (match) {
+      language = match[1]
+    }
   }
 
+  // Check if this is a mermaid code block
+  if (language === 'mermaid' && childElement?.props?.children) {
+    return <Mermaid chart={childElement.props.children} />
+  }
+
+  const displayLanguage = language
+    ? languageNames[language.toLowerCase()] || language
+    : 'Code'
+
   const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(codeContent)
+    if (preRef.current) {
+      const code = preRef.current.textContent || ''
+      await navigator.clipboard.writeText(code)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
-    } catch (err) {
-      console.error('Failed to copy:', err)
     }
   }
 
   return (
-    <div className="group relative my-6 overflow-hidden rounded-xl bg-gray-900 shadow-lg">
-      {/* Header with language label and copy button */}
-      <div className="flex items-center justify-between border-b border-gray-700/50 bg-gray-800/50 px-4 py-2">
-        <div className="flex items-center gap-2">
+    <div className="group relative my-6 overflow-hidden rounded-xl border border-gray-200 bg-gray-900 dark:border-gray-700">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-gray-700 bg-gray-800 px-4 py-2">
+        <div className="flex items-center space-x-2">
           {/* Terminal dots */}
-          <div className="flex gap-1.5">
-            <div className="h-3 w-3 rounded-full bg-red-500/80"></div>
-            <div className="h-3 w-3 rounded-full bg-yellow-500/80"></div>
-            <div className="h-3 w-3 rounded-full bg-green-500/80"></div>
+          <div className="flex space-x-1.5">
+            <div className="h-3 w-3 rounded-full bg-red-500" />
+            <div className="h-3 w-3 rounded-full bg-yellow-500" />
+            <div className="h-3 w-3 rounded-full bg-green-500" />
           </div>
           {/* Language label */}
-          <span className="ml-2 rounded bg-cyan-500/20 px-2 py-0.5 text-xs font-medium text-cyan-400">
-            {displayLanguage}
-          </span>
+          <span className="ml-3 text-xs font-medium text-gray-400">{displayLanguage}</span>
         </div>
         {/* Copy button */}
         <button
           onClick={handleCopy}
-          className="flex items-center gap-1.5 rounded-md bg-gray-700/50 px-3 py-1.5 text-xs font-medium text-gray-300 transition-all hover:bg-gray-600/50 hover:text-white"
+          className="flex items-center space-x-1 rounded px-2 py-1 text-xs text-gray-400 transition-colors hover:bg-gray-700 hover:text-white"
           aria-label="Copy code"
         >
           {copied ? (
             <>
-              <svg className="h-4 w-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              <svg
+                className="h-4 w-4 text-green-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
               </svg>
-              <span className="text-green-400">Copied!</span>
+              <span>Copied!</span>
             </>
           ) : (
             <>
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                />
               </svg>
               <span>Copy</span>
             </>
@@ -142,9 +151,10 @@ export default function Pre({ children }: PreProps) {
         </button>
       </div>
       {/* Code content */}
-      <pre 
-        ref={preRef} 
-        className="overflow-x-auto p-4 text-sm leading-relaxed [&>code]:block [&>code>.line]:table-row [&>code>.line>.line-number]:table-cell [&>code>.line>.line-number]:select-none [&>code>.line>.line-number]:pr-4 [&>code>.line>.line-number]:text-right [&>code>.line>.line-number]:text-gray-500 [&>code>.line>.line-number]:opacity-50"
+      <pre
+        ref={preRef}
+        className={`overflow-x-auto p-4 text-sm leading-relaxed [&>code>.line>.line-number]:table-cell [&>code>.line>.line-number]:select-none [&>code>.line>.line-number]:pr-4 [&>code>.line>.line-number]:text-right [&>code>.line>.line-number]:text-gray-500 [&>code>.line>.line-number]:opacity-50 [&>code>.line]:table-row [&>code]:block ${className || ''}`}
+        {...props}
       >
         {children}
       </pre>
