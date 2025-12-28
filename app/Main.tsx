@@ -124,7 +124,7 @@ export default function Home({ posts }: { posts: Post[] }) {
                         <div className="text-base font-medium leading-6">
                           <Link
                             href={`/blog/${slug}`}
-                            className="inline-flex items-center space-x-2 text-pink-500 transition-all duration-300 hover:text-pink-600 dark:text-pink-400 dark:hover:text-pink-300"
+                            className="inline-flex items-center space-x-2 text-pink-500 transition-all duration-300 hover:text-pink-600 group-hover:text-pink-600 dark:text-pink-400 dark:hover:text-pink-300 dark:group-hover:text-pink-300"
                             aria-label={`Read more: "${title}"`}
                           >
                             <span>Read more</span>
