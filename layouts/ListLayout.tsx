@@ -67,10 +67,8 @@ function Pagination({ totalPages, currentPage }: PaginationProps) {
             <span>Previous</span>
           </Link>
         )}
-        <span
-          className={`rounded-lg border-2 border-cyan-500 bg-cyan-50 px-4 py-2 font-medium text-cyan-700 dark:border-cyan-400 dark:bg-cyan-900/30 dark:text-cyan-300`}
-        >
-          {currentPage} / {totalPages}
+        <span className="px-4 py-2 font-medium text-gray-700 dark:text-gray-300">
+          {currentPage} of {totalPages}
         </span>
         {!nextPage && (
           <button
@@ -156,11 +154,8 @@ export default function ListLayout({
             const { path, date, title, summary, tags } = post
             return (
               <li key={path} className="py-4">
-                <article className="group relative rounded-xl p-4 transition-all duration-300 hover:bg-gray-50 hover:shadow-lg dark:hover:bg-gray-800/50">
-                  <div
-                    className={`absolute -inset-px rounded-xl bg-gradient-to-r ${gradientPalette} opacity-0 transition-all duration-300 group-hover:opacity-60`}
-                    style={{ padding: '1px' }}
-                  />
+                <article className="group relative rounded-xl p-4 transition-all duration-300 hover:shadow-xl">
+                  <div className="absolute inset-0 rounded-xl border-2 border-gray-200/60 transition-all duration-300 group-hover:border-transparent group-hover:bg-gradient-to-r group-hover:from-cyan-400/10 group-hover:via-blue-400/10 group-hover:to-purple-400/10 dark:border-gray-700/60" />
                   <div className="relative rounded-xl bg-white p-4 dark:bg-gray-900">
                     <div className="space-y-3">
                       <div>
