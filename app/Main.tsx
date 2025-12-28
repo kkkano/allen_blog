@@ -76,12 +76,9 @@ export default function Home({ posts }: { posts: Post[] }) {
             const { slug, date, title, summary, tags } = post
             return (
               <li key={slug} className="py-6">
-                <article className="group relative">
-                  {/* Hover background effect */}
-                  <div className="absolute -inset-4 z-0 rounded-2xl bg-gradient-to-r from-cyan-500/0 via-blue-500/0 to-purple-500/0 opacity-0 blur transition-all duration-500 group-hover:from-cyan-500/10 group-hover:via-blue-500/10 group-hover:to-purple-500/10 group-hover:opacity-100" />
-
-                  {/* Card content */}
-                  <div className="relative z-10 rounded-xl bg-white/50 p-6 backdrop-blur-sm transition-all duration-300 group-hover:bg-white/80 group-hover:shadow-lg dark:bg-gray-900/50 dark:group-hover:bg-gray-900/80">
+                <article className="group relative rounded-xl p-4 transition-all duration-300 hover:shadow-xl">
+                  <div className="absolute inset-0 rounded-xl border-2 border-gray-200/60 transition-all duration-300 group-hover:border-transparent group-hover:bg-gradient-to-r group-hover:from-cyan-400/20 group-hover:via-blue-400/20 group-hover:to-purple-400/20 dark:border-gray-700/60" />
+                  <div className="relative rounded-xl bg-white/80 p-4 backdrop-blur-sm transition-colors duration-300 group-hover:bg-white dark:bg-gray-900/80 dark:group-hover:bg-gray-900 [.gradient_&]:bg-white/40 dark:[.gradient_&]:bg-gray-900/40">
                     <div className="space-y-2 xl:grid xl:grid-cols-4 xl:items-baseline xl:space-y-0">
                       <dl>
                         <dt className="sr-only">Published on</dt>

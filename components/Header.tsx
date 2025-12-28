@@ -24,8 +24,8 @@ const Header = () => {
     siteMetadata.stickyNav ? 'sticky top-0 z-50' : ''
   } ${
     isScrolled
-      ? 'bg-white/80 backdrop-blur-lg shadow-lg dark:bg-gray-950/80'
-      : 'bg-white dark:bg-gray-950'
+      ? 'bg-white/80 backdrop-blur-lg shadow-lg dark:bg-gray-950/80 [.gradient_&]:bg-white/60 dark:[.gradient_&]:bg-gray-950/60'
+      : 'bg-white dark:bg-gray-950 [.gradient_&]:bg-transparent dark:[.gradient_&]:bg-transparent'
   }`
 
   return (

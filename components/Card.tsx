@@ -6,7 +6,7 @@ const Card = ({ title, description, imgSrc, href }) => (
     <div
       className={`${
         imgSrc && 'h-full'
-      }  overflow-hidden rounded-md border-2 border-gray-200 border-opacity-60 dark:border-gray-700`}
+      } group overflow-hidden rounded-xl border-2 border-gray-200 border-opacity-60 transition-all duration-300 hover:scale-[1.02] hover:border-cyan-400 hover:shadow-xl dark:border-gray-700 dark:hover:border-cyan-500`}
     >
       {imgSrc &&
         (href ? (
@@ -14,7 +14,7 @@ const Card = ({ title, description, imgSrc, href }) => (
             <Image
               alt={title}
               src={imgSrc}
-              className="object-cover object-center md:h-36 lg:h-48"
+              className="object-cover object-center transition-transform duration-300 group-hover:scale-105 md:h-36 lg:h-48"
               width={544}
               height={306}
             />
@@ -23,13 +23,13 @@ const Card = ({ title, description, imgSrc, href }) => (
           <Image
             alt={title}
             src={imgSrc}
-            className="object-cover object-center md:h-36 lg:h-48"
+            className="object-cover object-center transition-transform duration-300 group-hover:scale-105 md:h-36 lg:h-48"
             width={544}
             height={306}
           />
         ))}
       <div className="p-6">
-        <h2 className="mb-3 text-2xl font-bold leading-8 tracking-tight">
+        <h2 className="mb-3 text-2xl font-bold leading-8 tracking-tight transition-colors duration-300 group-hover:text-cyan-600 dark:group-hover:text-cyan-400">
           {href ? (
             <Link href={href} aria-label={`Link to ${title}`}>
               {title}
@@ -42,10 +42,18 @@ const Card = ({ title, description, imgSrc, href }) => (
         {href && (
           <Link
             href={href}
-            className="text-base font-medium leading-6 text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
+            className="inline-flex items-center space-x-1 text-base font-medium leading-6 text-cyan-600 transition-all duration-300 hover:translate-x-1 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300"
             aria-label={`Link to ${title}`}
           >
-            Learn more &rarr;
+            <span>Learn more</span>
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 7l5 5m0 0l-5 5m5-5H6"
+              />
+            </svg>
           </Link>
         )}
       </div>
