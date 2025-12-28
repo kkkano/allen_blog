@@ -152,7 +152,7 @@ export default function ListLayoutWithTags({
                       ) : (
                         <Link
                           href={`/tags/${slug(t)}`}
-                          className="inline-flex rounded-lg px-3 py-2 text-sm font-medium uppercase text-gray-500 transition-colors hover:text-primary-500 dark:text-gray-300 dark:hover:text-primary-500"
+                          className="inline-flex rounded-lg px-3 py-2 text-sm font-medium uppercase text-gray-500 transition-all duration-300 hover:bg-gray-100 hover:text-cyan-600 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-cyan-400"
                           aria-label={`View posts tagged ${t}`}
                         >
                           {`${t} (${tagCounts[t]})`}
