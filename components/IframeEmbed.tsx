@@ -34,7 +34,10 @@ export default function IframeEmbed({ src, minHeight = 600 }: IframeEmbedProps) 
     return () => iframe.removeEventListener('load', adjustHeight)
   }, [adjustHeight])
 
-  const title = src.replace(/.*\//, '').replace(/\.html$/, '').replace(/-/g, ' ')
+  const title = src
+    .replace(/.*\//, '')
+    .replace(/\.html$/, '')
+    .replace(/-/g, ' ')
 
   return (
     <iframe
