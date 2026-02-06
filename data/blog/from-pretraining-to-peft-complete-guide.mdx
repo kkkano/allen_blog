@@ -117,8 +117,9 @@ print(f"预测结果: {labels[predicted_class]}")
 <iframe
   src="/visualizations/tokenization-flow.html"
   width="100%"
-  height="600"
-  style={{ border: 'none', borderRadius: '12px' }}
+  scrolling="no"
+  style={{ border: 'none', borderRadius: '12px', display: 'block', minHeight: '600px' }}
+  onLoad={(e) => { e.target.style.height = (e.target.contentDocument.documentElement.scrollHeight || 800) + 'px' }}
 />
 
 ### 2.2 pipeline 函数：一行搞定推理
@@ -324,8 +325,9 @@ trainer.train()
 <iframe
   src="/visualizations/pretraining-mlm.html"
   width="100%"
-  height="600"
-  style={{ border: 'none', borderRadius: '12px' }}
+  scrolling="no"
+  style={{ border: 'none', borderRadius: '12px', display: 'block', minHeight: '600px' }}
+  onLoad={(e) => { e.target.style.height = (e.target.contentDocument.documentElement.scrollHeight || 800) + 'px' }}
 />
 
 ### 3.3 评估预训练模型：困惑度（Perplexity）
@@ -429,8 +431,9 @@ for epoch in range(num_epochs):
 <iframe
   src="/visualizations/training-loop.html"
   width="100%"
-  height="600"
-  style={{ border: 'none', borderRadius: '12px' }}
+  scrolling="no"
+  style={{ border: 'none', borderRadius: '12px', display: 'block', minHeight: '600px' }}
+  onLoad={(e) => { e.target.style.height = (e.target.contentDocument.documentElement.scrollHeight || 800) + 'px' }}
 />
 
 ### 4.2 评估模型
@@ -732,8 +735,9 @@ class FeatureAdapter(nn.Module):
 <iframe
   src="/visualizations/adapter-architecture.html"
   width="100%"
-  height="600"
-  style={{ border: 'none', borderRadius: '12px' }}
+  scrolling="no"
+  style={{ border: 'none', borderRadius: '12px', display: 'block', minHeight: '600px' }}
+  onLoad={(e) => { e.target.style.height = (e.target.contentDocument.documentElement.scrollHeight || 800) + 'px' }}
 />
 
 ### 6.3 将 Adapter 注入到模型中
@@ -874,8 +878,9 @@ class LinearWithLoRA(nn.Module):
 <iframe
   src="/visualizations/lora-math.html"
   width="100%"
-  height="600"
-  style={{ border: 'none', borderRadius: '12px' }}
+  scrolling="no"
+  style={{ border: 'none', borderRadius: '12px', display: 'block', minHeight: '600px' }}
+  onLoad={(e) => { e.target.style.height = (e.target.contentDocument.documentElement.scrollHeight || 800) + 'px' }}
 />
 
 ### 7.4 完整实验：AG News 预训练 → LoRA 微调 IMDB
@@ -1014,8 +1019,9 @@ model.print_trainable_parameters()
 
 <iframe
   src="/visualizations/qlora-quantization.html"
-  width="100%"
-  height="600"
+  scrolling="no"
+  style={{ border: 'none', borderRadius: '12px', display: 'block', minHeight: '600px' }}
+  onLoad={(e) => { e.target.style.height = (e.target.contentDocument.documentElement.scrollHeight || 800) + '
   style={{ border: 'none', borderRadius: '12px' }}
 />
 
@@ -1117,8 +1123,9 @@ trainer.train()
 <iframe
   src="/visualizations/peft-overview.html"
   width="100%"
-  height="600"
-  style={{ border: 'none', borderRadius: '12px' }}
+  scrolling="no"
+  style={{ border: 'none', borderRadius: '12px', display: 'block', minHeight: '600px' }}
+  onLoad={(e) => { e.target.style.height = (e.target.contentDocument.documentElement.scrollHeight || 800) + 'px' }}
 />
 
 ### 9.3 决策指南
