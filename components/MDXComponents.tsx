@@ -5,10 +5,12 @@ import Image from './Image'
 import CustomLink from './Link'
 import TableWrapper from './TableWrapper'
 import Pre from './Pre'
+import IframeEmbed from './IframeEmbed'
 
 export const components: MDXComponents = {
   Image,
   TOCInline,
+  IframeEmbed,
   a: CustomLink,
   pre: Pre,
   table: TableWrapper,

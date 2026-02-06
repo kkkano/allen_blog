@@ -114,13 +114,7 @@ print(f"预测结果: {labels[predicted_class]}")
 
 > 🎨 **交互式演示**：下面的可视化展示了 Tokenizer 的完整工作流程——从原始文本到 Token IDs 的转换过程。
 
-<iframe
-  src="/visualizations/tokenization-flow.html"
-  width="100%"
-  scrolling="no"
-  style={{ border: 'none', borderRadius: '12px', display: 'block', minHeight: '600px' }}
-  onLoad={(e) => { e.target.style.height = (e.target.contentDocument.documentElement.scrollHeight || 800) + 'px' }}
-/>
+<IframeEmbed src="/visualizations/tokenization-flow.html" />
 
 ### 2.2 pipeline 函数：一行搞定推理
 
@@ -322,13 +316,7 @@ trainer.train()
 
 > 🎨 **交互式演示**：下面的动画展示了 BERT 掩码语言模型（MLM）的预训练过程——随机遮盖 token 并让模型预测。
 
-<iframe
-  src="/visualizations/pretraining-mlm.html"
-  width="100%"
-  scrolling="no"
-  style={{ border: 'none', borderRadius: '12px', display: 'block', minHeight: '600px' }}
-  onLoad={(e) => { e.target.style.height = (e.target.contentDocument.documentElement.scrollHeight || 800) + 'px' }}
-/>
+<IframeEmbed src="/visualizations/pretraining-mlm.html" />
 
 ### 3.3 评估预训练模型：困惑度（Perplexity）
 
@@ -428,13 +416,7 @@ for epoch in range(num_epochs):
 
 > 🎨 **交互式演示**：下面的动画逐步展示了 PyTorch 训练循环的 5 个核心步骤——前向传播、损失计算、反向传播、参数更新和梯度清零。
 
-<iframe
-  src="/visualizations/training-loop.html"
-  width="100%"
-  scrolling="no"
-  style={{ border: 'none', borderRadius: '12px', display: 'block', minHeight: '600px' }}
-  onLoad={(e) => { e.target.style.height = (e.target.contentDocument.documentElement.scrollHeight || 800) + 'px' }}
-/>
+<IframeEmbed src="/visualizations/training-loop.html" />
 
 ### 4.2 评估模型
 
@@ -732,13 +714,7 @@ class FeatureAdapter(nn.Module):
 
 > 🎨 **交互式演示**：下面的动画展示了 Adapter 的瓶颈架构和数据流动过程，包括降维、激活、升维和残差连接。
 
-<iframe
-  src="/visualizations/adapter-architecture.html"
-  width="100%"
-  scrolling="no"
-  style={{ border: 'none', borderRadius: '12px', display: 'block', minHeight: '600px' }}
-  onLoad={(e) => { e.target.style.height = (e.target.contentDocument.documentElement.scrollHeight || 800) + 'px' }}
-/>
+<IframeEmbed src="/visualizations/adapter-architecture.html" />
 
 ### 6.3 将 Adapter 注入到模型中
 
@@ -875,13 +851,7 @@ class LinearWithLoRA(nn.Module):
 
 > 🎨 **交互式演示**：下面的可视化展示了 LoRA 低秩分解的数学原理——看看大矩阵 ΔW 如何被分解为两个小矩阵 B·A。
 
-<iframe
-  src="/visualizations/lora-math.html"
-  width="100%"
-  scrolling="no"
-  style={{ border: 'none', borderRadius: '12px', display: 'block', minHeight: '600px' }}
-  onLoad={(e) => { e.target.style.height = (e.target.contentDocument.documentElement.scrollHeight || 800) + 'px' }}
-/>
+<IframeEmbed src="/visualizations/lora-math.html" />
 
 ### 7.4 完整实验：AG News 预训练 → LoRA 微调 IMDB
 
@@ -1017,13 +987,7 @@ model.print_trainable_parameters()
 
 > 🎨 **交互式演示**：下面的可视化展示了 QLoRA 的量化过程——从 FP32 到 NF4 的精度压缩是如何工作的。
 
-<iframe
-  src="/visualizations/qlora-quantization.html"
-  scrolling="no"
-  style={{ border: 'none', borderRadius: '12px', display: 'block', minHeight: '600px' }}
-  onLoad={(e) => { e.target.style.height = (e.target.contentDocument.documentElement.scrollHeight || 800) + '
-  style={{ border: 'none', borderRadius: '12px' }}
-/>
+<IframeEmbed src="/visualizations/qlora-quantization.html" />
 
 ### 8.3 训练和评估
 
@@ -1120,13 +1084,7 @@ trainer.train()
 
 > 🎨 **交互式演示**：下面的交互式可视化展示了全量微调、Adapter、LoRA 三种方法的架构差异，点击切换不同方法查看对比。
 
-<iframe
-  src="/visualizations/peft-overview.html"
-  width="100%"
-  scrolling="no"
-  style={{ border: 'none', borderRadius: '12px', display: 'block', minHeight: '600px' }}
-  onLoad={(e) => { e.target.style.height = (e.target.contentDocument.documentElement.scrollHeight || 800) + 'px' }}
-/>
+<IframeEmbed src="/visualizations/peft-overview.html" />
 
 ### 9.3 决策指南
 
