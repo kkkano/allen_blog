@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>神经网络结构可视化</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 1200px;
+            width: 100%;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        #canvas {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            display: block;
+            margin: 0 auto;
+            background: #fafafa;
+        }
+        .controls {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 0 10px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .info-panel {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 10px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .legend-circle {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 神经网络结构可视化</h1>
+        <p class="subtitle">手写数字0/1识别 - 三层神经网络架构</p>
+
+        <canvas id="canvas" width="1000" height="400"></canvas>
+
+        <div class="controls">
+            <button class="btn" onclick="animateForward()">▶️ 前向传播动画</button>
+            <button class="btn" onclick="resetAnimation()">🔄 重置</button>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-circle" style="background: #4CAF50;"></div>
+                <span>输入层 (400个神经元)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-circle" style="background: #2196F3;"></div>
+                <span>隐藏层1 (25个神经元)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-circle" style="background: #FF9800;"></div>
+                <span>隐藏层2 (15个神经元)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-circle" style="background: #F44336;"></div>
+                <span>输出层 (1个神经元)</span>
+            </div>
+        </div>
+
+        <div class="info-panel">
+            <strong>📊 网络参数统计：</strong><br>
+            • 第1层参数：400 × 25 + 25 = <strong>10,025</strong><br>
+            • 第2层参数：25 × 15 + 15 = <strong>390</strong><br>
+            • 第3层参数：15 × 1 + 1 = <strong>16</strong><br>
+            • 总参数量：<strong>10,431</strong><br>
+            • 激活函数：<strong>Sigmoid (所有层)</strong>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // 网络结构定义
+        const layers = [
+            { neurons: 10, x: 100, color: '#4CAF50', label: '输入层\n(400)' },
+            { neurons: 8, x: 350, color: '#2196F3', label: '隐藏层1\n(25)' },
+            { neurons: 6, x: 600, color: '#FF9800', label: '隐藏层2\n(15)' },
+            { neurons: 1, x: 850, color: '#F44336', label: '输出层\n(1)' }
+        ];
+
+        let animationProgress = 0;
+        let isAnimating = false;
+
+        function drawNetwork() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 绘制连接线
+            for (let i = 0; i < layers.length - 1; i++) {
+                const currentLayer = layers[i];
+                const nextLayer = layers[i + 1];
+
+                for (let j = 0; j < currentLayer.neurons; j++) {
+                    const y1 = getYPosition(j, currentLayer.neurons);
+
+                    for (let k = 0; k < nextLayer.neurons; k++) {
+                        const y2 = getYPosition(k, nextLayer.neurons);
+
+                        ctx.beginPath();
+                        ctx.moveTo(currentLayer.x, y1);
+                        ctx.lineTo(nextLayer.x, y2);
+
+                        if (isAnimating && i < animationProgress) {
+                            ctx.strokeStyle = '#667eea';
+                            ctx.lineWidth = 2;
+                        } else {
+                            ctx.strokeStyle = '#e0e0e0';
+                            ctx.lineWidth = 1;
+                        }
+
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            // 绘制神经元
+            layers.forEach((layer, layerIndex) => {
+                for (let i = 0; i < layer.neurons; i++) {
+                    const y = getYPosition(i, layer.neurons);
+
+                    // 神经元圆圈
+                    ctx.beginPath();
+                    ctx.arc(layer.x, y, 15, 0, Math.PI * 2);
+
+                    if (isAnimating && layerIndex <= animationProgress) {
+                        ctx.fillStyle = layer.color;
+                        ctx.shadowBlur = 15;
+                        ctx.shadowColor = layer.color;
+                    } else {
+                        ctx.fillStyle = 'white';
+                        ctx.shadowBlur = 0;
+                    }
+
+                    ctx.fill();
+                    ctx.strokeStyle = layer.color;
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+                }
+
+                // 层标签
+                ctx.fillStyle = '#333';
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'center';
+                const lines = layer.label.split('\n');
+                lines.forEach((line, idx) => {
+                    ctx.fillText(line, layer.x, 30 + idx * 20);
+                });
+            });
+        }
+
+        function getYPosition(index, total) {
+            const spacing = 300 / (total + 1);
+            return 80 + spacing * (index + 1);
+        }
+
+        function animateForward() {
+            if (isAnimating) return;
+
+            isAnimating = true;
+            animationProgress = 0;
+
+            const interval = setInterval(() => {
+                animationProgress++;
+                drawNetwork();
+
+                if (animationProgress >= layers.length) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        isAnimating = false;
+                    }, 1000);
+                }
+            }, 600);
+        }
+
+        function resetAnimation() {
+            isAnimating = false;
+            animationProgress = 0;
+            drawNetwork();
+        }
+
+        // 初始绘制
+        drawNetwork();
+    </script>
+
+<script>
+(function () {
+  const sendHeight = () => {
+    if (window.parent === window) return;
+    const body = document.body;
+    const root = document.documentElement;
+    const height = Math.max(
+      body ? body.scrollHeight : 0,
+      body ? body.offsetHeight : 0,
+      root ? root.scrollHeight : 0,
+      root ? root.offsetHeight : 0
+    );
+    window.parent.postMessage({ type: 'iframe-height', height }, '*');
+  };
+
+  window.addEventListener('load', sendHeight);
+  window.addEventListener('resize', sendHeight);
+
+  if ('ResizeObserver' in window) {
+    const observer = new ResizeObserver(sendHeight);
+    if (document.body) observer.observe(document.body);
+    if (document.documentElement) observer.observe(document.documentElement);
+  }
+
+  requestAnimationFrame(sendHeight);
+  setTimeout(sendHeight, 250);
+  setTimeout(sendHeight, 1000);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Softmax概率分布可视化</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .controls {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .control-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #ddd;
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+        }
+        .value-display {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .logits-inputs {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .logit-input {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .logit-input input {
+            width: 80%;
+            padding: 8px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+        .formula {
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+            border: 2px solid #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Softmax概率分布可视化</h1>
+        <p class="subtitle">探索温度参数如何影响多分类神经网络的输出概率</p>
+
+        <div class="formula">
+            <strong>Softmax公式：</strong> P(y=j) = exp(z_j / T) / Σ exp(z_k / T)
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label>
+                    温度参数 (Temperature):
+                    <span class="value-display" id="tempValue">1.0</span>
+                </label>
+                <input type="range" id="temperature" min="0.1" max="5" step="0.1" value="1.0">
+                <small style="color: #666;">T < 1: 增强自信度 | T > 1: 降低自信度</small>
+            </div>
+
+            <div class="control-group">
+                <label>调整Logits值（10个类别的原始输出）：</label>
+                <div class="logits-inputs" id="logitsInputs"></div>
+            </div>
+        </div>
+
+        <div id="barChart"></div>
+        <div id="pieChart"></div>
+
+        <div class="info-box">
+            <strong>💡 关键洞察：</strong>
+            <ul>
+                <li><strong>T = 1.0</strong>: 标准Softmax，平衡的概率分布</li>
+                <li><strong>T < 1.0</strong>: 概率分布更尖锐，模型更"自信"（适合推理阶段）</li>
+                <li><strong>T > 1.0</strong>: 概率分布更平滑，模型更"谨慎"（适合知识蒸馏）</li>
+                <li><strong>应用场景</strong>: 温度缩放常用于模型校准和集成学习</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // 初始化10个类别的logits输入框
+        const logitsContainer = document.getElementById('logitsInputs');
+        const defaultLogits = [2.5, 1.8, 0.5, -0.3, 1.2, 0.8, -0.5, 1.5, 0.2, -0.8];
+
+        for (let i = 0; i < 10; i++) {
+            const div = document.createElement('div');
+            div.className = 'logit-input';
+            div.innerHTML = `
+                <label>类别${i}</label>
+                <input type="number" id="logit${i}" value="${defaultLogits[i]}" step="0.1">
+            `;
+            logitsContainer.appendChild(div);
+        }
+
+        function softmax(logits, temperature) {
+            const scaledLogits = logits.map(z => z / temperature);
+            const maxLogit = Math.max(...scaledLogits);
+            const exps = scaledLogits.map(z => Math.exp(z - maxLogit)); // 数值稳定性技巧
+            const sumExps = exps.reduce((a, b) => a + b, 0);
+            return exps.map(e => e / sumExps);
+        }
+
+        function updateCharts() {
+            const temperature = parseFloat(document.getElementById('temperature').value);
+            document.getElementById('tempValue').textContent = temperature.toFixed(1);
+
+            const logits = [];
+            for (let i = 0; i < 10; i++) {
+                logits.push(parseFloat(document.getElementById(`logit${i}`).value));
+            }
+
+            const probs = softmax(logits, temperature);
+            const categories = Array.from({length: 10}, (_, i) => `类别${i}`);
+
+            // 柱状图
+            const barTrace = {
+                x: categories,
+                y: probs,
+                type: 'bar',
+                marker: {
+                    color: probs,
+                    colorscale: 'Viridis',
+                    showscale: true,
+                    colorbar: {title: '概率'}
+                },
+                text: probs.map(p => (p * 100).toFixed(1) + '%'),
+                textposition: 'outside'
+            };
+
+            const barLayout = {
+                title: `Softmax概率分布 (T=${temperature.toFixed(1)})`,
+                xaxis: {title: '类别'},
+                yaxis: {title: '概率', range: [0, 1]},
+                height: 400
+            };
+
+            Plotly.newPlot('barChart', [barTrace], barLayout);
+
+            // 饼图
+            const pieTrace = {
+                labels: categories,
+                values: probs,
+                type: 'pie',
+                textinfo: 'label+percent',
+                marker: {
+                    colors: ['#667eea', '#764ba2', '#f093fb', '#4facfe',
+                             '#43e97b', '#fa709a', '#fee140', '#30cfd0',
+                             '#a8edea', '#fed6e3']
+                }
+            };
+
+            const pieLayout = {
+                title: '概率分布饼图',
+                height: 400
+            };
+
+            Plotly.newPlot('pieChart', [pieTrace], pieLayout);
+        }
+
+        // 事件监听
+        document.getElementById('temperature').addEventListener('input', updateCharts);
+        for (let i = 0; i < 10; i++) {
+            document.getElementById(`logit${i}`).addEventListener('input', updateCharts);
+        }
+
+        // 初始化
+        updateCharts();
+    </script>
+
+<script>
+(function () {
+  const sendHeight = () => {
+    if (window.parent === window) return;
+    const body = document.body;
+    const root = document.documentElement;
+    const height = Math.max(
+      body ? body.scrollHeight : 0,
+      body ? body.offsetHeight : 0,
+      root ? root.scrollHeight : 0,
+      root ? root.offsetHeight : 0
+    );
+    window.parent.postMessage({ type: 'iframe-height', height }, '*');
+  };
+
+  window.addEventListener('load', sendHeight);
+  window.addEventListener('resize', sendHeight);
+
+  if ('ResizeObserver' in window) {
+    const observer = new ResizeObserver(sendHeight);
+    if (document.body) observer.observe(document.body);
+    if (document.documentElement) observer.observe(document.documentElement);
+  }
+
+  requestAnimationFrame(sendHeight);
+  setTimeout(sendHeight, 250);
+  setTimeout(sendHeight, 1000);
+})();
+</script>
+</body>
+</html>

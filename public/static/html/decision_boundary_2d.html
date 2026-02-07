@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>决策边界可视化</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 1200px;
+            width: 100%;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        #canvas {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            display: block;
+            margin: 0 auto;
+            background: white;
+            cursor: crosshair;
+        }
+        .controls {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 0 10px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .legend-circle {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+        }
+        .info-panel {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 10px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 决策边界可视化</h1>
+        <p class="subtitle">通过PCA降维展示神经网络的分类边界</p>
+
+        <canvas id="canvas" width="800" height="600"></canvas>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-circle" style="background: #4CAF50;"></div>
+                <span>数字 0 (正确分类)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-circle" style="background: #2196F3;"></div>
+                <span>数字 1 (正确分类)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-circle" style="background: #F44336; border: 3px solid #000;"></div>
+                <span>分类错误</span>
+            </div>
+            <div class="legend-item">
+                <div style="width: 30px; height: 3px; background: #FF9800;"></div>
+                <span>决策边界</span>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn" onclick="generateNewData()">🔄 重新生成数据</button>
+            <button class="btn" onclick="toggleBoundary()">👁️ 切换边界显示</button>
+        </div>
+
+        <div class="info-panel">
+            <strong>📊 可视化说明：</strong><br>
+            • 原始数据为400维（20×20像素），通过PCA降维到2D平面展示<br>
+            • 橙色曲线表示神经网络学习到的决策边界<br>
+            • 点击画布可以添加新的测试点，观察模型预测结果<br>
+            • 黑色边框的点表示模型分类错误的样本（约2%）
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        let showBoundary = true;
+        let dataPoints = [];
+
+        // 生成模拟的PCA降维数据
+        function generateData() {
+            dataPoints = [];
+
+            // 生成数字0的数据点（聚类在左侧）
+            for (let i = 0; i < 150; i++) {
+                const x = 200 + Math.random() * 200 - 100;
+                const y = 300 + Math.random() * 300 - 150;
+                const label = 0;
+                const predicted = (x > 350 + Math.sin(y / 50) * 50) ? 1 : 0;
+                dataPoints.push({ x, y, label, predicted });
+            }
+
+            // 生成数字1的数据点（聚类在右侧）
+            for (let i = 0; i < 150; i++) {
+                const x = 600 + Math.random() * 200 - 100;
+                const y = 300 + Math.random() * 300 - 150;
+                const label = 1;
+                const predicted = (x > 350 + Math.sin(y / 50) * 50) ? 1 : 0;
+                dataPoints.push({ x, y, label, predicted });
+            }
+        }
+
+        function drawDecisionBoundary() {
+            if (!showBoundary) return;
+
+            ctx.strokeStyle = '#FF9800';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+
+            for (let y = 0; y < canvas.height; y += 2) {
+                const x = 350 + Math.sin(y / 50) * 50;
+                if (y === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+
+            ctx.stroke();
+
+            // 绘制背景色区域
+            ctx.globalAlpha = 0.1;
+            ctx.fillStyle = '#4CAF50';
+            ctx.fillRect(0, 0, 350, canvas.height);
+            ctx.fillStyle = '#2196F3';
+            ctx.fillRect(350, 0, canvas.width - 350, canvas.height);
+            ctx.globalAlpha = 1.0;
+        }
+
+        function drawDataPoints() {
+            dataPoints.forEach(point => {
+                const isCorrect = point.label === point.predicted;
+
+                // 设置颜色
+                if (point.label === 0) {
+                    ctx.fillStyle = '#4CAF50';
+                } else {
+                    ctx.fillStyle = '#2196F3';
+                }
+
+                // 绘制点
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, 5, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 如果分类错误，添加黑色边框
+                if (!isCorrect) {
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+            });
+        }
+
+        function drawAxes() {
+            ctx.strokeStyle = '#ccc';
+            ctx.lineWidth = 1;
+
+            // X轴
+            ctx.beginPath();
+            ctx.moveTo(50, canvas.height - 50);
+            ctx.lineTo(canvas.width - 50, canvas.height - 50);
+            ctx.stroke();
+
+            // Y轴
+            ctx.beginPath();
+            ctx.moveTo(50, 50);
+            ctx.lineTo(50, canvas.height - 50);
+            ctx.stroke();
+
+            // 标签
+            ctx.fillStyle = '#666';
+            ctx.font = '12px Arial';
+            ctx.fillText('PCA Component 1', canvas.width / 2 - 50, canvas.height - 20);
+            ctx.save();
+            ctx.translate(20, canvas.height / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText('PCA Component 2', 0, 0);
+            ctx.restore();
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawAxes();
+            drawDecisionBoundary();
+            drawDataPoints();
+        }
+
+        function generateNewData() {
+            generateData();
+            draw();
+        }
+
+        function toggleBoundary() {
+            showBoundary = !showBoundary;
+            draw();
+        }
+
+        // 点击添加新点
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            // 根据位置预测标签
+            const predicted = (x > 350 + Math.sin(y / 50) * 50) ? 1 : 0;
+
+            // 随机分配真实标签（模拟用户输入）
+            const label = Math.random() > 0.5 ? 1 : 0;
+
+            dataPoints.push({ x, y, label, predicted });
+            draw();
+        });
+
+        // 初始化
+        generateData();
+        draw();
+    </script>
+
+<script>
+(function () {
+  const sendHeight = () => {
+    if (window.parent === window) return;
+    const body = document.body;
+    const root = document.documentElement;
+    const height = Math.max(
+      body ? body.scrollHeight : 0,
+      body ? body.offsetHeight : 0,
+      root ? root.scrollHeight : 0,
+      root ? root.offsetHeight : 0
+    );
+    window.parent.postMessage({ type: 'iframe-height', height }, '*');
+  };
+
+  window.addEventListener('load', sendHeight);
+  window.addEventListener('resize', sendHeight);
+
+  if ('ResizeObserver' in window) {
+    const observer = new ResizeObserver(sendHeight);
+    if (document.body) observer.observe(document.body);
+    if (document.documentElement) observer.observe(document.documentElement);
+  }
+
+  requestAnimationFrame(sendHeight);
+  setTimeout(sendHeight, 250);
+  setTimeout(sendHeight, 1000);
+})();
+</script>
+</body>
+</html>

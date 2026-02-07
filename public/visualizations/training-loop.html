@@ -734,5 +734,35 @@
   init();
 })();
 </script>
+
+<script>
+(function () {
+  const sendHeight = () => {
+    if (window.parent === window) return;
+    const body = document.body;
+    const root = document.documentElement;
+    const height = Math.max(
+      body ? body.scrollHeight : 0,
+      body ? body.offsetHeight : 0,
+      root ? root.scrollHeight : 0,
+      root ? root.offsetHeight : 0
+    );
+    window.parent.postMessage({ type: 'iframe-height', height }, '*');
+  };
+
+  window.addEventListener('load', sendHeight);
+  window.addEventListener('resize', sendHeight);
+
+  if ('ResizeObserver' in window) {
+    const observer = new ResizeObserver(sendHeight);
+    if (document.body) observer.observe(document.body);
+    if (document.documentElement) observer.observe(document.documentElement);
+  }
+
+  requestAnimationFrame(sendHeight);
+  setTimeout(sendHeight, 250);
+  setTimeout(sendHeight, 1000);
+})();
+</script>
 </body>
 </html>

@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>正则化效果动画</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 12px 30px;
+            font-size: 16px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .slider-container {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #ddd;
+            outline: none;
+        }
+        .value-display {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+        .formula {
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+            border: 2px solid #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 正则化效果动画演示</h1>
+
+        <div class="formula">
+            <strong>Ridge回归目标函数：</strong> J(w) = MSE(w) + λ||w||²
+        </div>
+
+        <div class="slider-container">
+            <label>
+                正则化参数 λ (Lambda):
+                <span class="value-display" id="lambdaValue">0.0</span>
+            </label>
+            <input type="range" id="lambda" min="0" max="10" step="0.1" value="0">
+            <small style="color: #666;">λ=0: 无正则化 | λ增大: 正则化增强</small>
+        </div>
+
+        <div class="controls">
+            <button class="btn-primary" onclick="animateRegularization()">▶️ 播放动画</button>
+            <button class="btn-primary" onclick="pauseAnimation()">⏸️ 暂停</button>
+            <button class="btn-primary" onclick="resetAnimation()">🔄 重置</button>
+        </div>
+
+        <div id="fittingChart"></div>
+        <div id="weightsChart"></div>
+
+        <div class="info-box">
+            <strong>📊 观察要点：</strong>
+            <ul>
+                <li><strong>λ = 0</strong>: 无正则化，模型可能过拟合，权重值较大且不稳定</li>
+                <li><strong>λ = 0.1-1</strong>: 轻度正则化，模型平滑度提升，泛化能力增强</li>
+                <li><strong>λ = 1-5</strong>: 中度正则化，权重显著缩小，曲线更加平滑</li>
+                <li><strong>λ > 5</strong>: 过度正则化，模型过于简单，可能欠拟合</li>
+                <li><strong>权重变化</strong>: 观察高阶项权重如何随λ增大而趋近于0</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        let animationInterval = null;
+        let currentLambda = 0;
+
+        // 生成数据
+        function generateData() {
+            const X = [];
+            const y = [];
+            for (let i = 0; i < 30; i++) {
+                const x = Math.random() * 4 - 2;
+                const yTrue = 0.5 * x**3 - 2 * x**2 + x + 3;
+                const yNoisy = yTrue + (Math.random() - 0.5) * 5;
+                X.push(x);
+                y.push(yNoisy);
+            }
+            return { X, y };
+        }
+
+        const data = generateData();
+
+        // Ridge回归拟合
+        function ridgeFit(X, y, degree, lambda) {
+            const n = X.length;
+            const coeffs = Array(degree + 1).fill(0);
+
+            const lr = 0.001;
+            const iterations = 1000;
+
+            for (let iter = 0; iter < iterations; iter++) {
+                const gradients = Array(degree + 1).fill(0);
+
+                for (let i = 0; i < n; i++) {
+                    let pred = 0;
+                    for (let j = 0; j <= degree; j++) {
+                        pred += coeffs[j] * Math.pow(X[i], j);
+                    }
+                    const error = pred - y[i];
+
+                    for (let j = 0; j <= degree; j++) {
+                        gradients[j] += error * Math.pow(X[i], j);
+                    }
+                }
+
+                // 添加L2正则化项
+                for (let j = 1; j <= degree; j++) {  // 不惩罚截距项
+                    gradients[j] += lambda * coeffs[j];
+                }
+
+                for (let j = 0; j <= degree; j++) {
+                    coeffs[j] -= lr * gradients[j] / n;
+                }
+            }
+
+            return coeffs;
+        }
+
+        function predict(x, coeffs) {
+            let y = 0;
+            for (let i = 0; i < coeffs.length; i++) {
+                y += coeffs[i] * Math.pow(x, i);
+            }
+            return y;
+        }
+
+        function updateVisualization(lambda) {
+            document.getElementById('lambdaValue').textContent = lambda.toFixed(1);
+
+            const degree = 8;
+            const coeffs = ridgeFit(data.X, data.y, degree, lambda);
+
+            // 拟合曲线
+            const xRange = [];
+            const yPred = [];
+            for (let x = -2; x <= 2; x += 0.05) {
+                xRange.push(x);
+                yPred.push(predict(x, coeffs));
+            }
+
+            const trace1 = {
+                x: data.X,
+                y: data.y,
+                mode: 'markers',
+                type: 'scatter',
+                name: '训练数据',
+                marker: { size: 10, color: '#667eea' }
+            };
+
+            const trace2 = {
+                x: xRange,
+                y: yPred,
+                mode: 'lines',
+                type: 'scatter',
+                name: `拟合曲线 (λ=${lambda.toFixed(1)})`,
+                line: { color: '#f44336', width: 3 }
+            };
+
+            Plotly.newPlot('fittingChart', [trace1, trace2], {
+                title: `Ridge回归拟合效果 (λ=${lambda.toFixed(1)})`,
+                xaxis: { title: 'x' },
+                yaxis: { title: 'y' },
+                height: 400
+            });
+
+            // 权重可视化
+            const trace3 = {
+                x: Array.from({ length: degree + 1 }, (_, i) => `w${i}`),
+                y: coeffs,
+                type: 'bar',
+                marker: {
+                    color: coeffs.map(c => Math.abs(c)),
+                    colorscale: 'Viridis',
+                    showscale: true,
+                    colorbar: { title: '|权重|' }
+                },
+                text: coeffs.map(c => c.toFixed(3)),
+                textposition: 'outside'
+            };
+
+            Plotly.newPlot('weightsChart', [trace3], {
+                title: '模型权重分布',
+                xaxis: { title: '权重参数' },
+                yaxis: { title: '权重值' },
+                height: 350
+            });
+        }
+
+        function animateRegularization() {
+            if (animationInterval) return;
+
+            currentLambda = 0;
+            document.getElementById('lambda').value = 0;
+
+            animationInterval = setInterval(() => {
+                currentLambda += 0.2;
+                if (currentLambda > 10) {
+                    pauseAnimation();
+                    return;
+                }
+
+                document.getElementById('lambda').value = currentLambda;
+                updateVisualization(currentLambda);
+            }, 300);
+        }
+
+        function pauseAnimation() {
+            if (animationInterval) {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        function resetAnimation() {
+            pauseAnimation();
+            currentLambda = 0;
+            document.getElementById('lambda').value = 0;
+            updateVisualization(0);
+        }
+
+        // 手动滑块控制
+        document.getElementById('lambda').addEventListener('input', (e) => {
+            pauseAnimation();
+            updateVisualization(parseFloat(e.target.value));
+        });
+
+        // 初始化
+        updateVisualization(0);
+    </script>
+
+<script>
+(function () {
+  const sendHeight = () => {
+    if (window.parent === window) return;
+    const body = document.body;
+    const root = document.documentElement;
+    const height = Math.max(
+      body ? body.scrollHeight : 0,
+      body ? body.offsetHeight : 0,
+      root ? root.scrollHeight : 0,
+      root ? root.offsetHeight : 0
+    );
+    window.parent.postMessage({ type: 'iframe-height', height }, '*');
+  };
+
+  window.addEventListener('load', sendHeight);
+  window.addEventListener('resize', sendHeight);
+
+  if ('ResizeObserver' in window) {
+    const observer = new ResizeObserver(sendHeight);
+    if (document.body) observer.observe(document.body);
+    if (document.documentElement) observer.observe(document.documentElement);
+  }
+
+  requestAnimationFrame(sendHeight);
+  setTimeout(sendHeight, 250);
+  setTimeout(sendHeight, 1000);
+})();
+</script>
+</body>
+</html>

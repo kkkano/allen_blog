@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>偏差-方差权衡可视化</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .controls {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .control-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #ddd;
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+        }
+        .value-display {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .metric-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .metric-value {
+            font-size: 28px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .metric-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+        .status-indicator {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status-good { background: #4caf50; color: white; }
+        .status-warning { background: #ff9800; color: white; }
+        .status-bad { background: #f44336; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 偏差-方差权衡可视化</h1>
+        <p class="subtitle">探索模型复杂度如何影响欠拟合和过拟合</p>
+
+        <div class="controls">
+            <div class="control-group">
+                <label>
+                    多项式阶数 (Model Complexity):
+                    <span class="value-display" id="degreeValue">1</span>
+                    <span class="status-indicator" id="statusIndicator">欠拟合</span>
+                </label>
+                <input type="range" id="degree" min="1" max="15" step="1" value="1">
+            </div>
+            <div class="control-group">
+                <label>
+                    数据噪声水平:
+                    <span class="value-display" id="noiseValue">0.3</span>
+                </label>
+                <input type="range" id="noise" min="0.1" max="1.0" step="0.1" value="0.3">
+            </div>
+            <div class="control-group">
+                <label>
+                    训练样本数量:
+                    <span class="value-display" id="samplesValue">30</span>
+                </label>
+                <input type="range" id="samples" min="10" max="100" step="10" value="30">
+            </div>
+        </div>
+
+        <div class="metrics">
+            <div class="metric-card">
+                <div class="metric-label">训练误差</div>
+                <div class="metric-value" id="trainError">-</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">验证误差</div>
+                <div class="metric-value" id="valError">-</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">误差比值</div>
+                <div class="metric-value" id="errorRatio">-</div>
+            </div>
+        </div>
+
+        <div id="fittingChart"></div>
+        <div id="errorChart"></div>
+
+        <div class="info-box">
+            <strong>🎯 关键洞察：</strong>
+            <ul>
+                <li><strong>欠拟合（高偏差）</strong>: 阶数1-2时，模型过于简单，训练和验证误差都很高</li>
+                <li><strong>最优拟合</strong>: 阶数3-5时，模型复杂度适中，验证误差最低</li>
+                <li><strong>过拟合（高方差）</strong>: 阶数>8时，训练误差很低但验证误差激增</li>
+                <li><strong>判断标准</strong>: 当验证误差 > 2×训练误差时，说明过拟合严重</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // 生成真实函数（三次多项式）
+        function trueFunction(x) {
+            return 0.5 * x**3 - 2 * x**2 + x + 3;
+        }
+
+        // 生成训练数据
+        function generateData(n, noise) {
+            const X = [];
+            const y = [];
+            for (let i = 0; i < n; i++) {
+                const x = Math.random() * 4 - 2;
+                const yTrue = trueFunction(x);
+                const yNoisy = yTrue + (Math.random() - 0.5) * noise * 10;
+                X.push(x);
+                y.push(yNoisy);
+            }
+            return { X, y };
+        }
+
+        // 多项式拟合（简化版最小二乘法）
+        function polynomialFit(X, y, degree) {
+            // 构建设计矩阵
+            const n = X.length;
+            const A = [];
+            for (let i = 0; i < n; i++) {
+                const row = [];
+                for (let j = 0; j <= degree; j++) {
+                    row.push(Math.pow(X[i], j));
+                }
+                A.push(row);
+            }
+
+            // 使用正规方程求解（简化实现）
+            // 实际应用中应使用数值稳定的方法
+            const coeffs = Array(degree + 1).fill(0);
+
+            // 简化的梯度下降求解
+            const lr = 0.001;
+            const iterations = 1000;
+
+            for (let iter = 0; iter < iterations; iter++) {
+                const gradients = Array(degree + 1).fill(0);
+
+                for (let i = 0; i < n; i++) {
+                    let pred = 0;
+                    for (let j = 0; j <= degree; j++) {
+                        pred += coeffs[j] * Math.pow(X[i], j);
+                    }
+                    const error = pred - y[i];
+
+                    for (let j = 0; j <= degree; j++) {
+                        gradients[j] += error * Math.pow(X[i], j);
+                    }
+                }
+
+                for (let j = 0; j <= degree; j++) {
+                    coeffs[j] -= lr * gradients[j] / n;
+                }
+            }
+
+            return coeffs;
+        }
+
+        // 预测
+        function predict(x, coeffs) {
+            let y = 0;
+            for (let i = 0; i < coeffs.length; i++) {
+                y += coeffs[i] * Math.pow(x, i);
+            }
+            return y;
+        }
+
+        // 计算MSE
+        function mse(X, y, coeffs) {
+            let sum = 0;
+            for (let i = 0; i < X.length; i++) {
+                const pred = predict(X[i], coeffs);
+                sum += Math.pow(pred - y[i], 2);
+            }
+            return sum / X.length;
+        }
+
+        function updateVisualization() {
+            const degree = parseInt(document.getElementById('degree').value);
+            const noise = parseFloat(document.getElementById('noise').value);
+            const nSamples = parseInt(document.getElementById('samples').value);
+
+            document.getElementById('degreeValue').textContent = degree;
+            document.getElementById('noiseValue').textContent = noise.toFixed(1);
+            document.getElementById('samplesValue').textContent = nSamples;
+
+            // 生成数据
+            const trainData = generateData(nSamples, noise);
+            const valData = generateData(30, noise);
+
+            // 拟合模型
+            const coeffs = polynomialFit(trainData.X, trainData.y, degree);
+
+            // 计算误差
+            const trainError = mse(trainData.X, trainData.y, coeffs);
+            const valError = mse(valData.X, valData.y, coeffs);
+            const ratio = valError / trainError;
+
+            document.getElementById('trainError').textContent = trainError.toFixed(3);
+            document.getElementById('valError').textContent = valError.toFixed(3);
+            document.getElementById('errorRatio').textContent = ratio.toFixed(2) + 'x';
+
+            // 更新状态指示器
+            const statusElem = document.getElementById('statusIndicator');
+            if (degree <= 2) {
+                statusElem.textContent = '欠拟合';
+                statusElem.className = 'status-indicator status-bad';
+            } else if (degree <= 5) {
+                statusElem.textContent = '最优拟合';
+                statusElem.className = 'status-indicator status-good';
+            } else {
+                statusElem.textContent = '过拟合';
+                statusElem.className = 'status-indicator status-warning';
+            }
+
+            // 绘制拟合曲线
+            const xRange = [];
+            const yTrue = [];
+            const yPred = [];
+            for (let x = -2; x <= 2; x += 0.05) {
+                xRange.push(x);
+                yTrue.push(trueFunction(x));
+                yPred.push(predict(x, coeffs));
+            }
+
+            const trace1 = {
+                x: trainData.X,
+                y: trainData.y,
+                mode: 'markers',
+                type: 'scatter',
+                name: '训练数据',
+                marker: { size: 8, color: '#667eea' }
+            };
+
+            const trace2 = {
+                x: xRange,
+                y: yTrue,
+                mode: 'lines',
+                type: 'scatter',
+                name: '真实函数',
+                line: { color: '#4caf50', width: 3, dash: 'dash' }
+            };
+
+            const trace3 = {
+                x: xRange,
+                y: yPred,
+                mode: 'lines',
+                type: 'scatter',
+                name: `拟合曲线 (阶数=${degree})`,
+                line: { color: '#f44336', width: 3 }
+            };
+
+            Plotly.newPlot('fittingChart', [trace1, trace2, trace3], {
+                title: '多项式拟合效果',
+                xaxis: { title: 'x' },
+                yaxis: { title: 'y' },
+                height: 400
+            });
+
+            // 绘制误差曲线（不同阶数）
+            const degrees = Array.from({ length: 15 }, (_, i) => i + 1);
+            const trainErrors = [];
+            const valErrors = [];
+
+            for (let d of degrees) {
+                const c = polynomialFit(trainData.X, trainData.y, d);
+                trainErrors.push(mse(trainData.X, trainData.y, c));
+                valErrors.push(mse(valData.X, valData.y, c));
+            }
+
+            const trace4 = {
+                x: degrees,
+                y: trainErrors,
+                mode: 'lines+markers',
+                type: 'scatter',
+                name: '训练误差',
+                line: { color: '#667eea', width: 3 }
+            };
+
+            const trace5 = {
+                x: degrees,
+                y: valErrors,
+                mode: 'lines+markers',
+                type: 'scatter',
+                name: '验证误差',
+                line: { color: '#f44336', width: 3 }
+            };
+
+            Plotly.newPlot('errorChart', [trace4, trace5], {
+                title: '误差随模型复杂度变化',
+                xaxis: { title: '多项式阶数' },
+                yaxis: { title: 'MSE' },
+                height: 400,
+                shapes: [{
+                    type: 'line',
+                    x0: degree,
+                    x1: degree,
+                    y0: 0,
+                    y1: Math.max(...valErrors),
+                    line: { color: 'gray', width: 2, dash: 'dot' }
+                }]
+            });
+        }
+
+        // 事件监听
+        document.getElementById('degree').addEventListener('input', updateVisualization);
+        document.getElementById('noise').addEventListener('input', updateVisualization);
+        document.getElementById('samples').addEventListener('input', updateVisualization);
+
+        // 初始化
+        updateVisualization();
+    </script>
+
+<script>
+(function () {
+  const sendHeight = () => {
+    if (window.parent === window) return;
+    const body = document.body;
+    const root = document.documentElement;
+    const height = Math.max(
+      body ? body.scrollHeight : 0,
+      body ? body.offsetHeight : 0,
+      root ? root.scrollHeight : 0,
+      root ? root.offsetHeight : 0
+    );
+    window.parent.postMessage({ type: 'iframe-height', height }, '*');
+  };
+
+  window.addEventListener('load', sendHeight);
+  window.addEventListener('resize', sendHeight);
+
+  if ('ResizeObserver' in window) {
+    const observer = new ResizeObserver(sendHeight);
+    if (document.body) observer.observe(document.body);
+    if (document.documentElement) observer.observe(document.documentElement);
+  }
+
+  requestAnimationFrame(sendHeight);
+  setTimeout(sendHeight, 250);
+  setTimeout(sendHeight, 1000);
+})();
+</script>
+</body>
+</html>

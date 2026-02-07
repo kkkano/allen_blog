@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多分类决策边界3D可视化</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .controls {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .control-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #667eea;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 多分类决策边界3D可视化</h1>
+        <p class="subtitle">通过PCA降维展示10类手写数字在特征空间中的分布</p>
+
+        <div class="controls">
+            <div class="control-group">
+                <label>选择可视化模式：</label>
+                <select id="viewMode" onchange="updateVisualization()">
+                    <option value="3d">3D散点图（PCA前3个主成分）</option>
+                    <option value="2d">2D投影（PCA前2个主成分）</option>
+                    <option value="confusion">易混淆类别对分析</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>高亮类别：</label>
+                <select id="highlightClass" onchange="updateVisualization()">
+                    <option value="all">全部类别</option>
+                    <option value="0">数字 0</option>
+                    <option value="1">数字 1</option>
+                    <option value="2">数字 2</option>
+                    <option value="3">数字 3</option>
+                    <option value="4">数字 4</option>
+                    <option value="5">数字 5</option>
+                    <option value="6">数字 6</option>
+                    <option value="7">数字 7</option>
+                    <option value="8">数字 8</option>
+                    <option value="9">数字 9</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="mainChart"></div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: #1f77b4;"></div>
+                <span>数字 0</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #ff7f0e;"></div>
+                <span>数字 1</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #2ca02c;"></div>
+                <span>数字 2</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #d62728;"></div>
+                <span>数字 3</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #9467bd;"></div>
+                <span>数字 4</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #8c564b;"></div>
+                <span>数字 5</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #e377c2;"></div>
+                <span>数字 6</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #7f7f7f;"></div>
+                <span>数字 7</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #bcbd22;"></div>
+                <span>数字 8</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #17becf;"></div>
+                <span>数字 9</span>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <strong>🔍 关键洞察：</strong>
+            <ul>
+                <li><strong>PCA降维</strong>: 将400维像素空间降至3维，保留主要变化方向</li>
+                <li><strong>类别分离度</strong>: 聚类越紧密、类间距离越大，分类越容易</li>
+                <li><strong>易混淆对</strong>: 如4和9、3和8在特征空间中有重叠区域</li>
+                <li><strong>决策边界</strong>: 神经网络学习的是高维空间中的非线性分界面</li>
+                <li><strong>实际应用</strong>: 可用于数据质量检查和模型调试</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // 模拟生成PCA降维后的数据（实际应用中应使用真实数据）
+        function generateMockData() {
+            const data = [];
+            const colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
+                           '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'];
+
+            for (let digit = 0; digit < 10; digit++) {
+                const numSamples = 50;
+                const centerX = Math.cos(digit * Math.PI / 5) * 5;
+                const centerY = Math.sin(digit * Math.PI / 5) * 5;
+                const centerZ = (digit % 3) * 3;
+
+                for (let i = 0; i < numSamples; i++) {
+                    data.push({
+                        x: centerX + (Math.random() - 0.5) * 3,
+                        y: centerY + (Math.random() - 0.5) * 3,
+                        z: centerZ + (Math.random() - 0.5) * 2,
+                        label: digit,
+                        color: colors[digit]
+                    });
+                }
+            }
+            return data;
+        }
+
+        const mockData = generateMockData();
+
+        function updateVisualization() {
+            const viewMode = document.getElementById('viewMode').value;
+            const highlightClass = document.getElementById('highlightClass').value;
+
+            let filteredData = mockData;
+            if (highlightClass !== 'all') {
+                const targetClass = parseInt(highlightClass);
+                filteredData = mockData.map(d => ({
+                    ...d,
+                    color: d.label === targetClass ? d.color : '#cccccc',
+                    opacity: d.label === targetClass ? 1.0 : 0.2
+                }));
+            }
+
+            if (viewMode === '3d') {
+                plot3DScatter(filteredData);
+            } else if (viewMode === '2d') {
+                plot2DProjection(filteredData);
+            } else {
+                plotConfusionPairs();
+            }
+        }
+
+        function plot3DScatter(data) {
+            const traces = [];
+            for (let digit = 0; digit < 10; digit++) {
+                const digitData = data.filter(d => d.label === digit);
+                traces.push({
+                    x: digitData.map(d => d.x),
+                    y: digitData.map(d => d.y),
+                    z: digitData.map(d => d.z),
+                    mode: 'markers',
+                    type: 'scatter3d',
+                    name: `数字 ${digit}`,
+                    marker: {
+                        size: 5,
+                        color: digitData[0].color,
+                        opacity: digitData[0].opacity || 0.8
+                    }
+                });
+            }
+
+            const layout = {
+                title: '手写数字在PCA空间中的3D分布',
+                scene: {
+                    xaxis: {title: 'PC1 (主成分1)'},
+                    yaxis: {title: 'PC2 (主成分2)'},
+                    zaxis: {title: 'PC3 (主成分3)'}
+                },
+                height: 700,
+                showlegend: false
+            };
+
+            Plotly.newPlot('mainChart', traces, layout);
+        }
+
+        function plot2DProjection(data) {
+            const traces = [];
+            for (let digit = 0; digit < 10; digit++) {
+                const digitData = data.filter(d => d.label === digit);
+                traces.push({
+                    x: digitData.map(d => d.x),
+                    y: digitData.map(d => d.y),
+                    mode: 'markers',
+                    type: 'scatter',
+                    name: `数字 ${digit}`,
+                    marker: {
+                        size: 8,
+                        color: digitData[0].color,
+                        opacity: digitData[0].opacity || 0.7
+                    }
+                });
+            }
+
+            const layout = {
+                title: '手写数字在PCA空间中的2D投影',
+                xaxis: {title: 'PC1 (主成分1)'},
+                yaxis: {title: 'PC2 (主成分2)'},
+                height: 600,
+                showlegend: false
+            };
+
+            Plotly.newPlot('mainChart', traces, layout);
+        }
+
+        function plotConfusionPairs() {
+            // 模拟易混淆类别对的数据
+            const confusionPairs = [
+                {pair: '4 vs 9', count: 23, accuracy: 0.92},
+                {pair: '3 vs 8', count: 18, accuracy: 0.94},
+                {pair: '5 vs 6', count: 15, accuracy: 0.95},
+                {pair: '7 vs 9', count: 12, accuracy: 0.96},
+                {pair: '2 vs 7', count: 10, accuracy: 0.97},
+                {pair: '1 vs 7', count: 8, accuracy: 0.98},
+                {pair: '3 vs 5', count: 7, accuracy: 0.98},
+                {pair: '0 vs 6', count: 5, accuracy: 0.99}
+            ];
+
+            const trace = {
+                x: confusionPairs.map(p => p.pair),
+                y: confusionPairs.map(p => p.count),
+                type: 'bar',
+                marker: {
+                    color: confusionPairs.map(p => p.accuracy),
+                    colorscale: 'RdYlGn',
+                    showscale: true,
+                    colorbar: {title: '准确率'}
+                },
+                text: confusionPairs.map(p => `错误: ${p.count}<br>准确率: ${(p.accuracy*100).toFixed(1)}%`),
+                hoverinfo: 'text'
+            };
+
+            const layout = {
+                title: '易混淆数字对分析',
+                xaxis: {title: '数字对'},
+                yaxis: {title: '混淆次数'},
+                height: 500
+            };
+
+            Plotly.newPlot('mainChart', [trace], layout);
+        }
+
+        // 初始化
+        updateVisualization();
+    </script>
+
+<script>
+(function () {
+  const sendHeight = () => {
+    if (window.parent === window) return;
+    const body = document.body;
+    const root = document.documentElement;
+    const height = Math.max(
+      body ? body.scrollHeight : 0,
+      body ? body.offsetHeight : 0,
+      root ? root.scrollHeight : 0,
+      root ? root.offsetHeight : 0
+    );
+    window.parent.postMessage({ type: 'iframe-height', height }, '*');
+  };
+
+  window.addEventListener('load', sendHeight);
+  window.addEventListener('resize', sendHeight);
+
+  if ('ResizeObserver' in window) {
+    const observer = new ResizeObserver(sendHeight);
+    if (document.body) observer.observe(document.body);
+    if (document.documentElement) observer.observe(document.documentElement);
+  }
+
+  requestAnimationFrame(sendHeight);
+  setTimeout(sendHeight, 250);
+  setTimeout(sendHeight, 1000);
+})();
+</script>
+</body>
+</html>

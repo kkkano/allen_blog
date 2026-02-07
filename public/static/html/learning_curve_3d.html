@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学习曲线3D可视化</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .controls {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .control-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #667eea;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+        .recommendation {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📈 学习曲线3D可视化</h1>
+        <p class="subtitle">探索训练集大小、模型复杂度与误差的三维关系</p>
+
+        <div class="controls">
+            <div class="control-group">
+                <label>选择可视化模式：</label>
+                <select id="viewMode" onchange="updateVisualization()">
+                    <option value="3d">3D曲面图（训练集大小 × 模型复杂度 × 误差）</option>
+                    <option value="learning_curve">学习曲线（固定模型复杂度）</option>
+                    <option value="complexity_curve">复杂度曲线（固定训练集大小）</option>
+                    <option value="heatmap">热力图（误差分布）</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>模型类型：</label>
+                <select id="modelType" onchange="updateVisualization()">
+                    <option value="polynomial">多项式回归</option>
+                    <option value="neural_network">神经网络</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="mainChart"></div>
+
+        <div class="recommendation" id="recommendation"></div>
+
+        <div class="info-box">
+            <strong>🔍 关键洞察：</strong>
+            <ul>
+                <li><strong>小数据集（<50样本）</strong>: 高方差问题严重，验证误差波动大</li>
+                <li><strong>中等数据集（50-200样本）</strong>: 误差快速下降，数据增益明显</li>
+                <li><strong>大数据集（>200样本）</strong>: 误差趋于平稳，继续增加数据收益递减</li>
+                <li><strong>模型复杂度影响</strong>: 简单模型受数据量影响小，复杂模型需要更多数据</li>
+                <li><strong>判断标准</strong>: 如果曲线未收敛且训练/验证误差差距大，需要更多数据</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // 模拟学习曲线数据生成
+        function generateLearningCurveData(modelComplexity, maxSamples = 300) {
+            const trainSizes = [];
+            const trainErrors = [];
+            const valErrors = [];
+
+            for (let n = 10; n <= maxSamples; n += 10) {
+                trainSizes.push(n);
+
+                // 训练误差：随样本增加而增加（模型难以完美拟合更多数据）
+                const trainError = 0.1 + 0.3 * Math.exp(-n / 50) +
+                                   0.05 * Math.random();
+                trainErrors.push(trainError);
+
+                // 验证误差：随样本增加而减少（泛化能力提升）
+                const baseValError = 0.5 + 0.5 * Math.exp(-n / 80);
+                const complexityPenalty = modelComplexity > 5 ?
+                    0.3 * Math.exp(-n / 100) : 0;
+                const valError = baseValError + complexityPenalty +
+                                0.08 * Math.random();
+                valErrors.push(valError);
+            }
+
+            return { trainSizes, trainErrors, valErrors };
+        }
+
+        // 生成3D曲面数据
+        function generate3DSurfaceData() {
+            const trainSizes = Array.from({ length: 20 }, (_, i) => 20 + i * 15);
+            const complexities = Array.from({ length: 15 }, (_, i) => i + 1);
+
+            const trainErrorSurface = [];
+            const valErrorSurface = [];
+
+            for (let complexity of complexities) {
+                const trainRow = [];
+                const valRow = [];
+
+                for (let n of trainSizes) {
+                    // 训练误差
+                    const trainError = 0.1 + 0.3 * Math.exp(-n / 50) +
+                                      0.02 * complexity / 15;
+                    trainRow.push(trainError);
+
+                    // 验证误差
+                    const baseValError = 0.5 + 0.5 * Math.exp(-n / 80);
+                    const complexityPenalty = complexity > 5 ?
+                        0.4 * Math.exp(-n / 100) * (complexity - 5) / 10 : 0;
+                    const valError = baseValError + complexityPenalty;
+                    valRow.push(valError);
+                }
+
+                trainErrorSurface.push(trainRow);
+                valErrorSurface.push(valRow);
+            }
+
+            return { trainSizes, complexities, trainErrorSurface, valErrorSurface };
+        }
+
+        function updateVisualization() {
+            const viewMode = document.getElementById('viewMode').value;
+            const modelType = document.getElementById('modelType').value;
+
+            if (viewMode === '3d') {
+                plot3DSurface();
+            } else if (viewMode === 'learning_curve') {
+                plotLearningCurve();
+            } else if (viewMode === 'complexity_curve') {
+                plotComplexityCurve();
+            } else {
+                plotHeatmap();
+            }
+        }
+
+        function plot3DSurface() {
+            const data = generate3DSurfaceData();
+
+            const trace1 = {
+                x: data.trainSizes,
+                y: data.complexities,
+                z: data.trainErrorSurface,
+                type: 'surface',
+                name: '训练误差',
+                colorscale: 'Blues',
+                showscale: true,
+                opacity: 0.9
+            };
+
+            const trace2 = {
+                x: data.trainSizes,
+                y: data.complexities,
+                z: data.valErrorSurface,
+                type: 'surface',
+                name: '验证误差',
+                colorscale: 'Reds',
+                showscale: false,
+                opacity: 0.7
+            };
+
+            const layout = {
+                title: '学习曲线3D曲面（蓝色=训练误差，红色=验证误差）',
+                scene: {
+                    xaxis: { title: '训练集大小' },
+                    yaxis: { title: '模型复杂度（多项式阶数）' },
+                    zaxis: { title: 'MSE' }
+                },
+                height: 700
+            };
+
+            Plotly.newPlot('mainChart', [trace1, trace2], layout);
+
+            document.getElementById('recommendation').innerHTML =
+                '<strong>💡 建议：</strong>观察红色曲面（验证误差）的最低点区域，' +
+                '这是最优的训练集大小和模型复杂度组合。';
+        }
+
+        function plotLearningCurve() {
+            const complexity = 5;
+            const data = generateLearningCurveData(complexity);
+
+            const trace1 = {
+                x: data.trainSizes,
+                y: data.trainErrors,
+                mode: 'lines+markers',
+                type: 'scatter',
+                name: '训练误差',
+                line: { color: '#667eea', width: 3 },
+                marker: { size: 8 }
+            };
+
+            const trace2 = {
+                x: data.trainSizes,
+                y: data.valErrors,
+                mode: 'lines+markers',
+                type: 'scatter',
+                name: '验证误差',
+                line: { color: '#f44336', width: 3 },
+                marker: { size: 8 }
+            };
+
+            const layout = {
+                title: `学习曲线（模型复杂度=${complexity}）`,
+                xaxis: { title: '训练集大小' },
+                yaxis: { title: 'MSE' },
+                height: 500
+            };
+
+            Plotly.newPlot('mainChart', [trace1, trace2], layout);
+
+            // 判断是否需要更多数据
+            const lastTrainError = data.trainErrors[data.trainErrors.length - 1];
+            const lastValError = data.valErrors[data.valErrors.length - 1];
+            const gap = lastValError - lastTrainError;
+
+            let recommendation = '';
+            if (gap > 0.15) {
+                recommendation = '<strong>⚠️ 建议：</strong>验证误差明显高于训练误差，' +
+                    '模型存在高方差问题。<strong>建议增加训练数据</strong>或降低模型复杂度。';
+            } else if (lastValError > 0.3) {
+                recommendation = '<strong>⚠️ 建议：</strong>训练和验证误差都较高，' +
+                    '模型存在高偏差问题。<strong>建议增加模型复杂度</strong>或添加更多特征。';
+            } else {
+                recommendation = '<strong>✅ 建议：</strong>模型表现良好，' +
+                    '训练和验证误差都较低且接近。当前数据量和模型复杂度较为合适。';
+            }
+
+            document.getElementById('recommendation').innerHTML = recommendation;
+        }
+
+        function plotComplexityCurve() {
+            const nSamples = 150;
+            const complexities = Array.from({ length: 15 }, (_, i) => i + 1);
+            const trainErrors = [];
+            const valErrors = [];
+
+            for (let c of complexities) {
+                const data = generateLearningCurveData(c, nSamples);
+                const idx = data.trainSizes.indexOf(nSamples);
+                trainErrors.push(data.trainErrors[idx]);
+                valErrors.push(data.valErrors[idx]);
+            }
+
+            const trace1 = {
+                x: complexities,
+                y: trainErrors,
+                mode: 'lines+markers',
+                type: 'scatter',
+                name: '训练误差',
+                line: { color: '#667eea', width: 3 },
+                marker: { size: 8 }
+            };
+
+            const trace2 = {
+                x: complexities,
+                y: valErrors,
+                mode: 'lines+markers',
+                type: 'scatter',
+                name: '验证误差',
+                line: { color: '#f44336', width: 3 },
+                marker: { size: 8 }
+            };
+
+            const layout = {
+                title: `模型复杂度曲线（训练集大小=${nSamples}）`,
+                xaxis: { title: '模型复杂度（多项式阶数）' },
+                yaxis: { title: 'MSE' },
+                height: 500
+            };
+
+            Plotly.newPlot('mainChart', [trace1, trace2], layout);
+
+            // 找到最优复杂度
+            const minValErrorIdx = valErrors.indexOf(Math.min(...valErrors));
+            const optimalComplexity = complexities[minValErrorIdx];
+
+            document.getElementById('recommendation').innerHTML =
+                `<strong>💡 建议：</strong>在当前训练集大小（${nSamples}样本）下，` +
+                `最优模型复杂度约为 <strong>${optimalComplexity}</strong>。` +
+                `此时验证误差最低（${valErrors[minValErrorIdx].toFixed(3)}）。`;
+        }
+
+        function plotHeatmap() {
+            const data = generate3DSurfaceData();
+
+            // 计算误差差距（过拟合程度）
+            const gapMatrix = [];
+            for (let i = 0; i < data.complexities.length; i++) {
+                const row = [];
+                for (let j = 0; j < data.trainSizes.length; j++) {
+                    const gap = data.valErrorSurface[i][j] - data.trainErrorSurface[i][j];
+                    row.push(gap);
+                }
+                gapMatrix.push(row);
+            }
+
+            const trace = {
+                x: data.trainSizes,
+                y: data.complexities,
+                z: gapMatrix,
+                type: 'heatmap',
+                colorscale: 'RdYlGn_r',
+                colorbar: { title: '过拟合程度<br>(验证误差-训练误差)' }
+            };
+
+            const layout = {
+                title: '过拟合热力图（颜色越深=过拟合越严重）',
+                xaxis: { title: '训练集大小' },
+                yaxis: { title: '模型复杂度' },
+                height: 600
+            };
+
+            Plotly.newPlot('mainChart', [trace], layout);
+
+            document.getElementById('recommendation').innerHTML =
+                '<strong>💡 建议：</strong>绿色区域表示模型泛化良好，' +
+                '红色区域表示过拟合严重。选择绿色区域的参数组合。';
+        }
+
+        // 初始化
+        updateVisualization();
+    </script>
+
+<script>
+(function () {
+  const sendHeight = () => {
+    if (window.parent === window) return;
+    const body = document.body;
+    const root = document.documentElement;
+    const height = Math.max(
+      body ? body.scrollHeight : 0,
+      body ? body.offsetHeight : 0,
+      root ? root.scrollHeight : 0,
+      root ? root.offsetHeight : 0
+    );
+    window.parent.postMessage({ type: 'iframe-height', height }, '*');
+  };
+
+  window.addEventListener('load', sendHeight);
+  window.addEventListener('resize', sendHeight);
+
+  if ('ResizeObserver' in window) {
+    const observer = new ResizeObserver(sendHeight);
+    if (document.body) observer.observe(document.body);
+    if (document.documentElement) observer.observe(document.documentElement);
+  }
+
+  requestAnimationFrame(sendHeight);
+  setTimeout(sendHeight, 250);
+  setTimeout(sendHeight, 1000);
+})();
+</script>
+</body>
+</html>
