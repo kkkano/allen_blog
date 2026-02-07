@@ -1,15 +1,42 @@
 'use client'
 
-import { useRef, useEffect, useState, useCallback } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 interface IframeEmbedProps {
   src: string
   minHeight?: number
+  title?: string
 }
 
-export default function IframeEmbed({ src, minHeight = 600 }: IframeEmbedProps) {
+const getDocumentHeight = (doc: Document) => {
+  const bodyHeight = Math.max(doc.body?.scrollHeight ?? 0, doc.body?.offsetHeight ?? 0)
+  const rootHeight = Math.max(
+    doc.documentElement?.scrollHeight ?? 0,
+    doc.documentElement?.offsetHeight ?? 0
+  )
+  return Math.max(bodyHeight, rootHeight)
+}
+
+export default function IframeEmbed({ src, minHeight = 600, title }: IframeEmbedProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [height, setHeight] = useState(minHeight)
+  const latestHeightRef = useRef(minHeight)
+
+  useEffect(() => {
+    latestHeightRef.current = minHeight
+    setHeight(minHeight)
+  }, [minHeight])
+
+  const setNextHeight = useCallback(
+    (nextHeight: number) => {
+      const safeHeight = Math.max(Math.ceil(nextHeight), minHeight)
+      if (safeHeight !== latestHeightRef.current) {
+        latestHeightRef.current = safeHeight
+        setHeight(safeHeight)
+      }
+    },
+    [minHeight]
+  )
 
   const adjustHeight = useCallback(() => {
     const iframe = iframeRef.current
@@ -17,37 +44,83 @@ export default function IframeEmbed({ src, minHeight = 600 }: IframeEmbedProps) 
     try {
       const doc = iframe.contentDocument || iframe.contentWindow?.document
       if (doc) {
-        const scrollH = doc.documentElement.scrollHeight
-        if (scrollH > 0) {
-          setHeight(Math.max(scrollH, minHeight))
-        }
+        setNextHeight(getDocumentHeight(doc))
       }
     } catch {
-      // cross-origin fallback – keep minHeight
+      setNextHeight(minHeight)
     }
-  }, [minHeight])
+  }, [minHeight, setNextHeight])
+
+  useEffect(() => {
+    const onMessage = (event: MessageEvent) => {
+      const iframe = iframeRef.current
+      if (!iframe || event.source !== iframe.contentWindow) return
+      const payload = event.data
+      if (!payload || payload.type !== 'iframe-height') return
+      const reportedHeight = Number(payload.height)
+      if (!Number.isFinite(reportedHeight) || reportedHeight <= 0) return
+      setNextHeight(reportedHeight)
+    }
+
+    window.addEventListener('message', onMessage)
+    return () => window.removeEventListener('message', onMessage)
+  }, [setNextHeight])
 
   useEffect(() => {
     const iframe = iframeRef.current
     if (!iframe) return
-    iframe.addEventListener('load', adjustHeight)
-    return () => iframe.removeEventListener('load', adjustHeight)
+
+    let resizeObserver: ResizeObserver | null = null
+    let animationFrameId = 0
+
+    const observeDocument = () => {
+      try {
+        const doc = iframe.contentDocument || iframe.contentWindow?.document
+        if (!doc?.body || !doc.documentElement) return
+        resizeObserver = new ResizeObserver(() => adjustHeight())
+        resizeObserver.observe(doc.body)
+        resizeObserver.observe(doc.documentElement)
+      } catch {
+        resizeObserver = null
+      }
+    }
+
+    const onLoad = () => {
+      adjustHeight()
+      observeDocument()
+      animationFrameId = window.requestAnimationFrame(() => adjustHeight())
+    }
+
+    iframe.addEventListener('load', onLoad)
+
+    return () => {
+      iframe.removeEventListener('load', onLoad)
+      if (resizeObserver) {
+        resizeObserver.disconnect()
+      }
+      if (animationFrameId) {
+        window.cancelAnimationFrame(animationFrameId)
+      }
+    }
   }, [adjustHeight])
 
-  const title = src
-    .replace(/.*\//, '')
-    .replace(/\.html$/, '')
-    .replace(/-/g, ' ')
+  const resolvedTitle =
+    title ||
+    src
+      .replace(/.*\//, '')
+      .replace(/\.html$/, '')
+      .replace(/-/g, ' ')
 
   return (
     <iframe
       ref={iframeRef}
       src={src}
-      title={title}
+      title={resolvedTitle}
       width="100%"
       height={height}
+      loading="lazy"
       scrolling="no"
-      style={{ border: 'none', borderRadius: '12px', display: 'block' }}
+      style={{ border: 'none', borderRadius: '12px', display: 'block', overflow: 'hidden' }}
     />
   )
 }

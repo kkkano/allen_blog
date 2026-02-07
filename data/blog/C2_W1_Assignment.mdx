@@ -42,8 +42,6 @@ authors: ['Allen']
   - [实现成果](#wrap-up-1)
   - [扩展挑战](#wrap-up-2)
 
-
-
 <a name="1"></a>
 
 ## 1 - 环境准备：搭建学习舞台
@@ -128,11 +126,10 @@ for i, ax in enumerate(axes.flat):
     ax.set_title(y[random_index, 0])
     ax.set_axis_off()
 ```
+
 ![数据图](/static/images/MLc2/output_13_0.png)
 
 > **可视化为什么重要？** 它让我们直观感受到数据的分布和复杂性，为后续模型设计提供直觉。
-
-
 
 <a name="3"></a>
 
@@ -204,8 +201,6 @@ def my_sequential_v(X, W1, b1, W2, b2, W3, b3):
 
 > **向量化优势**：使用矩阵乘法避免循环，显著提升计算速度。
 
-
-
 <a name="4"></a>
 
 ## 4 - 训练与评估：让模型“学会”识别
@@ -249,18 +244,17 @@ for i, ax in enumerate(axes.flat):
     random_index = np.random.randint(m)
     X_random_reshaped = X[random_index].reshape((20, 20)).T
     ax.imshow(X_random_reshaped, cmap='gray')
-    
+
     prediction = model.predict(X[random_index].reshape(1, 400))
     yhat = int(prediction >= 0.5)
-    
+
     ax.set_title(f"真实:{y[random_index, 0]}\n预测:{yhat}")
     ax.set_axis_off()
 ```
+
 ![数据图](/static/images/MLc2/output_39_0.png)
 
 > **阈值选择**：0.5作为概率阈值，实际应用中可调整以平衡精确率和召回率。
-
-
 
 <a name="5"></a>
 
@@ -270,10 +264,10 @@ for i, ax in enumerate(axes.flat):
 
 ### 5.1 激活函数对比
 
-| 函数    | 公式               | 优点               | 缺点           |
-| ------- | ------------------ | ------------------ | -------------- |
-| Sigmoid | $$1/(1 + e^{-x})$$  | 输出概率化         | 梯度消失       |
-| ReLU    | $$max(0, x)$$        | 缓解梯度消失       | 神经元可能死亡 |
+| 函数    | 公式               | 优点         | 缺点           |
+| ------- | ------------------ | ------------ | -------------- |
+| Sigmoid | $$1/(1 + e^{-x})$$ | 输出概率化   | 梯度消失       |
+| ReLU    | $$max(0, x)$$      | 缓解梯度消失 | 神经元可能死亡 |
 
 > **选择依据**：sigmoid适合输出层需要概率的二分类问题。
 
@@ -306,8 +300,8 @@ print(f"(a + b).shape: {(a + b).shape}, \na + b = \n{a + b}")
 输出：
 
 ```
-(a + b).shape: (3, 1), 
-a + b = 
+(a + b).shape: (3, 1),
+a + b =
 [[6]
  [7]
  [8]]
@@ -315,6 +309,341 @@ a + b =
 
 > **广播规则**：当维度不匹配时，较小维度自动复制扩展，避免显式循环。
 
+## 6 - 交互式可视化探索
+
+为了更直观地理解神经网络的工作原理，我们准备了三个交互式可视化工具：
+
+### 6.1 神经网络结构可视化
+
+<IframeEmbed
+  src="/static/html/neural_network_architecture.html"
+  minHeight={760}
+  title="神经网络结构可视化"
+/>
+
+这个可视化展示了我们的三层神经网络结构，你可以：
+
+- 查看每层的神经元数量和连接
+- 观察激活函数的作用
+- 理解前向传播的数据流动
+
+### 6.2 训练过程动画
+
+<IframeEmbed
+  src="/static/html/training_process_animation.html"
+  minHeight={820}
+  title="训练过程动画"
+/>
+
+观察模型训练过程中的动态变化：
+
+- 损失函数随epoch的下降曲线
+- 准确率的提升过程
+- 权重参数的更新可视化
+
+### 6.3 决策边界可视化
+
+<IframeEmbed src="/static/html/decision_boundary_2d.html" minHeight={820} title="决策边界可视化" />
+
+通过降维技术（PCA）将400维特征投影到2D平面，展示：
+
+- 数字0和1在特征空间的分布
+- 神经网络学习到的决策边界
+- 分类错误的样本位置
+
+---
+
+## 7 - 深入理解神经网络
+
+### 7.1 前向传播的数学原理
+
+神经网络的前向传播本质上是一系列矩阵乘法和非线性变换：
+
+**第一层计算**：
+
+$$
+\mathbf{z}^{[1]} = \mathbf{W}^{[1]}\mathbf{x} + \mathbf{b}^{[1]}
+$$
+
+$$
+\mathbf{a}^{[1]} = \sigma(\mathbf{z}^{[1]})
+$$
+
+其中：
+
+- $\mathbf{W}^{[1]} \in \mathbb{R}^{25 \times 400}$ 是权重矩阵
+- $\mathbf{b}^{[1]} \in \mathbb{R}^{25}$ 是偏置向量
+- $\sigma$ 是sigmoid激活函数
+
+**后续层**依次类推，最终输出层给出预测概率。
+
+> **为什么需要激活函数？** 如果没有激活函数，多层神经网络等价于单层线性模型，无法学习复杂的非线性关系。
+
+### 7.2 损失函数详解
+
+二元交叉熵损失函数的数学形式：
+
+$$
+J(\mathbf{W}, \mathbf{b}) = -\frac{1}{m}\sum_{i=1}^{m}[y^{(i)}\log(\hat{y}^{(i)}) + (1-y^{(i)})\log(1-\hat{y}^{(i)})]
+$$
+
+**直观理解**：
+
+- 当真实标签 $y=1$ 时，如果预测 $\hat{y}$ 接近1，损失接近0
+- 当真实标签 $y=0$ 时，如果预测 $\hat{y}$ 接近0，损失接近0
+- 预测错误时，损失会显著增大
+
+**代码实现对比**：
+
+```python
+# TensorFlow自动计算
+loss = tf.keras.losses.BinaryCrossentropy()
+
+# NumPy手动实现
+def binary_crossentropy(y_true, y_pred, epsilon=1e-7):
+    # 添加epsilon防止log(0)
+    y_pred = np.clip(y_pred, epsilon, 1 - epsilon)
+    return -np.mean(y_true * np.log(y_pred) + (1 - y_true) * np.log(1 - y_pred))
+```
+
+### 7.3 优化器原理
+
+**Adam优化器**结合了动量法和自适应学习率：
+
+$$
+m_t = \beta_1 m_{t-1} + (1-\beta_1)g_t
+$$
+
+$$
+v_t = \beta_2 v_{t-1} + (1-\beta_2)g_t^2
+$$
+
+$$
+\theta_t = \theta_{t-1} - \alpha \frac{m_t}{\sqrt{v_t} + \epsilon}
+$$
+
+**优势**：
+
+- 自动调整每个参数的学习率
+- 对稀疏梯度和噪声数据鲁棒
+- 通常比SGD收敛更快
+
+**常用优化器对比**：
+
+| 优化器   | 学习率 | 收敛速度 | 适用场景           |
+| -------- | ------ | -------- | ------------------ |
+| SGD      | 固定   | 慢       | 简单问题           |
+| Momentum | 固定   | 中等     | 有局部最优的问题   |
+| Adam     | 自适应 | 快       | 大多数深度学习任务 |
+| RMSprop  | 自适应 | 快       | RNN任务            |
+
+---
+
+## 8 - 常见问题与调试技巧
+
+### 8.1 模型不收敛怎么办？
+
+**问题表现**：损失函数不下降或震荡
+
+**可能原因及解决方案**：
+
+1. **学习率过大**
+
+   ```python
+   # 尝试减小学习率
+   optimizer = tf.keras.optimizers.Adam(0.0001)  # 从0.001降到0.0001
+   ```
+
+2. **权重初始化不当**
+
+   ```python
+   # 使用He初始化（适合ReLU）
+   Dense(25, activation='relu',
+         kernel_initializer='he_normal')
+   ```
+
+3. **数据未归一化**
+   ```python
+   # 标准化输入数据
+   from sklearn.preprocessing import StandardScaler
+   scaler = StandardScaler()
+   X_scaled = scaler.fit_transform(X)
+   ```
+
+### 8.2 过拟合问题
+
+**识别过拟合**：训练准确率高，验证准确率低
+
+**解决方案**：
+
+1. **添加Dropout层**
+
+   ```python
+   model = Sequential([
+       Dense(25, activation='sigmoid'),
+       tf.keras.layers.Dropout(0.3),  # 随机丢弃30%神经元
+       Dense(15, activation='sigmoid'),
+       tf.keras.layers.Dropout(0.3),
+       Dense(1, activation='sigmoid')
+   ])
+   ```
+
+2. **L2正则化**
+
+   ```python
+   from tensorflow.keras import regularizers
+
+   Dense(25, activation='sigmoid',
+         kernel_regularizer=regularizers.l2(0.01))
+   ```
+
+3. **早停法（Early Stopping）**
+
+   ```python
+   early_stop = tf.keras.callbacks.EarlyStopping(
+       monitor='val_loss',
+       patience=5,
+       restore_best_weights=True
+   )
+
+   model.fit(X, y, epochs=100,
+             validation_split=0.2,
+             callbacks=[early_stop])
+   ```
+
+### 8.3 训练速度优化
+
+**向量化加速对比**：
+
+```python
+import time
+
+# 循环版本（慢）
+start = time.time()
+for i in range(1000):
+    prediction = my_sequential(X[i], W1, b1, W2, b2, W3, b3)
+loop_time = time.time() - start
+
+# 向量化版本（快）
+start = time.time()
+predictions = my_sequential_v(X, W1, b1, W2, b2, W3, b3)
+vectorized_time = time.time() - start
+
+print(f"循环版本耗时: {loop_time:.2f}秒")
+print(f"向量化版本耗时: {vectorized_time:.2f}秒")
+print(f"加速比: {loop_time/vectorized_time:.1f}x")
+```
+
+**预期输出**：
+
+```
+循环版本耗时: 2.34秒
+向量化版本耗时: 0.08秒
+加速比: 29.3x
+```
+
+### 8.4 调试检查清单
+
+在模型训练遇到问题时，按以下顺序检查：
+
+- [ ] 数据形状是否正确（`X.shape`, `y.shape`）
+- [ ] 标签范围是否正确（二分类应为0/1）
+- [ ] 是否有NaN或Inf值（`np.isnan(X).any()`）
+- [ ] 学习率是否合理（通常0.0001-0.01）
+- [ ] 损失函数是否匹配任务（二分类用BinaryCrossentropy）
+- [ ] 输出层激活函数是否正确（二分类用sigmoid）
+- [ ] 是否需要数据归一化
+
+---
+
+## 9 - 进阶话题
+
+### 9.1 从二分类到多分类
+
+扩展到识别0-9所有数字：
+
+```python
+# 多分类模型
+model = Sequential([
+    Dense(128, activation='relu', input_shape=(400,)),
+    Dense(64, activation='relu'),
+    Dense(10, activation='softmax')  # 10个类别
+])
+
+model.compile(
+    loss='sparse_categorical_crossentropy',  # 多分类损失
+    optimizer='adam',
+    metrics=['accuracy']
+)
+```
+
+**关键变化**：
+
+- 输出层10个神经元（对应10个数字）
+- 激活函数改为softmax（输出概率分布）
+- 损失函数改为categorical_crossentropy
+
+### 9.2 卷积神经网络（CNN）
+
+对于图像任务，CNN通常比全连接网络更有效：
+
+```python
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten
+
+# 重塑数据为图像格式
+X_image = X.reshape(-1, 20, 20, 1)
+
+cnn_model = Sequential([
+    Conv2D(32, (3, 3), activation='relu', input_shape=(20, 20, 1)),
+    MaxPooling2D((2, 2)),
+    Conv2D(64, (3, 3), activation='relu'),
+    MaxPooling2D((2, 2)),
+    Flatten(),
+    Dense(64, activation='relu'),
+    Dense(1, activation='sigmoid')
+])
+```
+
+**CNN优势**：
+
+- 自动学习空间特征（边缘、纹理）
+- 参数共享，减少过拟合
+- 平移不变性
+
+### 9.3 模型评估指标
+
+除了准确率，还应关注：
+
+```python
+from sklearn.metrics import classification_report, confusion_matrix
+
+# 预测
+y_pred = (model.predict(X) >= 0.5).astype(int)
+
+# 混淆矩阵
+print("混淆矩阵:")
+print(confusion_matrix(y, y_pred))
+
+# 详细报告
+print("\n分类报告:")
+print(classification_report(y, y_pred, target_names=['数字0', '数字1']))
+```
+
+**输出示例**：
+
+```
+混淆矩阵:
+[[485   5]
+ [  3 507]]
+
+分类报告:
+              precision    recall  f1-score   support
+      数字0       0.99      0.99      0.99       490
+      数字1       0.99      0.99      0.99       510
+   accuracy                           0.99      1000
+```
+
+---
 
 <a name="wrap-up"></a>
 

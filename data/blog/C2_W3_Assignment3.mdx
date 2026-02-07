@@ -99,6 +99,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random
 print("X_train.shape", X_train.shape, "y_train.shape", y_train.shape)
 print("X_test.shape", X_test.shape, "y_test.shape", y_test.shape)
 ```
+
 > X.shape (18,) y.shape (18,)
 > X_train.shape (12,) y_train.shape (12,)
 > X_test.shape (6,) y_test.shape (6,)
@@ -115,6 +116,7 @@ ax.scatter(X_test, y_test,   color = dlc["dlblue"],   label="test")
 ax.legend(loc='upper left')
 plt.show()
 ```
+
 ![数据图2](/static/images/MLc2/output2w3_02.png)
 
 <a name="2.2"></a>
@@ -122,7 +124,6 @@ plt.show()
 ### 2.2 模型评估的误差计算（线性回归）
 
 在评估线性回归模型时，你需要计算预测值与目标值之间的平方误差差的平均值。
-
 
 $$
 J_{\text{test}}(\mathbf{w}, b) = \frac{1}{2m_{\text{test}}} \sum_{i=0}^{m_{\text{test}}-1} \left( f_{\mathbf{w}, b}(\mathbf{x}^{(i)}_{\text{test}}) - y^{(i)}_{\text{test}} \right)^2
@@ -174,10 +175,12 @@ err_train = lmodel.mse(y_train, yhat)
 yhat = lmodel.predict(X_test)
 err_test = lmodel.mse(y_test, yhat)
 ```
+
 ```python
 print(f"training err {err_train:0.2f}, test err {err_test:0.2f}")
 ```
->training err 58.01, test err 171215.01
+
+> training err 58.01, test err 171215.01
 
 训练集上的误差远小于测试集上的误差。以下图表显示了原因。模型非常好地拟合了训练数据，但为了做到这一点，它创建了一个复杂的函数。测试数据不是训练的一部分，模型在这些数据上的预测效果很差。这种模型可以描述为 1) 过拟合，2) 具有高方差，3) “泛化”能力差。
 
@@ -195,11 +198,11 @@ plt_train_test(X_train, y_train, X_test, y_test, x, y_pred, x_ideal, y_ideal, de
 
 下表中显示的训练集、交叉验证集和测试集的分布是典型分布，但可能会因可用数据量而异。
 
-|                 data 数据 | % of total 占总数的百分比 | Description 描述                                             |
-| ------------------------: | :-----------------------: | :----------------------------------------------------------- |
-|             training 训练 |            60             | Data used to tune model parameters 𝑤w and 𝑏b in training or fitting 用于调整模型参数 𝑤w 以及 𝑏b 用于训练或拟合的数据 |
+|                 data 数据 | % of total 占总数的百分比 | Description 描述                                                                                                                                                                             |
+| ------------------------: | :-----------------------: | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|             training 训练 |            60             | Data used to tune model parameters 𝑤w and 𝑏b in training or fitting 用于调整模型参数 𝑤w 以及 𝑏b 用于训练或拟合的数据                                                                         |
 | cross-validation 交叉验证 |            20             | Data used to tune other model parameters like degree of polynomial, regularization or the architecture of a neural network. 用于调整其他模型参数的数据，例如多项式、正则化或神经网络的架构。 |
-|                 test 测试 |            20             | Data used to test the model after tuning to gauge performance on new data 优化后用于测试模型以衡量新数据性能的数据 |
+|                 test 测试 |            20             | Data used to test the model after tuning to gauge performance on new data 优化后用于测试模型以衡量新数据性能的数据                                                                           |
 
 让我们在下面生成三个数据集。我们将再次使用 `train_test_split` from `sklearn` ，但将调用它两次以获得三个拆分：
 
@@ -208,7 +211,7 @@ plt_train_test(X_train, y_train, X_test, y_test, x, y_pred, x_ideal, y_ideal, de
 X,y, x_ideal,y_ideal = gen_data(40, 5, 0.7)
 print("X.shape", X.shape, "y.shape", y.shape)
 
-#split the data using sklearn routine 
+#split the data using sklearn routine
 X_train, X_, y_train, y_ = train_test_split(X,y,test_size=0.40, random_state=1)
 X_cv, X_test, y_cv, y_test = train_test_split(X_,y_,test_size=0.50, random_state=1)
 print("X_train.shape", X_train.shape, "y_train.shape", y_train.shape)
@@ -216,17 +219,16 @@ print("X_cv.shape", X_cv.shape, "y_cv.shape", y_cv.shape)
 print("X_test.shape", X_test.shape, "y_test.shape", y_test.shape)
 ```
 
->X.shape (40,) y.shape (40,)
-X_train.shape (24,) y_train.shape (24,)
-X_cv.shape (8,) y_cv.shape (8,)
-X_test.shape (8,) y_test.shape (8,)
-
+> X.shape (40,) y.shape (40,)
+> X_train.shape (24,) y_train.shape (24,)
+> X_cv.shape (8,) y_cv.shape (8,)
+> X_test.shape (8,) y_test.shape (8,)
 
 <a name="3"></a>
 
 ## 3 - 偏差与方差
 
-![偏差与方差](/static/images/MLc2/output2w3_04.png) 
+![偏差与方差](/static/images/MLc2/output2w3_04.png)
 
 上面很明显，多项式模型的阶数过高。如何选择一个好的值？事实证明，如图所示，训练和交叉验证的性能可以提供指导。通过尝试一系列阶数值，可以评估训练和交叉验证的性能。随着阶数变得过大，交叉验证的性能将开始相对于训练性能下降。让我们在我们的示例中尝试这一点。
 
@@ -372,7 +374,9 @@ X_train, X_, y_train, y_ = train_test_split(X, y, test_size=0.50, random_state=1
 X_cv, X_test, y_cv, y_test = train_test_split(X_, y_, test_size=0.20, random_state=1)
 print("X_train.shape:", X_train.shape, "X_cv.shape:", X_cv.shape, "X_test.shape:", X_test.shape)
 ```
->X_train.shape: (400, 2) X_cv.shape: (320, 2) X_test.shape: (80, 2)
+
+> X_train.shape: (400, 2) X_cv.shape: (320, 2) X_test.shape: (80, 2)
+
 ```python
 plt_train_eq_dist(X_train, y_train, classes, X_cv, y_cv, centers, std)
 ```
@@ -389,10 +393,10 @@ plt_train_eq_dist(X_train, y_train, classes, X_cv, y_cv, centers, std)
 分类模型的评估函数很简单：不正确预测的比例。
 
 $$
-J_{cv} = \frac{1}{m} \sum_{i=0}^{m-1} 
-\begin{cases} 
-1, & \text{if } \hat{y}^{(i)} \neq y^{(i)} \\ 
-0, & \text{otherwise} 
+J_{cv} = \frac{1}{m} \sum_{i=0}^{m-1}
+\begin{cases}
+1, & \text{if } \hat{y}^{(i)} \neq y^{(i)} \\
+0, & \text{otherwise}
 \end{cases}
 $$
 
@@ -431,9 +435,9 @@ print(f"categorization error {np.squeeze(eval_cat_err(y_hat, y_tmp)):0.3f}, expe
 
 test_eval_cat_err(eval_cat_err)
 ```
->categorization error 0.333, expected:0.333
-categorization error 0.250, expected:0.250
 
+> categorization error 0.333, expected:0.333
+> categorization error 0.250, expected:0.250
 
 <a name="5"></a>
 
@@ -475,20 +479,20 @@ model.fit(X_train, y_train, epochs=1000)
 
 ```py
 model.summary()
-model_test(model, classes, X_train.shape[1]) 
+model_test(model, classes, X_train.shape[1])
 ```
 
 ```text
 Model: "Complex"
 _________________________________________________________________
- Layer (type)                Output Shape              Param #   
+ Layer (type)                Output Shape              Param #
 =================================================================
- L1 (Dense)                  (None, 120)               360       
-                                                                 
- L2 (Dense)                  (None, 40)                4840      
-                                                                 
- L3 (Dense)                  (None, 6)                 246       
-                                                                 
+ L1 (Dense)                  (None, 120)               360
+
+ L2 (Dense)                  (None, 40)                4840
+
+ L3 (Dense)                  (None, 6)                 246
+
 =================================================================
 Total params: 5,446
 Trainable params: 5,446
@@ -504,9 +508,9 @@ cv_cerr_complex = eval_cat_err(y_cv, model_predict(X_cv))
 print(f"分类误差，训练，复杂模型: {training_cerr_complex:0.3f}")
 print(f"分类误差，CV，复杂模型: {cv_cerr_complex:0.3f}")
 ```
->categorization error, training,  complex model: 0.003
-categorization error, cv,  complex model: 0.122
 
+> categorization error, training, complex model: 0.003
+> categorization error, cv, complex model: 0.122
 
 <a name="5.1"></a>
 
@@ -558,12 +562,12 @@ plt_nn(model_predict_s,X_train,y_train, classes, X_cv, y_cv, suptitle="Simple Mo
 ```text
 Model: "Simple"
 _________________________________________________________________
- Layer (type)                Output Shape              Param #   
+ Layer (type)                Output Shape              Param #
 =================================================================
- L1 (Dense)                  (None, 6)                 18        
-                                                                 
- L2 (Dense)                  (None, 6)                 42        
-                                                                 
+ L1 (Dense)                  (None, 6)                 18
+
+ L2 (Dense)                  (None, 6)                 42
+
 =================================================================
 Total params: 60
 Trainable params: 60
@@ -580,8 +584,8 @@ print(f"分类误差，训练，简单模型: {training_cerr_simple:0.3f}, 复�
 print(f"分类误差，CV，简单模型: {cv_cerr_simple:0.3f}, 复杂模型: {cv_cerr_complex:0.3f}")
 ```
 
->categorization error, training, simple model, 0.062, complex model: 0.003
-categorization error, cv,       simple model, 0.087, complex model: 0.122
+> categorization error, training, simple model, 0.062, complex model: 0.003
+> categorization error, cv, simple model, 0.087, complex model: 0.122
 
 我们的简单模型在训练集上的分类误差略高，但在交叉验证集上的表现优于更复杂的模型。
 
@@ -626,20 +630,20 @@ model_r.fit(X_train, y_train, epochs=1000)
 
 ```python
 model_r.summary()
-model_r_test(model_r, classes, X_train.shape[1]) 
+model_r_test(model_r, classes, X_train.shape[1])
 ```
 
 ```text
 Model: "sequential"
 _________________________________________________________________
- Layer (type)                Output Shape              Param #   
+ Layer (type)                Output Shape              Param #
 =================================================================
- L1 (Dense)                  (None, 120)               360       
-                                                                 
- L2 (Dense)                  (None, 40)                4840      
-                                                                 
- L3 (Dense)                  (None, 6)                 246       
-                                                                 
+ L1 (Dense)                  (None, 120)               360
+
+ L2 (Dense)                  (None, 40)                4840
+
+ L3 (Dense)                  (None, 6)                 246
+
 =================================================================
 Total params: 5,446
 Trainable params: 5,446
@@ -662,8 +666,8 @@ print(f"分类误差，训练，正则化模型: {training_cerr_reg:0.3f}, 简�
 print(f"分类误差，CV，正则化模型: {cv_cerr_reg:0.3f}, 简单模型: {cv_cerr_simple:0.3f}, 复杂模型: {cv_cerr_complex:0.3f}")
 ```
 
->categorization error, training, regularized: 0.072, simple model, 0.062, complex model: 0.003
-categorization error, cv,       regularized: 0.066, simple model, 0.087, complex model: 0.122
+> categorization error, training, regularized: 0.072, simple model, 0.062, complex model: 0.003
+> categorization error, cv, regularized: 0.066, simple model, 0.087, complex model: 0.122
 
 简单模型在训练集上的分类误差略高，但在交叉验证集上的表现优于正则化模型。
 
@@ -718,12 +722,412 @@ plt_compare(X_test, y_test, classes, model_predict_s, model_predict_r, centers)
 
 ---
 
+<a name="8"></a>
+
+## 8 - 交互式可视化探索
+
+为了更直观地理解偏差-方差权衡和正则化效果，我们准备了三个交互式可视化工具：
+
+### 8.1 偏差-方差权衡可视化
+
+<IframeEmbed
+  src="/static/html/bias_variance_tradeoff.html"
+  minHeight={920}
+  title="偏差-方差权衡可视化"
+/>
+
+这个可视化展示了模型复杂度如何影响偏差和方差：
+
+- 调整多项式阶数观察欠拟合到过拟合的转变
+- 理解训练误差和验证误差的变化规律
+- 找到最优模型复杂度的"甜蜜点"
+
+### 8.2 正则化效果动画
+
+<IframeEmbed
+  src="/static/html/regularization_animation.html"
+  minHeight={860}
+  title="正则化效果动画"
+/>
+
+实时观察正则化参数λ的影响：
+
+- λ=0时的过拟合现象
+- λ增大时模型逐渐平滑
+- λ过大导致的欠拟合
+- 学习曲线的动态变化
+
+### 8.3 学习曲线3D可视化
+
+<IframeEmbed src="/static/html/learning_curve_3d.html" minHeight={920} title="学习曲线3D可视化" />
+
+通过3D视角理解训练集大小的影响：
+
+- 小数据集时的高方差问题
+- 数据增加如何改善泛化能力
+- 识别是否需要更多数据
+
+---
+
+<a name="9"></a>
+
+## 9 - 深入理解模型诊断
+
+### 9.1 偏差-方差分解的数学原理
+
+**期望泛化误差分解**：
+
+$$
+\mathbb{E}[(y - \hat{f}(x))^2] = \text{Bias}^2 + \text{Variance} + \text{Irreducible Error}
+$$
+
+其中：
+
+- **偏差（Bias）**：模型预测的期望值与真实值的差距
+  $$\text{Bias} = \mathbb{E}[\hat{f}(x)] - f(x)$$
+- **方差（Variance）**：模型预测的波动程度
+  $$\text{Variance} = \mathbb{E}[(\hat{f}(x) - \mathbb{E}[\hat{f}(x)])^2]$$
+- **不可约误差**：数据本身的噪声
+
+**实际应用**：
+
+```python
+def bias_variance_decomposition(model, X_train, y_train, X_test, y_test, n_iterations=100):
+    """
+    通过Bootstrap采样估计偏差和方差
+    """
+    predictions = []
+
+    for i in range(n_iterations):
+        # Bootstrap采样
+        indices = np.random.choice(len(X_train), len(X_train), replace=True)
+        X_boot = X_train[indices]
+        y_boot = y_train[indices]
+
+        # 训练模型
+        model_copy = clone(model)
+        model_copy.fit(X_boot, y_boot)
+        predictions.append(model_copy.predict(X_test))
+
+    predictions = np.array(predictions)
+
+    # 计算偏差和方差
+    mean_prediction = predictions.mean(axis=0)
+    bias_squared = np.mean((mean_prediction - y_test) ** 2)
+    variance = np.mean(predictions.var(axis=0))
+
+    return bias_squared, variance
+
+# 使用示例
+from sklearn.base import clone
+bias_sq, var = bias_variance_decomposition(model, X_train, y_train, X_cv, y_cv)
+print(f"偏差²: {bias_sq:.4f}, 方差: {var:.4f}")
+```
+
+### 9.2 正则化的几何解释
+
+**L2正则化（Ridge）**：
+
+```python
+# 目标函数
+J(w) = MSE(w) + λ||w||²
+
+# 等价于约束优化
+minimize MSE(w)
+subject to ||w||² ≤ t
+```
+
+**几何意义**：在权重空间中，L2正则化将解约束在一个球体内，鼓励权重均匀分布。
+
+**L1正则化（Lasso）**：
+
+```python
+# 目标函数
+J(w) = MSE(w) + λ||w||₁
+
+# 等价于约束优化
+minimize MSE(w)
+subject to ||w||₁ ≤ t
+```
+
+**几何意义**：L1正则化将解约束在菱形内，容易产生稀疏解（部分权重为0），实现特征选择。
+
+**对比实验**：
+
+```python
+from sklearn.linear_model import Ridge, Lasso
+
+# Ridge回归
+ridge = Ridge(alpha=0.1)
+ridge.fit(X_train, y_train)
+print("Ridge权重:", ridge.coef_)
+
+# Lasso回归
+lasso = Lasso(alpha=0.1)
+lasso.fit(X_train, y_train)
+print("Lasso权重:", lasso.coef_)
+print("非零权重数量:", np.sum(lasso.coef_ != 0))
+```
+
+### 9.3 交叉验证的高级技巧
+
+**K折交叉验证**：
+
+```python
+from sklearn.model_selection import KFold, cross_val_score
+
+# 5折交叉验证
+kfold = KFold(n_splits=5, shuffle=True, random_state=42)
+scores = cross_val_score(model, X, y, cv=kfold, scoring='neg_mean_squared_error')
+
+print(f"CV MSE: {-scores.mean():.4f} (+/- {scores.std():.4f})")
+```
+
+**分层K折（用于分类）**：
+
+```python
+from sklearn.model_selection import StratifiedKFold
+
+# 保持类别比例的5折交叉验证
+skfold = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+scores = cross_val_score(model, X, y, cv=skfold, scoring='accuracy')
+```
+
+**时间序列交叉验证**：
+
+```python
+from sklearn.model_selection import TimeSeriesSplit
+
+# 时间序列专用交叉验证（避免数据泄露）
+tscv = TimeSeriesSplit(n_splits=5)
+for train_idx, test_idx in tscv.split(X):
+    X_train_fold, X_test_fold = X[train_idx], X[test_idx]
+    y_train_fold, y_test_fold = y[train_idx], y[test_idx]
+    # 训练和评估
+```
+
+---
+
+<a name="10"></a>
+
+## 10 - 常见问题与解决方案
+
+### 问题1：如何判断是否需要更多数据？
+
+**学习曲线诊断**：
+
+```python
+from sklearn.model_selection import learning_curve
+
+train_sizes, train_scores, val_scores = learning_curve(
+    model, X, y, cv=5,
+    train_sizes=np.linspace(0.1, 1.0, 10),
+    scoring='neg_mean_squared_error'
+)
+
+plt.plot(train_sizes, -train_scores.mean(axis=1), label='训练误差')
+plt.plot(train_sizes, -val_scores.mean(axis=1), label='验证误差')
+plt.xlabel('训练集大小')
+plt.ylabel('MSE')
+plt.legend()
+plt.show()
+```
+
+**判断标准**：
+
+- ✅ **需要更多数据**：训练误差和验证误差都很高，且随数据增加持续下降
+- ❌ **不需要更多数据**：验证误差已趋于平稳，增加数据无明显改善
+
+### 问题2：正则化参数λ如何选择？
+
+**网格搜索**：
+
+```python
+from sklearn.model_selection import GridSearchCV
+
+param_grid = {'alpha': np.logspace(-4, 4, 20)}
+grid_search = GridSearchCV(Ridge(), param_grid, cv=5,
+                           scoring='neg_mean_squared_error')
+grid_search.fit(X_train, y_train)
+
+print(f"最优λ: {grid_search.best_params_['alpha']:.4f}")
+print(f"最优CV MSE: {-grid_search.best_score_:.4f}")
+```
+
+**贝叶斯优化**（更高效）：
+
+```python
+from skopt import BayesSearchCV
+
+bayes_search = BayesSearchCV(
+    Ridge(),
+    {'alpha': (1e-4, 1e4, 'log-uniform')},
+    n_iter=32,
+    cv=5,
+    scoring='neg_mean_squared_error'
+)
+bayes_search.fit(X_train, y_train)
+```
+
+### 问题3：神经网络过拟合严重怎么办？
+
+**综合解决方案**：
+
+```python
+from tensorflow.keras.layers import Dropout, BatchNormalization
+from tensorflow.keras.regularizers import l2
+from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
+
+model = Sequential([
+    Dense(128, activation='relu', kernel_regularizer=l2(0.01)),
+    BatchNormalization(),  # 批归一化稳定训练
+    Dropout(0.3),          # 30%神经元随机失活
+
+    Dense(64, activation='relu', kernel_regularizer=l2(0.01)),
+    BatchNormalization(),
+    Dropout(0.2),
+
+    Dense(10, activation='softmax')
+])
+
+# 早停法
+early_stop = EarlyStopping(
+    monitor='val_loss',
+    patience=10,
+    restore_best_weights=True
+)
+
+# 学习率衰减
+lr_schedule = ReduceLROnPlateau(
+    monitor='val_loss',
+    factor=0.5,
+    patience=5,
+    min_lr=1e-6
+)
+
+model.compile(optimizer=Adam(learning_rate=0.001),
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+
+history = model.fit(X_train, y_train,
+                    validation_data=(X_cv, y_cv),
+                    epochs=100,
+                    callbacks=[early_stop, lr_schedule])
+```
+
+### 问题4：多项式特征导致维度爆炸
+
+**特征选择**：
+
+```python
+from sklearn.feature_selection import SelectKBest, f_regression
+
+# 生成多项式特征
+poly = PolynomialFeatures(degree=5)
+X_poly = poly.fit_transform(X)
+
+# 选择最重要的K个特征
+selector = SelectKBest(f_regression, k=20)
+X_selected = selector.fit_transform(X_poly, y)
+
+print(f"原始特征数: {X_poly.shape[1]}")
+print(f"选择后特征数: {X_selected.shape[1]}")
+```
+
+**主成分分析（PCA）降维**：
+
+```python
+from sklearn.decomposition import PCA
+
+pca = PCA(n_components=0.95)  # 保留95%方差
+X_pca = pca.fit_transform(X_poly)
+
+print(f"降维后特征数: {X_pca.shape[1]}")
+print(f"解释方差比: {pca.explained_variance_ratio_.sum():.2%}")
+```
+
+---
+
+<a name="11"></a>
+
+## 11 - 实战技巧总结
+
+### 模型评估检查清单
+
+```python
+# ✅ 数据分割检查
+assert len(X_train) + len(X_cv) + len(X_test) == len(X), "数据分割错误"
+assert 0.6 <= len(X_train)/len(X) <= 0.8, "训练集比例异常"
+
+# ✅ 数据泄露检查
+train_indices = set(range(len(X_train)))
+cv_indices = set(range(len(X_train), len(X_train)+len(X_cv)))
+assert train_indices.isdisjoint(cv_indices), "训练集和验证集有重叠！"
+
+# ✅ 特征缩放检查
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_cv_scaled = scaler.transform(X_cv)  # 注意：只用transform，不用fit
+assert np.abs(X_train_scaled.mean()) < 0.1, "特征未正确标准化"
+
+# ✅ 过拟合检查
+train_error = mean_squared_error(y_train, model.predict(X_train))
+cv_error = mean_squared_error(y_cv, model.predict(X_cv))
+if cv_error > 2 * train_error:
+    print("⚠️ 警告：模型可能过拟合！")
+```
+
+### 性能优化建议
+
+1. **向量化计算**（避免Python循环）：
+
+   ```python
+   # ❌ 慢速循环
+   errors = []
+   for i in range(len(X)):
+       pred = model.predict(X[i:i+1])
+       errors.append((y[i] - pred) ** 2)
+
+   # ✅ 向量化
+   predictions = model.predict(X)
+   errors = (y - predictions) ** 2
+   ```
+
+2. **批量预测**：
+
+   ```python
+   # 神经网络批量预测更快
+   predictions = model.predict(X_test, batch_size=128)
+   ```
+
+3. **缓存中间结果**：
+
+   ```python
+   from functools import lru_cache
+
+   @lru_cache(maxsize=128)
+   def compute_polynomial_features(degree):
+       poly = PolynomialFeatures(degree)
+       return poly.fit_transform(X_train)
+   ```
+
+### 扩展学习方向
+
+- **集成学习**：结合多个模型（Bagging、Boosting、Stacking）
+- **自动机器学习（AutoML）**：使用Auto-sklearn或TPOT自动调参
+- **深度学习正则化**：Dropout、Batch Normalization、Layer Normalization
+- **迁移学习**：利用预训练模型加速训练
+
+---
+
 ## 总结
 
 恭喜你完成了这篇关于机器学习模型评估和改进的实践博客！通过这次学习，你已经掌握了：
+
 - 如何将数据分为训练和测试集，以区分欠拟合和过拟合。
 - 如何创建训练、交叉验证和测试集，以训练模型参数、调整模型复杂度、正则化等，并评估模型在新数据上的性能。
 - 如何通过比较训练和交叉验证的性能，洞察模型的过拟合（高方差）或欠拟合（高偏差）倾向。
+
 ---
 
 希望这篇文章为你提供了宝贵的工具和见解，帮助你在未来的机器学习项目中取得成功！如果你想进一步探索，可以尝试调整模型的超参数或使用不同的数据集进行实验。

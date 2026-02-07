@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多维高斯分布3D可视化</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+        .subtitle {
+            text-align: center;
+            color: #718096;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f7fafc;
+            border-radius: 12px;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #e2e8f0;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #4facfe;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            background: #0ea5e9;
+            transform: scale(1.2);
+        }
+        .value-display {
+            display: inline-block;
+            background: #4facfe;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        .plot-container {
+            margin-bottom: 30px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            height: 600px;
+        }
+        .info-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+        .info-box h3 {
+            margin-top: 0;
+        }
+        .formula-box {
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+            backdrop-filter: blur(10px);
+        }
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+            }
+            .container {
+                background: #2d3748;
+                color: #e2e8f0;
+            }
+            h1, label {
+                color: #e2e8f0;
+            }
+            .subtitle {
+                color: #a0aec0;
+            }
+            .controls {
+                background: #1a202c;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌐 多维高斯分布3D可视化</h1>
+        <p class="subtitle">探索二维高斯分布的概率密度曲面</p>
+
+        <div class="controls">
+            <div class="control-group">
+                <label>
+                    μ₁ (均值X): <span class="value-display" id="mu1Value">0</span>
+                </label>
+                <input type="range" id="mu1Slider" min="-3" max="3" step="0.2" value="0">
+            </div>
+
+            <div class="control-group">
+                <label>
+                    μ₂ (均值Y): <span class="value-display" id="mu2Value">0</span>
+                </label>
+                <input type="range" id="mu2Slider" min="-3" max="3" step="0.2" value="0">
+            </div>
+
+            <div class="control-group">
+                <label>
+                    σ₁² (方差X): <span class="value-display" id="var1Value">1.0</span>
+                </label>
+                <input type="range" id="var1Slider" min="0.5" max="3" step="0.1" value="1">
+            </div>
+
+            <div class="control-group">
+                <label>
+                    σ₂² (方差Y): <span class="value-display" id="var2Value">1.0</span>
+                </label>
+                <input type="range" id="var2Slider" min="0.5" max="3" step="0.1" value="1">
+            </div>
+
+            <div class="control-group">
+                <label>
+                    相关系数 ρ: <span class="value-display" id="rhoValue">0.0</span>
+                </label>
+                <input type="range" id="rhoSlider" min="-0.9" max="0.9" step="0.1" value="0">
+            </div>
+        </div>
+
+        <div class="plot-container" id="surface3D"></div>
+        <div class="plot-container" id="contourPlot"></div>
+
+        <div class="info-box">
+            <h3>📐 多维高斯分布公式</h3>
+            <div class="formula-box">
+                p(x) = (1 / (2π)^(n/2) |Σ|^(1/2)) × exp(-1/2 (x-μ)ᵀ Σ⁻¹ (x-μ))
+            </div>
+            <p style="margin-top: 15px;">
+                其中：<br>
+                • <strong>μ</strong> = [μ₁, μ₂]ᵀ 是均值向量<br>
+                • <strong>Σ</strong> 是协方差矩阵<br>
+                • <strong>|Σ|</strong> 是协方差矩阵的行列式<br>
+                • <strong>ρ</strong> 是相关系数，控制两个特征的相关性
+            </p>
+            <div class="formula-box">
+                Σ = [σ₁²      ρσ₁σ₂]
+                    [ρσ₁σ₂    σ₂²  ]
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function multivariateGaussian(x, y, mu1, mu2, var1, var2, rho) {
+            const sigma1 = Math.sqrt(var1);
+            const sigma2 = Math.sqrt(var2);
+
+            // 协方差矩阵的行列式
+            const detSigma = var1 * var2 * (1 - rho * rho);
+
+            // 标准化
+            const x_centered = x - mu1;
+            const y_centered = y - mu2;
+
+            // 马氏距离的平方
+            const z = (x_centered * x_centered / var1 +
+                      y_centered * y_centered / var2 -
+                      2 * rho * x_centered * y_centered / (sigma1 * sigma2)) /
+                      (1 - rho * rho);
+
+            // 概率密度
+            const coefficient = 1 / (2 * Math.PI * Math.sqrt(detSigma));
+            return coefficient * Math.exp(-0.5 * z);
+        }
+
+        function updateVisualization() {
+            const mu1 = parseFloat(document.getElementById('mu1Slider').value);
+            const mu2 = parseFloat(document.getElementById('mu2Slider').value);
+            const var1 = parseFloat(document.getElementById('var1Slider').value);
+            const var2 = parseFloat(document.getElementById('var2Slider').value);
+            const rho = parseFloat(document.getElementById('rhoSlider').value);
+
+            document.getElementById('mu1Value').textContent = mu1.toFixed(1);
+            document.getElementById('mu2Value').textContent = mu2.toFixed(1);
+            document.getElementById('var1Value').textContent = var1.toFixed(1);
+            document.getElementById('var2Value').textContent = var2.toFixed(1);
+            document.getElementById('rhoValue').textContent = rho.toFixed(1);
+
+            // 生成网格数据
+            const range = 5;
+            const resolution = 50;
+            const step = (2 * range) / resolution;
+
+            const xValues = [];
+            const yValues = [];
+            const zValues = [];
+
+            for (let i = 0; i <= resolution; i++) {
+                const x = -range + i * step;
+                xValues.push(x);
+                yValues.push(x);
+            }
+
+            for (let i = 0; i <= resolution; i++) {
+                const row = [];
+                for (let j = 0; j <= resolution; j++) {
+                    const z = multivariateGaussian(
+                        xValues[j], yValues[i],
+                        mu1, mu2, var1, var2, rho
+                    );
+                    row.push(z);
+                }
+                zValues.push(row);
+            }
+
+            // 3D曲面图
+            const surfaceTrace = {
+                x: xValues,
+                y: yValues,
+                z: zValues,
+                type: 'surface',
+                colorscale: [
+                    [0, '#0d47a1'],
+                    [0.5, '#42a5f5'],
+                    [1, '#ffeb3b']
+                ],
+                showscale: true,
+                colorbar: {
+                    title: '概率密度',
+                    titleside: 'right'
+                }
+            };
+
+            const layout3D = {
+                title: '二维高斯分布的3D概率密度曲面',
+                scene: {
+                    xaxis: { title: '特征 X₁' },
+                    yaxis: { title: '特征 X₂' },
+                    zaxis: { title: '概率密度 p(x)' },
+                    camera: {
+                        eye: { x: 1.5, y: 1.5, z: 1.3 }
+                    }
+                },
+                autosize: true,
+                margin: { l: 0, r: 0, b: 0, t: 40 }
+            };
+
+            Plotly.newPlot('surface3D', [surfaceTrace], layout3D, {responsive: true});
+
+            // 等高线图
+            const contourTrace = {
+                x: xValues,
+                y: yValues,
+                z: zValues,
+                type: 'contour',
+                colorscale: [
+                    [0, '#0d47a1'],
+                    [0.5, '#42a5f5'],
+                    [1, '#ffeb3b']
+                ],
+                contours: {
+                    coloring: 'heatmap',
+                    showlabels: true
+                },
+                colorbar: {
+                    title: '概率密度',
+                    titleside: 'right'
+                }
+            };
+
+            // 添加均值点
+            const meanPoint = {
+                x: [mu1],
+                y: [mu2],
+                type: 'scatter',
+                mode: 'markers',
+                name: '均值 μ',
+                marker: {
+                    color: '#f56565',
+                    size: 15,
+                    symbol: 'x',
+                    line: {
+                        color: 'white',
+                        width: 2
+                    }
+                }
+            };
+
+            const layoutContour = {
+                title: '高斯分布等高线图（俯视图）',
+                xaxis: { title: '特征 X₁' },
+                yaxis: { title: '特征 X₂' },
+                autosize: true,
+                margin: { l: 60, r: 60, b: 60, t: 40 }
+            };
+
+            Plotly.newPlot('contourPlot', [contourTrace, meanPoint], layoutContour, {responsive: true});
+        }
+
+        document.getElementById('mu1Slider').addEventListener('input', updateVisualization);
+        document.getElementById('mu2Slider').addEventListener('input', updateVisualization);
+        document.getElementById('var1Slider').addEventListener('input', updateVisualization);
+        document.getElementById('var2Slider').addEventListener('input', updateVisualization);
+        document.getElementById('rhoSlider').addEventListener('input', updateVisualization);
+
+        function reportHeight() {
+            const height = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+            window.parent.postMessage({ type: 'iframe-height', height }, '*');
+        }
+
+        updateVisualization();
+        window.addEventListener('load', () => {
+            reportHeight();
+            const ro = new ResizeObserver(reportHeight);
+            ro.observe(document.body);
+            ro.observe(document.documentElement);
+            setTimeout(reportHeight, 120);
+        });
+    </script>
+</body>
+</html>

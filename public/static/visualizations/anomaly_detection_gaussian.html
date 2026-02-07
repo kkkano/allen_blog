@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高斯分布与异常检测交互式可视化</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+        .subtitle {
+            text-align: center;
+            color: #718096;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f7fafc;
+            border-radius: 12px;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #e2e8f0;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            background: #5a67d8;
+            transform: scale(1.2);
+        }
+        .value-display {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        .plot-container {
+            margin-bottom: 30px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .info-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+        .info-box h3 {
+            margin-top: 0;
+            font-size: 1.3em;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+        }
+        .stat-label {
+            font-size: 0.85em;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: 700;
+        }
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+            }
+            .container {
+                background: #2d3748;
+                color: #e2e8f0;
+            }
+            h1, label {
+                color: #e2e8f0;
+            }
+            .subtitle {
+                color: #a0aec0;
+            }
+            .controls {
+                background: #1a202c;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 高斯分布与异常检测</h1>
+        <p class="subtitle">交互式探索正态分布参数对异常检测的影响</p>
+
+        <div class="controls">
+            <div class="control-group">
+                <label>
+                    均值 μ (Mean): <span class="value-display" id="muValue">0</span>
+                </label>
+                <input type="range" id="muSlider" min="-5" max="5" step="0.1" value="0">
+            </div>
+
+            <div class="control-group">
+                <label>
+                    标准差 σ (Std Dev): <span class="value-display" id="sigmaValue">1.0</span>
+                </label>
+                <input type="range" id="sigmaSlider" min="0.5" max="3" step="0.1" value="1">
+            </div>
+
+            <div class="control-group">
+                <label>
+                    异常阈值 ε (Epsilon): <span class="value-display" id="epsilonValue">0.05</span>
+                </label>
+                <input type="range" id="epsilonSlider" min="0.001" max="0.2" step="0.001" value="0.05">
+            </div>
+
+            <div class="control-group">
+                <label>
+                    样本数量: <span class="value-display" id="samplesValue">300</span>
+                </label>
+                <input type="range" id="samplesSlider" min="100" max="1000" step="50" value="300">
+            </div>
+        </div>
+
+        <div class="plot-container" id="gaussianPlot"></div>
+        <div class="plot-container" id="scatterPlot"></div>
+
+        <div class="info-box">
+            <h3>📊 实时统计</h3>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">检测到的异常</div>
+                    <div class="stat-value" id="anomalyCount">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">异常比例</div>
+                    <div class="stat-value" id="anomalyRate">0%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">正常样本</div>
+                    <div class="stat-value" id="normalCount">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">概率阈值</div>
+                    <div class="stat-value" id="probThreshold">0</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 生成高斯分布数据
+        function gaussianPDF(x, mu, sigma) {
+            const coefficient = 1 / (sigma * Math.sqrt(2 * Math.PI));
+            const exponent = -Math.pow(x - mu, 2) / (2 * Math.pow(sigma, 2));
+            return coefficient * Math.exp(exponent);
+        }
+
+        // 生成正态分布随机数 (Box-Muller变换)
+        function randomGaussian(mu, sigma) {
+            let u1 = Math.random();
+            let u2 = Math.random();
+            let z0 = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+            return z0 * sigma + mu;
+        }
+
+        // 更新可视化
+        function updateVisualization() {
+            const mu = parseFloat(document.getElementById('muSlider').value);
+            const sigma = parseFloat(document.getElementById('sigmaSlider').value);
+            const epsilon = parseFloat(document.getElementById('epsilonSlider').value);
+            const numSamples = parseInt(document.getElementById('samplesSlider').value);
+
+            // 更新显示值
+            document.getElementById('muValue').textContent = mu.toFixed(2);
+            document.getElementById('sigmaValue').textContent = sigma.toFixed(2);
+            document.getElementById('epsilonValue').textContent = epsilon.toFixed(3);
+            document.getElementById('samplesValue').textContent = numSamples;
+
+            // 生成高斯分布曲线
+            const xRange = [];
+            const yRange = [];
+            for (let x = mu - 4*sigma; x <= mu + 4*sigma; x += 0.1) {
+                xRange.push(x);
+                yRange.push(gaussianPDF(x, mu, sigma));
+            }
+
+            // 计算概率阈值对应的x值
+            const thresholdProb = gaussianPDF(mu, mu, sigma) * epsilon;
+
+            // 绘制高斯分布
+            const trace1 = {
+                x: xRange,
+                y: yRange,
+                type: 'scatter',
+                mode: 'lines',
+                name: '高斯分布 PDF',
+                line: {
+                    color: '#667eea',
+                    width: 3
+                },
+                fill: 'tozeroy',
+                fillcolor: 'rgba(102, 126, 234, 0.2)'
+            };
+
+            // 异常区域标记
+            const anomalyThreshold = mu + sigma * Math.sqrt(-2 * Math.log(epsilon * sigma * Math.sqrt(2 * Math.PI)));
+
+            const trace2 = {
+                x: [anomalyThreshold, anomalyThreshold],
+                y: [0, Math.max(...yRange)],
+                type: 'scatter',
+                mode: 'lines',
+                name: '异常阈值',
+                line: {
+                    color: '#f56565',
+                    width: 2,
+                    dash: 'dash'
+                }
+            };
+
+            const trace3 = {
+                x: [-anomalyThreshold + 2*mu, -anomalyThreshold + 2*mu],
+                y: [0, Math.max(...yRange)],
+                type: 'scatter',
+                mode: 'lines',
+                name: '异常阈值 (左)',
+                line: {
+                    color: '#f56565',
+                    width: 2,
+                    dash: 'dash'
+                },
+                showlegend: false
+            };
+
+            const layout1 = {
+                title: '高斯概率密度函数 (PDF)',
+                xaxis: { title: '特征值 x' },
+                yaxis: { title: '概率密度 p(x)' },
+                hovermode: 'closest',
+                plot_bgcolor: '#f7fafc',
+                paper_bgcolor: 'white',
+                font: { family: 'Arial, sans-serif' }
+            };
+
+            Plotly.newPlot('gaussianPlot', [trace1, trace2, trace3], layout1, {responsive: true});
+
+            // 生成样本数据
+            const samples = [];
+            const anomalies = [];
+            const normals = [];
+
+            for (let i = 0; i < numSamples; i++) {
+                const x = randomGaussian(mu, sigma);
+                const y = randomGaussian(mu, sigma);
+                const prob = gaussianPDF(x, mu, sigma) * gaussianPDF(y, mu, sigma);
+
+                samples.push({x, y, prob});
+
+                if (prob < thresholdProb) {
+                    anomalies.push({x, y});
+                } else {
+                    normals.push({x, y});
+                }
+            }
+
+            // 绘制散点图
+            const trace4 = {
+                x: normals.map(p => p.x),
+                y: normals.map(p => p.y),
+                type: 'scatter',
+                mode: 'markers',
+                name: '正常样本',
+                marker: {
+                    color: '#48bb78',
+                    size: 6,
+                    opacity: 0.6
+                }
+            };
+
+            const trace5 = {
+                x: anomalies.map(p => p.x),
+                y: anomalies.map(p => p.y),
+                type: 'scatter',
+                mode: 'markers',
+                name: '异常样本',
+                marker: {
+                    color: '#f56565',
+                    size: 10,
+                    symbol: 'x',
+                    line: {
+                        width: 2
+                    }
+                }
+            };
+
+            const layout2 = {
+                title: '二维特征空间中的异常检测',
+                xaxis: { title: '特征 1' },
+                yaxis: { title: '特征 2' },
+                hovermode: 'closest',
+                plot_bgcolor: '#f7fafc',
+                paper_bgcolor: 'white',
+                font: { family: 'Arial, sans-serif' }
+            };
+
+            Plotly.newPlot('scatterPlot', [trace4, trace5], layout2, {responsive: true});
+
+            // 更新统计信息
+            document.getElementById('anomalyCount').textContent = anomalies.length;
+            document.getElementById('anomalyRate').textContent =
+                ((anomalies.length / numSamples) * 100).toFixed(1) + '%';
+            document.getElementById('normalCount').textContent = normals.length;
+            document.getElementById('probThreshold').textContent = thresholdProb.toExponential(2);
+        }
+
+        // 事件监听
+        document.getElementById('muSlider').addEventListener('input', updateVisualization);
+        document.getElementById('sigmaSlider').addEventListener('input', updateVisualization);
+        document.getElementById('epsilonSlider').addEventListener('input', updateVisualization);
+        document.getElementById('samplesSlider').addEventListener('input', updateVisualization);
+
+        function reportHeight() {
+            const height = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+            window.parent.postMessage({ type: 'iframe-height', height }, '*');
+        }
+
+        // 初始化
+        updateVisualization();
+        window.addEventListener('load', () => {
+            reportHeight();
+            const ro = new ResizeObserver(reportHeight);
+            ro.observe(document.body);
+            ro.observe(document.documentElement);
+            setTimeout(reportHeight, 120);
+        });
+    </script>
+</body>
+</html>
