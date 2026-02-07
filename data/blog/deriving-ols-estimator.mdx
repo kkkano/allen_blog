@@ -1,143 +1,176 @@
----
-title: Deriving the OLS Estimator
-date: '2020-12-21'
-tags: ['next js', 'math', 'ols']
+﻿---
+title: 'OLS 估计量推导：从几何直觉到正规方程'
+date: '2026-02-07'
+tags: ['Machine Learning', 'Linear Algebra', 'OLS', 'Statistics']
 draft: true
-summary: 'How to derive the OLS Estimator with matrix notation and a tour of math typesetting using markdown with the help of KaTeX.'
+summary: '面向新手的 OLS 推导教程：先建立最小二乘几何直觉，再逐步完成矩阵求导，得到正规方程；并配套交互式可视化帮助理解残差、投影与多重共线性。'
+authors: ['allen']
 ---
 
-# Introduction
+# OLS 估计量推导：从直觉到公式
 
-Parsing and display of math equations is included in this blog template. Parsing of math is enabled by `remark-math` and `rehype-katex`.
-KaTeX and its associated font is included in `_document.js` so feel free to use it on any page.
-[^footnote]
-
-[^footnote]: For the full list of supported TeX functions, check out the [KaTeX documentation](https://katex.org/docs/supported.html)
-
-Inline math symbols can be included by enclosing the term between the `$` symbol.
-
-Math code blocks are denoted by `$$`.
-
-If you intend to use the `$` sign instead of math, you can escape it (`\$`), or specify the HTML entity (`&dollar;`) [^2]
-
-Inline or manually enumerated footnotes are also supported. Click on the links above to see them in action.
-
-[^2]: \$10 and &dollar;20.
-
-# Deriving the OLS Estimator
-
-Using matrix notation, let $n$ denote the number of observations and $k$ denote the number of regressors.
-
-The vector of outcome variables $\mathbf{Y}$ is a $n \times 1$ matrix,
-
-```tex
-\mathbf{Y} = \left[\begin{array}
-  {c}
-  y_1 \\
-  . \\
-  . \\
-  . \\
-  y_n
-\end{array}\right]
-```
+你可能已经知道 OLS（普通最小二乘）的结论是：
 
 $$
-\mathbf{Y} = \left[\begin{array}
-  {c}
-  y_1 \\
-  . \\
-  . \\
-  . \\
-  y_n
-\end{array}\right]
+\hat{\beta} = (X^TX)^{-1}X^Ty
 $$
 
-The matrix of regressors $\mathbf{X}$ is a $n \times k$ matrix (or each row is a $k \times 1$ vector),
+但很多同学第一次看到这个式子时，会有两个疑问：
 
-```latex
-\mathbf{X} = \left[\begin{array}
-  {ccccc}
-  x_{11} & . & . & . & x_{1k} \\
-  . & . & . & . & .  \\
-  . & . & . & . & .  \\
-  . & . & . & . & .  \\
-  x_{n1} & . & . & . & x_{nn}
-\end{array}\right] =
-\left[\begin{array}
-  {c}
-  \mathbf{x}'_1 \\
-  . \\
-  . \\
-  . \\
-  \mathbf{x}'_n
-\end{array}\right]
-```
+1. 为什么是“平方和最小”？
+2. 为什么最后会出现 $X^TX$ 的逆？
 
-$$
-\mathbf{X} = \left[\begin{array}
-  {ccccc}
-  x_{11} & . & . & . & x_{1k} \\
-  . & . & . & . & .  \\
-  . & . & . & . & .  \\
-  . & . & . & . & .  \\
-  x_{n1} & . & . & . & x_{nn}
-\end{array}\right] =
-\left[\begin{array}
-  {c}
-  \mathbf{x}'_1 \\
-  . \\
-  . \\
-  . \\
-  \mathbf{x}'_n
-\end{array}\right]
-$$
+这篇文章会按 **直觉 → 代数 → 工程检查** 的顺序，把整个推导过程讲透。
 
-The vector of error terms $\mathbf{U}$ is also a $n \times 1$ matrix.
+## 目录
 
-At times it might be easier to use vector notation. For consistency, I will use the bold small x to denote a vector and capital letters to denote a matrix. Single observations are denoted by the subscript.
+- [1 - 问题定义](#1)
+- [2 - 几何直觉：投影与残差](#2)
+- [3 - 矩阵推导：从目标函数到正规方程](#3)
+- [4 - 条件与陷阱：为什么有时逆不存在](#4)
+- [5 - 与梯度下降的关系](#5)
+- [6 - 交互式可视化](#6)
+- [7 - 总结](#7)
 
-## Least Squares
+---
 
-**Start**:  
-$$y_i = \mathbf{x}'_i \beta + u_i$$
+<a name="1"></a>
+## 1 - 问题定义
 
-**Assumptions**:
-
-1. Linearity (given above)
-2. $E(\mathbf{U}|\mathbf{X}) = 0$ (conditional independence)
-3. rank($\mathbf{X}$) = $k$ (no multi-collinearity i.e. full rank)
-4. $Var(\mathbf{U}|\mathbf{X}) = \sigma^2 I_n$ (Homoskedascity)
-
-**Aim**:  
-Find $\beta$ that minimises the sum of squared errors:
+给定 $n$ 个样本、$p$ 个特征，线性模型写成：
 
 $$
-Q = \sum_{i=1}^{n}{u_i^2} = \sum_{i=1}^{n}{(y_i - \mathbf{x}'_i\beta)^2} = (Y-X\beta)'(Y-X\beta)
+y = X\beta + \varepsilon
 $$
 
-**Solution**:  
-Hints: $Q$ is a $1 \times 1$ scalar, by symmetry $\frac{\partial b'Ab}{\partial b} = 2Ab$.
+其中：
 
-Take matrix derivative w.r.t $\beta$:
+- $y \in \mathbb{R}^{n\times1}$：标签向量
+- $X \in \mathbb{R}^{n\times p}$：设计矩阵
+- $\beta \in \mathbb{R}^{p\times1}$：待估参数
+- $\varepsilon$：误差项
 
-```tex
-\begin{aligned}
-  \min Q           & = \min_{\beta} \mathbf{Y}'\mathbf{Y} - 2\beta'\mathbf{X}'\mathbf{Y} +
-  \beta'\mathbf{X}'\mathbf{X}\beta \\
-                   & = \min_{\beta} - 2\beta'\mathbf{X}'\mathbf{Y} + \beta'\mathbf{X}'\mathbf{X}\beta \\
-  \text{[FOC]}~~~0 & =  - 2\mathbf{X}'\mathbf{Y} + 2\mathbf{X}'\mathbf{X}\hat{\beta}                  \\
-  \hat{\beta}      & = (\mathbf{X}'\mathbf{X})^{-1}\mathbf{X}'\mathbf{Y}                              \\
-                   & = (\sum^{n} \mathbf{x}_i \mathbf{x}'_i)^{-1} \sum^{n} \mathbf{x}_i y_i
-\end{aligned}
-```
+我们的目标是找到一个 $\beta$，让预测误差最小：
+
+$$
+J(\beta)=\|y-X\beta\|_2^2 = (y-X\beta)^T(y-X\beta)
+$$
+
+---
+
+<a name="2"></a>
+## 2 - 几何直觉：投影与残差
+
+把 $X\beta$ 看成在 $X$ 列空间中的一个向量。OLS 做的事情是：
+
+- 在列空间里找一个点 $\hat y$（即 $X\hat\beta$）
+- 让 $\hat y$ 离真实 $y$ 最近（欧式距离最小）
+
+这时残差 $r = y-\hat y$ 会与列空间正交：
+
+$$
+X^T(y-X\hat\beta)=0
+$$
+
+这就是正规方程的几何来源。
+
+---
+
+<a name="3"></a>
+## 3 - 矩阵推导：从目标函数到正规方程
+
+先把目标函数展开：
 
 $$
 \begin{aligned}
-  \min Q           & = \min_{\beta} \mathbf{Y}'\mathbf{Y} - 2\beta'\mathbf{X}'\mathbf{Y} +
-  \beta'\mathbf{X}'\mathbf{X}\beta \\
-                   & = \min_{\beta} - 2\beta'\mathbf{X}'\mathbf{Y} + \beta'\mathbf{X}'\mathbf{X}\beta \\
-  \text{[FOC]}~~~0 & =  - 2\mathbf{X}'\mathbf{Y} + 2\mathbf{X}'\mathbf{X}\hat{\beta}                  \\
-  \hat{\beta}      & = (\mathbf{X}'\mathbf{X})^{-1}\mathbf{X}'\mathbf{Y}                              \\
-                   & = (\sum^{n} \mathbf{x}_i \mathbf{x}'_i)^{-1} \sum^{n} \mathbf{x}_i y_i
+J(\beta)
+&=(y-X\beta)^T(y-X\beta)\\
+&=y^Ty - 2\beta^TX^Ty + \beta^TX^TX\beta
 \end{aligned}
 $$
+
+对 $\beta$ 求导并令其为 0：
+
+$$
+\nabla_\beta J(\beta)= -2X^Ty + 2X^TX\beta = 0
+$$
+
+得到：
+
+$$
+X^TX\hat\beta = X^Ty
+$$
+
+若 $X^TX$ 可逆，则：
+
+$$
+\hat{\beta} = (X^TX)^{-1}X^Ty
+$$
+
+> 这一步只在 $X$ 满列秩时成立。
+
+---
+
+<a name="4"></a>
+## 4 - 条件与陷阱：为什么逆可能不存在
+
+如果特征之间线性相关（多重共线性），则 $X^TX$ 不可逆。
+
+典型例子：
+
+- $x_3 = 2x_1 + x_2$
+
+这时可以用：
+
+1. 删除冗余特征
+2. 加正则（Ridge：$X^TX + \lambda I$）
+3. 用伪逆（Moore-Penrose）
+
+---
+
+<a name="5"></a>
+## 5 - 与梯度下降的关系
+
+- OLS 闭式解：一步得到全局最优（小规模问题非常方便）
+- 梯度下降：适合超大规模数据或在线训练
+
+实际工程中：
+
+- 小到中规模：常优先闭式解（或 QR/SVD 数值解）
+- 高维稀疏大数据：常用迭代法
+
+---
+
+<a name="6"></a>
+## 6 - 交互式可视化
+
+<IframeEmbed
+  src="/visualizations/ols-residual-geometry.html"
+  minHeight={760}
+  title="OLS 残差几何可视化"
+/>
+
+<IframeEmbed
+  src="/visualizations/ols-normal-equation-stepper.html"
+  minHeight={760}
+  title="OLS 正规方程推导步骤"
+/>
+
+<IframeEmbed
+  src="/visualizations/ols-collinearity-sensitivity.html"
+  minHeight={760}
+  title="OLS 多重共线性敏感性"
+/>
+
+---
+
+<a name="7"></a>
+## 7 - 总结
+
+你现在可以把 OLS 看成三件事：
+
+1. **几何问题**：把 $y$ 投影到 $X$ 的列空间
+2. **优化问题**：最小化平方误差
+3. **代数问题**：解正规方程
+
+掌握这一条主线后，再看 Ridge、Lasso、广义线性模型会轻松很多。

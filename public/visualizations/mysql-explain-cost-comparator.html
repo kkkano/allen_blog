@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EXPLAIN 成本对比</title>
+  <style>
+    body{margin:0;padding:20px;background:#020617;color:#e5e7eb;font-family:"Segoe UI","Microsoft YaHei",sans-serif}
+    .w{max-width:900px;margin:0 auto;background:#0f172a;border:1px solid #1e293b;border-radius:14px;padding:18px}
+    h1{font-size:1.2rem;color:#38bdf8;margin-bottom:8px}
+    p{color:#94a3b8;font-size:.9rem;line-height:1.6;margin-bottom:12px}
+    label{display:flex;justify-content:space-between;color:#94a3b8;font-size:.86rem;margin-bottom:6px}
+    input[type='range']{width:100%;accent-color:#38bdf8}
+    .v{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#fbbf24}
+    .box{border:1px solid #334155;border-radius:10px;padding:10px;background:#111827;margin-top:10px}
+    .ok{color:#22c55e}.bad{color:#ef4444}
+  </style>
+</head>
+<body>
+  <div class="w">
+    <h1>全表扫描 vs 索引扫描</h1>
+    <p>通过行数规模模拟 EXPLAIN `rows` 差异，理解为什么先降扫描行数通常收益最大。</p>
+    <label>表规模（万行）<span id="nVal" class="v">100</span></label>
+    <input id="n" type="range" min="10" max="500" step="10" value="100" />
+    <div class="box"><div>无索引（type=ALL）：<span id="allRows" class="bad"></span></div><div>有索引（type=ref/range）：<span id="idxRows" class="ok"></span></div></div>
+  </div>
+  <script>
+    const n=document.getElementById('n'),nVal=document.getElementById('nVal'),allRows=document.getElementById('allRows'),idxRows=document.getElementById('idxRows');
+    function render(){const w=Number(n.value);nVal.textContent=String(w);allRows.textContent=`rows ≈ ${w*10000}`;idxRows.textContent=`rows ≈ ${Math.max(20,Math.floor(w*10000*0.004))}`;reportHeight()}
+    function reportHeight(){const h=Math.max(document.body.scrollHeight,document.documentElement.scrollHeight);window.parent.postMessage({type:'iframe-height',height:h},'*')}
+    n.addEventListener('input',render);window.addEventListener('load',()=>{render();const ro=new ResizeObserver(reportHeight);ro.observe(document.body);ro.observe(document.documentElement);setTimeout(reportHeight,120)});
+  </script>
+</body>
+</html>
+

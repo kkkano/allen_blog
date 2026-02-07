@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MySQL B+Tree 结构模拟</title>
+  <style>
+    body{margin:0;padding:20px;background:#020617;color:#e5e7eb;font-family:"Segoe UI","Microsoft YaHei",sans-serif}
+    .w{max-width:920px;margin:0 auto;background:#0f172a;border:1px solid #1e293b;border-radius:14px;padding:18px}
+    h1{font-size:1.2rem;color:#38bdf8;margin-bottom:8px}
+    p{color:#94a3b8;font-size:.9rem;line-height:1.6;margin-bottom:12px}
+    .row{display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+    button{border:1px solid #334155;background:#111827;color:#e5e7eb;border-radius:8px;padding:8px 12px;cursor:pointer}
+    canvas{width:100%;border:1px solid #334155;border-radius:10px;background:#020617}
+  </style>
+</head>
+<body>
+  <div class="w">
+    <h1>B+Tree 页分裂模拟</h1>
+    <p>插入键值后，当叶子页超过容量会分裂。这个过程解释了为什么随机插入会带来页分裂开销。</p>
+    <div class="row"><button id="ins">插入随机键</button><button id="reset">重置</button><span id="keys" style="color:#fbbf24"></span></div>
+    <canvas id="c" width="780" height="320"></canvas>
+  </div>
+  <script>
+    const c=document.getElementById('c'),ctx=c.getContext('2d'),keysEl=document.getElementById('keys');
+    let keys=[12,25,38,51,66];
+    function leafPages(){
+      const s=[...keys].sort((a,b)=>a-b), pages=[]; const cap=4;
+      for(let i=0;i<s.length;i+=cap) pages.push(s.slice(i,i+cap));
+      return pages;
+    }
+    function render(){
+      ctx.clearRect(0,0,c.width,c.height);
+      const pages=leafPages();
+      ctx.fillStyle='#22c55e'; ctx.fillRect(320,35,140,36); ctx.fillStyle='#0b1120'; ctx.fillText('Root',380,58);
+      pages.forEach((p,i)=>{
+        const x=80+i*170,y=190; ctx.fillStyle='#38bdf8'; ctx.fillRect(x,y,150,44); ctx.fillStyle='#0b1120'; ctx.fillText(p.join(', '),x+12,y+27);
+        ctx.strokeStyle='rgba(148,163,184,.7)'; ctx.beginPath(); ctx.moveTo(390,71); ctx.lineTo(x+75,y); ctx.stroke();
+      });
+      keysEl.textContent=`键数量: ${keys.length}`; reportHeight();
+    }
+    document.getElementById('ins').addEventListener('click',()=>{keys.push(Math.floor(Math.random()*90)+5); render()});
+    document.getElementById('reset').addEventListener('click',()=>{keys=[12,25,38,51,66]; render()});
+    function reportHeight(){const h=Math.max(document.body.scrollHeight,document.documentElement.scrollHeight);window.parent.postMessage({type:'iframe-height',height:h},'*')}
+    window.addEventListener('load',()=>{render();const ro=new ResizeObserver(reportHeight);ro.observe(document.body);ro.observe(document.documentElement);setTimeout(reportHeight,120)});
+  </script>
+</body>
+</html>
+
