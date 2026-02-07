@@ -208,7 +208,7 @@
             const yPred = [];
             for (let x = -2; x <= 2; x += 0.05) {
                 xRange.push(x);
-                yPred.push(predict(x, coeffs));
+                yPred.push(safeFinite(predict(x, coeffs), null));
             }
 
             const trace1 = {
@@ -242,12 +242,12 @@
                 y: coeffs,
                 type: 'bar',
                 marker: {
-                    color: coeffs.map(c => Math.abs(c)),
+                    color: coeffs.map(c => safeFinite(Math.abs(c), 0)),
                     colorscale: 'Viridis',
                     showscale: true,
                     colorbar: { title: '|权重|' }
                 },
-                text: coeffs.map(c => c.toFixed(3)),
+                text: coeffs.map(c => safeFinite(c, 0).toFixed(3)),
                 textposition: 'outside'
             };
 

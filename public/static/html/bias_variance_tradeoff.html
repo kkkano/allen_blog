@@ -295,7 +295,7 @@
             for (let x = -2; x <= 2; x += 0.05) {
                 xRange.push(x);
                 yTrue.push(trueFunction(x));
-                yPred.push(predict(x, coeffs));
+                yPred.push(safeFinite(predict(x, coeffs), null));
             }
 
             const trace1 = {
@@ -371,7 +371,7 @@
                     x0: degree,
                     x1: degree,
                     y0: 0,
-                    y1: Math.max(...valErrors),
+                    y1: Math.max(...valErrors.filter(Number.isFinite), 1),
                     line: { color: 'gray', width: 2, dash: 'dot' }
                 }]
             });
