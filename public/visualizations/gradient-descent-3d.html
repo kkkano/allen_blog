@@ -162,6 +162,8 @@
     <button class="btn-secondary" id="resetBtn">↻ 重置</button>
   </div>
 
+  <div id="status" class="status"></div>
+
   <div class="info-row">
     <div class="info-card"><div class="label">迭代次数</div><div class="val c1" id="iVal">0</div></div>
     <div class="info-card"><div class="label">当前成本 J</div><div class="val c2" id="jVal">—</div></div>
@@ -427,6 +429,13 @@ const alphaSlider = document.getElementById('alphaSlider');
 const iterSlider = document.getElementById('iterSlider');
 const runBtn = document.getElementById('runBtn');
 const resetBtn = document.getElementById('resetBtn');
+const statusEl = document.getElementById('status');
+
+function setStatus(message = '', kind = '') {
+  if (!statusEl) return;
+  statusEl.textContent = message;
+  statusEl.className = kind ? 'status ' + kind : 'status';
+}
 
 alphaSlider.addEventListener('input', () => {
   document.getElementById('alphaVal').textContent = parseFloat(alphaSlider.value).toFixed(3);
@@ -438,6 +447,7 @@ iterSlider.addEventListener('input', () => {
 runBtn.addEventListener('click', () => {
   if (animating) return;
   animating = true;
+  setStatus('');
   runBtn.textContent = '⏳ 下降中...';
   runBtn.disabled = true;
 
@@ -462,8 +472,17 @@ runBtn.addEventListener('click', () => {
       }
     }
 
+    const currentCost = cost(w, b);
+    if (!Number.isFinite(w) || !Number.isFinite(b) || !Number.isFinite(currentCost) || Math.abs(w) > 1e4 || Math.abs(b) > 1e4 || currentCost > 1e7) {
+      animating = false;
+      runBtn.textContent = 'Restart';
+      runBtn.disabled = false;
+      setStatus('Diverged: lower alpha (<= 0.02) and retry.', 'error');
+      return;
+    }
+
     document.getElementById('iVal').textContent = iter;
-    document.getElementById('jVal').textContent = cost(w, b).toFixed(4);
+    document.getElementById('jVal').textContent = currentCost.toFixed(4);
     document.getElementById('wVal').textContent = w.toFixed(4);
     document.getElementById('bvVal').textContent = b.toFixed(4);
 
@@ -486,6 +505,7 @@ resetBtn.addEventListener('click', () => {
   animating = false;
   runBtn.textContent = '▶ 开始梯度下降';
   runBtn.disabled = false;
+  setStatus('');
   path = [];
   costHistory = [];
   document.getElementById('iVal').textContent = '0';
