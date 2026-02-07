@@ -13,7 +13,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;
+    min-height: 0;
     padding: 20px;
   }
   .container {
@@ -139,6 +139,10 @@
     font-family: 'Courier New', monospace;
     font-size: 1em;
     color: #c4b5fd;
+  }
+  @media (max-width: 860px) {
+    .container { padding: 18px; }
+    .info-panel { grid-template-columns: 1fr; }
   }
 </style>
 </head>

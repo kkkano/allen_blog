@@ -8,6 +8,8 @@ interface IframeEmbedProps {
   title?: string
 }
 
+const MAX_IFRAME_HEIGHT = 6000
+
 const getDocumentHeight = (doc: Document) => {
   const bodyHeight = Math.max(doc.body?.scrollHeight ?? 0, doc.body?.offsetHeight ?? 0)
   const rootHeight = Math.max(
@@ -29,7 +31,7 @@ export default function IframeEmbed({ src, minHeight = 600, title }: IframeEmbed
 
   const setNextHeight = useCallback(
     (nextHeight: number) => {
-      const safeHeight = Math.max(Math.ceil(nextHeight), minHeight)
+      const safeHeight = Math.min(Math.max(Math.ceil(nextHeight), minHeight), MAX_IFRAME_HEIGHT)
       if (safeHeight !== latestHeightRef.current) {
         latestHeightRef.current = safeHeight
         setHeight(safeHeight)

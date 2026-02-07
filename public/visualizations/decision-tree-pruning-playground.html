@@ -37,7 +37,7 @@
     const a=document.getElementById('a'),aVal=document.getElementById('aVal'),tr=document.getElementById('tr'),va=document.getElementById('va');
     function metric(alpha){
       const train=96-18*alpha;
-      const valid=84+8*Math.exp(-((alpha-0.35)/0.22)**2)-6*alpha;
+      const valid=84+8*Math.exp(-(((alpha - 0.35) / 0.22) ** 2))-6*alpha;
       return {train,valid};
     }
     function draw(alpha){
@@ -45,7 +45,7 @@
       ctx.strokeStyle='rgba(148,163,184,.45)';ctx.beginPath();ctx.moveTo(40,280);ctx.lineTo(530,280);ctx.stroke();ctx.beginPath();ctx.moveTo(40,30);ctx.lineTo(40,280);ctx.stroke();
       const py=(v)=>280-((v-60)/40)*240, px=(x)=>40+x*490;
       ctx.beginPath(); for(let i=0;i<=100;i++){const x=i/100; const y=96-18*x; if(i===0)ctx.moveTo(px(x),py(y)); else ctx.lineTo(px(x),py(y));} ctx.strokeStyle='#ef4444';ctx.lineWidth=2.2;ctx.stroke();
-      ctx.beginPath(); for(let i=0;i<=100;i++){const x=i/100; const y=84+8*Math.exp(-((x-0.35)/0.22)**2)-6*x; if(i===0)ctx.moveTo(px(x),py(y)); else ctx.lineTo(px(x),py(y));} ctx.strokeStyle='#22c55e';ctx.lineWidth=2.2;ctx.stroke();
+      ctx.beginPath(); for(let i=0;i<=100;i++){const x=i/100; const y=84+8*Math.exp(-(((x - 0.35) / 0.22) ** 2))-6*x; if(i===0)ctx.moveTo(px(x),py(y)); else ctx.lineTo(px(x),py(y));} ctx.strokeStyle='#22c55e';ctx.lineWidth=2.2;ctx.stroke();
       const m=metric(alpha); ctx.beginPath(); ctx.arc(px(alpha),py(m.valid),5,0,Math.PI*2); ctx.fillStyle='#f59e0b'; ctx.fill();
     }
     function update(){

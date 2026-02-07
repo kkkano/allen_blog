@@ -1,0 +1,326 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LangGraph Reflection Loop Visualizer</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --card: #121a33;
+      --edge: #2a3a6a;
+      --text: #e6ecff;
+      --muted: #9fb0e3;
+      --ok: #34d399;
+      --warn: #fbbf24;
+      --accent: #60a5fa;
+      --purple: #a78bfa;
+      --danger: #f87171;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+      background: radial-gradient(circle at top, #1d2a54 0%, var(--bg) 58%);
+      color: var(--text);
+    }
+    .wrap {
+      max-width: 920px;
+      margin: 0 auto;
+      background: rgba(10, 16, 34, 0.82);
+      border: 1px solid #243768;
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 18px 38px rgba(0, 0, 0, 0.28);
+    }
+    h1 { font-size: 1.3rem; margin: 0 0 8px; color: #86c9ff; }
+    p.sub { margin: 0 0 16px; color: var(--muted); font-size: .92rem; }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .node {
+      border: 1px solid var(--edge);
+      border-radius: 12px;
+      padding: 12px;
+      background: var(--card);
+      min-height: 96px;
+      transition: all .2s ease;
+    }
+    .node h3 { margin: 0 0 8px; font-size: .95rem; }
+    .node p { margin: 0; font-size: .82rem; color: var(--muted); line-height: 1.5; }
+    .node.active {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(96,165,250,.22) inset;
+      transform: translateY(-1px);
+    }
+    .node.done {
+      border-color: var(--ok);
+      background: linear-gradient(180deg, rgba(52,211,153,.10), rgba(18,26,51,.9));
+    }
+
+    .arrow-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin: 8px 0 14px;
+      color: var(--muted);
+      font-size: .82rem;
+      flex-wrap: wrap;
+    }
+    .badge {
+      padding: 4px 8px;
+      border: 1px solid #31467f;
+      border-radius: 999px;
+      background: #0f1732;
+    }
+
+    .panel {
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .card {
+      border: 1px solid #22335f;
+      border-radius: 12px;
+      background: #0f1731;
+      padding: 12px;
+    }
+    .card h4 { margin: 0 0 8px; color: #c8d6ff; font-size: .92rem; }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 8px;
+      align-items: center;
+      margin-top: 8px;
+    }
+    input[type='range'] { width: 100%; accent-color: var(--purple); }
+    button {
+      border: 1px solid #345093;
+      background: #132047;
+      color: #dbe7ff;
+      border-radius: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: .84rem;
+      font-weight: 600;
+    }
+    button.primary { background: linear-gradient(135deg, #4f7bf3, #7b5cf5); border-color: transparent; }
+
+    .log {
+      margin-top: 8px;
+      max-height: 200px;
+      overflow: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: .78rem;
+      line-height: 1.6;
+      color: #c8d6ff;
+      background: #0a1128;
+      border: 1px solid #1f2f5e;
+      border-radius: 8px;
+      padding: 8px;
+      white-space: pre-wrap;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .metric {
+      background: rgba(80, 106, 188, .14);
+      border: 1px solid rgba(88, 122, 220, .35);
+      border-radius: 10px;
+      padding: 8px;
+    }
+    .metric .k { color: var(--muted); font-size: .75rem; }
+    .metric .v { font-size: 1.05rem; font-weight: 700; color: #fff; }
+
+    @media (max-width: 860px) {
+      .flow { grid-template-columns: 1fr; }
+      .panel { grid-template-columns: 1fr; }
+      .controls { grid-template-columns: 1fr; }
+      button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>🔁 LangGraph Reflection 循环可视化</h1>
+    <p class="sub">模拟 <code>Generator → Critic → Revise</code> 的多轮迭代流程：越靠后轮次，通常质量越高，但 token/延迟也会上升。</p>
+
+    <div class="flow">
+      <div class="node" id="node-generate">
+        <h3>1) Generator</h3>
+        <p>先给出一个“可用但不完美”的初稿，速度快，覆盖面广。</p>
+      </div>
+      <div class="node" id="node-critic">
+        <h3>2) Critic / Reflection</h3>
+        <p>指出漏洞、缺证据点和表达问题，产出可执行改进建议。</p>
+      </div>
+      <div class="node" id="node-revise">
+        <h3>3) Revise</h3>
+        <p>根据批评意见重写，再决定是否继续下一轮反思。</p>
+      </div>
+    </div>
+
+    <div class="arrow-row">
+      <span class="badge">Generator → Critic</span>
+      <span class="badge">Critic → Revise</span>
+      <span class="badge">Revise → (Stop / Next Round)</span>
+    </div>
+
+    <div class="panel">
+      <div class="card">
+        <h4>流程控制</h4>
+        <div class="controls">
+          <input id="rounds" type="range" min="1" max="6" value="3" />
+          <button class="primary" id="play">▶ 演示一轮</button>
+          <button id="reset">↻ 重置</button>
+        </div>
+        <div class="log" id="log"></div>
+      </div>
+      <div class="card">
+        <h4>结果指标（示意）</h4>
+        <div class="metrics">
+          <div class="metric"><div class="k">当前轮次</div><div class="v" id="m-round">0</div></div>
+          <div class="metric"><div class="k">质量评分</div><div class="v" id="m-quality">0</div></div>
+          <div class="metric"><div class="k">累计 Token</div><div class="v" id="m-token">0</div></div>
+          <div class="metric"><div class="k">预计延迟(ms)</div><div class="v" id="m-latency">0</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const nodes = {
+      generate: document.getElementById('node-generate'),
+      critic: document.getElementById('node-critic'),
+      revise: document.getElementById('node-revise'),
+    };
+    const roundsInput = document.getElementById('rounds');
+    const logEl = document.getElementById('log');
+    const mRound = document.getElementById('m-round');
+    const mQuality = document.getElementById('m-quality');
+    const mToken = document.getElementById('m-token');
+    const mLatency = document.getElementById('m-latency');
+
+    let timer = null;
+    let round = 0;
+    let quality = 52;
+    let tokens = 0;
+
+    function clearNodeState() {
+      Object.values(nodes).forEach((n) => {
+        n.classList.remove('active');
+        n.classList.remove('done');
+      });
+    }
+
+    function setActive(name) {
+      clearNodeState();
+      nodes[name].classList.add('active');
+    }
+
+    function appendLog(line) {
+      logEl.textContent += line + '\n';
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function syncMetrics() {
+      mRound.textContent = String(round);
+      mQuality.textContent = String(Math.min(99, Math.round(quality)));
+      mToken.textContent = String(tokens);
+      mLatency.textContent = String(Math.round(220 + tokens * 0.18));
+    }
+
+    function reset() {
+      if (timer) clearInterval(timer);
+      timer = null;
+      round = 0;
+      quality = 52;
+      tokens = 0;
+      clearNodeState();
+      logEl.textContent = 'Ready. 点击“演示一轮”开始。\n';
+      syncMetrics();
+      reportHeight();
+    }
+
+    function runOneRound() {
+      if (timer) return;
+      const maxRounds = Number(roundsInput.value);
+      let phase = 0;
+      const phases = ['generate', 'critic', 'revise'];
+
+      timer = setInterval(() => {
+        if (round >= maxRounds) {
+          appendLog(`✔ 已达到最大轮次 ${maxRounds}，停止。`);
+          clearInterval(timer);
+          timer = null;
+          clearNodeState();
+          reportHeight();
+          return;
+        }
+
+        const current = phases[phase];
+        setActive(current);
+
+        if (current === 'generate') {
+          appendLog(`Round ${round + 1}: Generator 生成草稿`);
+          tokens += 180;
+        } else if (current === 'critic') {
+          appendLog(`Round ${round + 1}: Critic 给出改进建议（事实性/结构/表达）`);
+          tokens += 120;
+          quality += 6;
+        } else {
+          appendLog(`Round ${round + 1}: Revise 根据建议重写`);
+          tokens += 150;
+          quality += 5;
+          round += 1;
+          Object.values(nodes).forEach((n) => n.classList.add('done'));
+        }
+
+        syncMetrics();
+        phase = (phase + 1) % phases.length;
+      }, 620);
+    }
+
+    document.getElementById('play').addEventListener('click', runOneRound);
+    document.getElementById('reset').addEventListener('click', reset);
+    roundsInput.addEventListener('input', () => {
+      appendLog(`Max rounds: ${roundsInput.value}`);
+      reportHeight();
+    });
+
+    function reportHeight() {
+      if (window.parent === window) return;
+      const body = document.body;
+      const root = document.documentElement;
+      const height = Math.max(
+        body ? body.scrollHeight : 0,
+        body ? body.offsetHeight : 0,
+        root ? root.scrollHeight : 0,
+        root ? root.offsetHeight : 0
+      );
+      window.parent.postMessage({ type: 'iframe-height', height }, '*');
+    }
+
+    reset();
+    window.addEventListener('load', () => {
+      reportHeight();
+      const ro = new ResizeObserver(reportHeight);
+      ro.observe(document.body);
+      ro.observe(document.documentElement);
+      setTimeout(reportHeight, 120);
+    });
+  </script>
+</body>
+</html>
