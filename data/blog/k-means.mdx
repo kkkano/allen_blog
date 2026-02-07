@@ -1,17 +1,24 @@
 ---
 title: 'K-means 聚类算法：从理论到图像压缩'
 date: '2025-04-20'
-tags: ['Machine Learning', 'Clustering', 'Image Processing', 'K-means', 'Python', 'Unsupervised Learning']
+tags:
+  [
+    'Machine Learning',
+    'Clustering',
+    'Image Processing',
+    'K-means',
+    'Python',
+    'Unsupervised Learning',
+  ]
 draft: false
 summary: '在这篇博客中，我们将深入探索 K-means 聚类算法，了解它如何将数据分组，并将其应用于图像压缩，减少图像颜色数量。'
 authors: ['allen']
 ---
 
-
-
 在这篇博客中，我们将从零开始实现 K-means 算法，探索它如何将数据分组为簇，并将其应用于图像压缩，将一张彩色图片的颜色数量从数千种减少到仅 16 种。
 
 ## 目录
+
 - [1 - 实现 K-means 算法](#1)
   - [1.1 寻找最近的簇中心](#1.1)
     - [练习 1：实现 `find_closest_centroids`](#ex01)
@@ -24,19 +31,20 @@ authors: ['allen']
   - [4.2 对图像像素应用 K-means](#4.2)
   - [4.3 压缩图像](#4.3)
 
-
 ---
 
 <a name="1"></a>
 ## 1 - 实现 K-means 算法
 
 K-means 是一种无监督学习算法，用于将相似的数据点自动分组为簇。想象你有一堆散乱的珠子，想把它们按颜色或大小整理成几堆，这就是 K-means 的工作原理！具体来说，它的工作流程如下：
-- 随机猜测初始的簇中心（称为 *质心* 或 *centroids*）。
+
+- 随机猜测初始的簇中心（称为 _质心_ 或 _centroids_）。
 - 不断重复两个步骤，直到质心稳定：
   1. 将每个数据点分配到离它最近的质心。
   2. 根据分配的点，更新每个质心的位置为这些点的平均位置。
 
 ### K-means 伪代码
+
 ```python
 # 初始化质心
 centroids = kMeans_init_centroids(X, K)
@@ -54,16 +62,18 @@ for iter in range(iterations):
 <a name="1.1"></a>
 ### 1.1 寻找最近的簇中心
 
-在 *簇分配* 阶段，K-means 算法为每个数据点找到离它最近的质心，并记录质心的索引。
+在 _簇分配_ 阶段，K-means 算法为每个数据点找到离它最近的质心，并记录质心的索引。
 
 <a name="ex01"></a>
 #### 练习 1：实现 `find_closest_centroids`
 
 我们需要实现以下功能：
+
 - **输入：** 数据矩阵 `X`（形状为 `(m, n)`，其中 `m` 是数据点数量，`n` 是特征数量）和质心矩阵 `centroids`（形状为 `(K, n)`，其中 `K` 是簇数量）。
 - **输出：** 数组 `idx`（形状为 `(m,)`），记录每个数据点最近的质心索引（0 到 `K-1`）。
 
 对于每个数据点 $x^{(i)}$，我们找到使其距离最小的质心 $\mu_j$：
+
 - 距离定义为欧氏距离的平方：$\| x^{(i)} - \mu_j \|^2$
 
 代码如下：
@@ -74,17 +84,17 @@ import numpy as np
 def find_closest_centroids(X, centroids):
 
     为每个数据点分配最近的质心。
-    
+
     参数:
         X (ndarray): 形状 (m, n)，数据点
         centroids (ndarray): 形状 (K, n)，质心
-    
+
     返回:
         idx (array_like): 形状 (m,)，每个数据点的最近质心索引
 
     K = centroids.shape[0]
     idx = np.zeros(X.shape[0], dtype=int)
-    
+
     for i in range(X.shape[0]):
         distances = []
         for j in range(K):
@@ -93,11 +103,12 @@ def find_closest_centroids(X, centroids):
             distances.append(norm_ij)
         # 选择距离最小的质心索引
         idx[i] = np.argmin(distances)
-    
+
     return idx
 ```
 
 **代码详解：**
+
 - `np.linalg.norm(X[i] - centroids[j])` 计算点和质心之间的欧氏距离。
 - `np.argmin(distances)` 返回最小距离对应的质心索引。
 - 循环遍历每个数据点，确保每个点都被正确分配。
@@ -114,6 +125,7 @@ print("前三个数据点的最近质心索引:", idx[:3])
 ```
 
 **预期输出：**
+
 ```
 前三个数据点的最近质心索引: [0 2 1]
 ```
@@ -125,46 +137,49 @@ print("前三个数据点的最近质心索引:", idx[:3])
 <a name="1.2"></a>
 ### 1.2 计算簇中心均值
 
-在 *质心更新* 阶段，我们根据分配结果重新计算每个质心的位置，取分配到该质心的所有点的平均值。
+在 _质心更新_ 阶段，我们根据分配结果重新计算每个质心的位置，取分配到该质心的所有点的平均值。
 
 <a name="ex02"></a>
 #### 练习 2：实现 `compute_centroids`
 
 任务：
+
 - **输入：** 数据 `X`、分配索引 `idx` 和簇数量 `K`。
 - **输出：** 更新后的质心矩阵（形状为 `(K, n)`）。
 
 对于每个质心 $\mu_k$，更新公式为：
+
 - 取所有分配到簇 \(k\) 的点的平均值：$\mu_k = \frac{1}{|C_k|} \sum_{i \in C_k} x^{(i)}$
 
 实现代码如下：
 
 ```python
 def compute_centroids(X, idx, K):
- 
+
     根据分配结果更新质心位置。
-    
+
     参数:
         X (ndarray): 形状 (m, n)，数据点
         idx (ndarray): 形状 (m,)，质心分配索引
         K (int): 簇数量
-    
+
     返回:
         centroids (ndarray): 形状 (K, n)，更新后的质心
 
     m, n = X.shape
     centroids = np.zeros((K, n))
-    
+
     for k in range(K):
         # 获取分配到簇 k 的所有点
         points = X[idx == k]
         # 计算这些点的均值
         centroids[k] = np.mean(points, axis=0)
-    
+
     return centroids
 ```
 
 **代码详解：**
+
 - `X[idx == k]` 筛选出分配到簇 `k` 的数据点。
 - `np.mean(points, axis=0)` 沿特征维度计算平均值，得到新的质心位置。
 - 如果某个簇为空（无点分配），`np.mean` 会返回 `NaN`，在实际应用中需要处理（这里假设数据合理）。
@@ -179,6 +194,7 @@ print("更新后的质心:", centroids)
 ```
 
 **预期输出（基于完整数据集）：**
+
 ```
 更新后的质心: [[2.42830111 3.15792418]
                  [5.81350331 2.63365645]
@@ -202,22 +218,22 @@ import matplotlib.pyplot as plt
 def run_kMeans(X, initial_centroids, max_iters=10, plot_progress=False):
 
     在数据集 X 上运行 K-means 算法。
-    
+
     参数:
         X (ndarray): 形状 (m, n)，数据点
         initial_centroids (ndarray): 形状 (K, n)，初始质心
         max_iters (int): 最大迭代次数
         plot_progress (bool): 是否可视化过程
-    
+
     返回:
         centroids (ndarray): 最终质心
         idx (ndarray): 数据点分配
- 
+
     m, n = X.shape
     K = initial_centroids.shape[0]
     centroids = initial_centroids
     idx = np.zeros(m)
-    
+
     for i in range(max_iters):
         print(f"K-means 迭代 {i}/{max_iters-1}")
         idx = find_closest_centroids(X, centroids)
@@ -260,13 +276,13 @@ centroids, idx = run_kMeans(X, initial_centroids, max_iters=10, plot_progress=Tr
 
 ```python
 def kMeans_init_centroids(X, K):
- 
+
     随机选择 K 个数据点作为初始质心。
-    
+
     参数:
         X (ndarray): 数据点
         K (int): 簇数量
-    
+
     返回:
         centroids (ndarray): 初始质心
 
@@ -340,13 +356,15 @@ centroids, idx = run_kMeans(X_img, initial_centroids, max_iters)
 print("Shape of idx:", idx.shape)
 print("Closest centroid for the first five elements:", idx[:5])
 ```
->Shape of idx: (16384,)
-Closest centroid for the first five elements: [4 4 4 4 4]
+
+> Shape of idx: (16384,)
+> Closest centroid for the first five elements: [4 4 4 4 4]
 
 ```python
 # Plot the colors of the image and mark the centroids
 plot_kMeans_RGB(X_img, centroids, idx, K)
 ```
+
 ![图片2](/static/images/MLc3/outputw1_39_0.png)
 
 ```python
@@ -396,15 +414,52 @@ plt.show()
 **效果：**
 压缩后的图像保留了主要特征，但由于颜色减少，可能会出现轻 细微的压缩伪影（如颜色过渡不自然）。尝试调整 `K` 或 `max_iters` 来观察效果变化！
 
+## 5 - 交互式可视化探索
+
+<IframeEmbed
+  src="/visualizations/kmeans-iteration-lab.html"
+  minHeight={760}
+  title="K-means 迭代过程实验"
+/>
+
+<IframeEmbed
+  src="/visualizations/kmeans-elbow-silhouette.html"
+  minHeight={760}
+  title="K值选择（Elbow / Silhouette）"
+/>
+
+<IframeEmbed
+  src="/visualizations/kmeans-image-compression.html"
+  minHeight={760}
+  title="K-means 图像压缩交互"
+/>
+
+### 5.1 怎么选 K 才更稳妥？
+
+给新手一个实用流程：
+
+1. 先画 Elbow 曲线，找“拐点候选区”
+2. 在候选区比较 Silhouette 分数
+3. 最终结合业务可解释性选 K（例如推荐分群希望 4~8 类）
+
+### 5.2 常见排错建议
+
+- 如果结果每次差异很大：固定随机种子并增加初始化次数（`n_init`）
+- 如果某些簇空了：检查初始化或降低 K
+- 如果收敛慢：先做特征缩放、减少噪声维度
+
 ---
 
 ## 总结
 
 恭喜你完成了这场 K-means 聚类的实践之旅！通过这篇博客，你学会了：
+
 - 从零实现 K-means 算法，包括分配和更新质心。
 - 在 2D 数据集上运行 K-means 并可视化聚类过程。
 - 将 K-means 应用于图像压缩，减少颜色数量并保留图像特征。
+
 ---
+
 希望这篇文章为你打开了机器学习聚类的大门！想进一步探索？试试用不同的 `K` 值或自己的图片，看看效果如何。下期我们将探讨无监督学习的另一个应用：异常检测，敬请期待！
 
 完整代码已开源在[GitHub仓库](https://github.com/kkkano/machine-learning-notebook/blob/main/C3/W1_KMeans.ipynb)

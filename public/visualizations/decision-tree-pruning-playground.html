@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>决策树剪枝实验</title>
+  <style>
+    body{margin:0;padding:20px;background:#020617;color:#e5e7eb;font-family:"Segoe UI","Microsoft YaHei",sans-serif}
+    .w{max-width:900px;margin:0 auto;background:#0f172a;border:1px solid #1e293b;border-radius:14px;padding:18px}
+    h1{font-size:1.2rem;color:#38bdf8;margin-bottom:8px}
+    p{color:#94a3b8;font-size:.9rem;line-height:1.6;margin-bottom:12px}
+    .g{display:grid;grid-template-columns:1.2fr 1fr;gap:12px}
+    @media (max-width:860px){.g{grid-template-columns:1fr}}
+    .panel{border:1px solid #1f2937;border-radius:10px;padding:10px;background:#111827}
+    canvas{width:100%;border:1px solid #334155;border-radius:10px;background:#020617}
+    label{display:flex;justify-content:space-between;color:#94a3b8;font-size:.86rem;margin-bottom:6px}
+    input[type='range']{width:100%;accent-color:#38bdf8}
+    .v{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#fbbf24}
+  </style>
+</head>
+<body>
+  <div class="w">
+    <h1>剪枝强度与泛化</h1>
+    <p>用剪枝强度模拟模型复杂度变化：训练准确率通常下降，验证准确率会先升后降，帮助你找到平衡点。</p>
+    <div class="g">
+      <canvas id="c" width="560" height="320"></canvas>
+      <div class="panel">
+        <label>剪枝强度 α <span id="aVal" class="v">0.0</span></label>
+        <input id="a" type="range" min="0" max="1" step="0.02" value="0" />
+        <label style="margin-top:10px">训练准确率 <span id="tr" class="v">0.00%</span></label>
+        <label>验证准确率 <span id="va" class="v">0.00%</span></label>
+      </div>
+    </div>
+  </div>
+  <script>
+    const c=document.getElementById('c'),ctx=c.getContext('2d');
+    const a=document.getElementById('a'),aVal=document.getElementById('aVal'),tr=document.getElementById('tr'),va=document.getElementById('va');
+    function metric(alpha){
+      const train=96-18*alpha;
+      const valid=84+8*Math.exp(-((alpha-0.35)/0.22)**2)-6*alpha;
+      return {train,valid};
+    }
+    function draw(alpha){
+      ctx.clearRect(0,0,c.width,c.height);
+      ctx.strokeStyle='rgba(148,163,184,.45)';ctx.beginPath();ctx.moveTo(40,280);ctx.lineTo(530,280);ctx.stroke();ctx.beginPath();ctx.moveTo(40,30);ctx.lineTo(40,280);ctx.stroke();
+      const py=(v)=>280-((v-60)/40)*240, px=(x)=>40+x*490;
+      ctx.beginPath(); for(let i=0;i<=100;i++){const x=i/100; const y=96-18*x; if(i===0)ctx.moveTo(px(x),py(y)); else ctx.lineTo(px(x),py(y));} ctx.strokeStyle='#ef4444';ctx.lineWidth=2.2;ctx.stroke();
+      ctx.beginPath(); for(let i=0;i<=100;i++){const x=i/100; const y=84+8*Math.exp(-((x-0.35)/0.22)**2)-6*x; if(i===0)ctx.moveTo(px(x),py(y)); else ctx.lineTo(px(x),py(y));} ctx.strokeStyle='#22c55e';ctx.lineWidth=2.2;ctx.stroke();
+      const m=metric(alpha); ctx.beginPath(); ctx.arc(px(alpha),py(m.valid),5,0,Math.PI*2); ctx.fillStyle='#f59e0b'; ctx.fill();
+    }
+    function update(){
+      const alpha=Number(a.value); aVal.textContent=alpha.toFixed(2); const m=metric(alpha); tr.textContent=`${m.train.toFixed(1)}%`; va.textContent=`${m.valid.toFixed(1)}%`; draw(alpha); reportHeight();
+    }
+    function reportHeight(){const h=Math.max(document.body.scrollHeight,document.documentElement.scrollHeight);window.parent.postMessage({type:'iframe-height',height:h},'*')}
+    a.addEventListener('input',update); window.addEventListener('load',()=>{update();const ro=new ResizeObserver(reportHeight);ro.observe(document.body);ro.observe(document.documentElement);setTimeout(reportHeight,120)});
+  </script>
+</body>
+</html>
+
