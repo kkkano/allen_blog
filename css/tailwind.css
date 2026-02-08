@@ -158,3 +158,38 @@ input:-webkit-autofill:focus {
     display: none;
   }
 }
+
+/* ===== Gradient theme: primary (cyan) → pink for third-party components (KBar, etc.) ===== */
+.gradient .bg-primary-500 {
+  background-color: rgb(236 72 153 / var(--tw-bg-opacity, 1));
+}
+.gradient .bg-primary-600 {
+  background-color: rgb(219 39 119 / var(--tw-bg-opacity, 1));
+}
+.gradient .text-primary-500 {
+  color: rgb(236 72 153 / var(--tw-text-opacity, 1));
+}
+.gradient .text-primary-600 {
+  color: rgb(219 39 119 / var(--tw-text-opacity, 1));
+}
+.gradient .hover\:text-primary-500:hover {
+  color: rgb(236 72 153 / var(--tw-text-opacity, 1));
+}
+.gradient .hover\:text-primary-600:hover {
+  color: rgb(219 39 119 / var(--tw-text-opacity, 1));
+}
+.gradient .hover\:bg-primary-600:hover {
+  background-color: rgb(219 39 119 / var(--tw-bg-opacity, 1));
+}
+.gradient .hover\:bg-primary-700:hover {
+  background-color: rgb(190 24 93 / var(--tw-bg-opacity, 1));
+}
+.gradient .focus\:ring-primary-500:focus {
+  --tw-ring-color: rgb(236 72 153 / var(--tw-ring-opacity, 1));
+}
+.gradient .focus\:ring-primary-600:focus {
+  --tw-ring-color: rgb(219 39 119 / var(--tw-ring-opacity, 1));
+}
+.gradient .focus\:border-primary-500:focus {
+  border-color: rgb(236 72 153 / var(--tw-border-opacity, 1));
+}
