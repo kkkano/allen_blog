@@ -32,9 +32,16 @@ export default function Home({ posts }: { posts: Post[] }) {
         <div className="space-y-6 pb-10 pt-8 md:space-y-8">
           {/* Animated gradient background */}
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#f6faff] via-[#e9f2ff] to-[#ddebff] p-8 dark:from-[#0b1424] dark:via-[#0e1b33] dark:to-[#12264a] md:p-12 [.gradient_&]:from-[#f8fbff] [.gradient_&]:via-[#eef4ff] [.gradient_&]:to-[#e2edff] dark:[.gradient_&]:from-[#0a1221] dark:[.gradient_&]:via-[#0d1930] dark:[.gradient_&]:to-[#11264a]">
-            <div className="bg-grid-pattern absolute inset-0 opacity-[0.04]" />
-            <div className="from-sky-300/24 to-blue-500/22 absolute -right-20 -top-20 h-60 w-60 rounded-full bg-gradient-to-br blur-3xl" />
-            <div className="absolute -bottom-20 -left-20 h-60 w-60 rounded-full bg-gradient-to-br from-blue-300/20 to-indigo-500/20 blur-3xl" />
+            <div className="bg-grid-pattern absolute inset-0 opacity-[0.04] [.gradient_&]:opacity-0" />
+            {/* A-style: subtle static glow orbs for light/dark */}
+            <div className="from-sky-300/24 to-blue-500/22 absolute -right-20 -top-20 h-60 w-60 rounded-full bg-gradient-to-br blur-3xl [.gradient_&]:hidden" />
+            <div className="absolute -bottom-20 -left-20 h-60 w-60 rounded-full bg-gradient-to-br from-blue-300/20 to-indigo-500/20 blur-3xl [.gradient_&]:hidden" />
+            {/* C-style: animated mesh blobs for gradient theme */}
+            <div className="pointer-events-none absolute inset-0 hidden [.gradient_&]:block">
+              <div className="mesh-blob mesh-blob-1" />
+              <div className="mesh-blob mesh-blob-2" />
+              <div className="mesh-blob mesh-blob-3" />
+            </div>
 
             <div className="relative z-10">
               <h1 className="bg-gradient-to-r from-gray-900 via-gray-700 to-gray-900 bg-clip-text text-4xl font-extrabold leading-tight tracking-tight text-transparent dark:from-white dark:via-gray-200 dark:to-white sm:text-5xl md:text-6xl">
@@ -124,7 +131,7 @@ export default function Home({ posts }: { posts: Post[] }) {
                         <div className="text-base font-medium leading-6">
                           <Link
                             href={`/blog/${slug}`}
-                            className="inline-flex items-center space-x-2 text-pink-500 transition-all duration-300 hover:text-pink-600 group-hover:text-pink-600 dark:text-pink-400 dark:hover:text-pink-300 dark:group-hover:text-pink-300"
+                            className="inline-flex items-center space-x-2 text-primary-500 transition-all duration-300 hover:text-primary-600 group-hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-300 dark:group-hover:text-primary-300"
                             aria-label={`Read more: "${title}"`}
                           >
                             <span>Read more</span>
@@ -157,7 +164,7 @@ export default function Home({ posts }: { posts: Post[] }) {
         <div className="flex justify-end pt-6 text-base font-medium leading-6">
           <Link
             href="/blog"
-            className="group inline-flex items-center space-x-2 font-semibold text-pink-500 transition-colors duration-300 hover:text-pink-600 dark:text-pink-400 dark:hover:text-pink-300"
+            className="group inline-flex items-center space-x-2 font-semibold text-primary-500 transition-colors duration-300 hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-300"
             aria-label="All posts"
           >
             <span>All Posts</span>
