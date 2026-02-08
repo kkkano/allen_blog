@@ -345,7 +345,7 @@
 <body>
   <div class="wrap">
     <h1 class="title">🔁 LangGraph Reflection：流程图 + 文字联动演示</h1>
-    <p class="subtitle">不是“一个框里换文字”，而是让你看到节点状态、连线路径、停止条件和指标变化：<code>Generator → Critic → Revise → (Stop / Next Round)</code>。</p>
+    <p class="subtitle">通过流程图把 Reflection 的状态流转可视化：节点会高亮、路径会联动、并在 Stop 节点根据条件决定“结束”或“进入下一轮”。</p>
 
     <div class="layout">
       <div class="panel">
@@ -357,15 +357,15 @@
             </marker>
           </defs>
 
-          <path id="edge-gc" class="edge" d="M230,95 C290,75 330,75 392,95"></path>
-          <path id="edge-cr" class="edge" d="M546,95 C600,75 620,100 620,150 C620,200 600,225 546,245"></path>
-          <path id="edge-rg" class="edge" d="M392,245 C332,270 292,270 230,245"></path>
-          <path id="edge-rs" class="edge" d="M470,292 C470,322 470,328 470,350"></path>
+          <path id="edge-gc" class="edge" d="M230,95 C292,76 332,76 392,95"></path>
+          <path id="edge-cr" class="edge" d="M477,138 C532,160 532,182 477,202"></path>
+          <path id="edge-rs" class="edge" d="M477,288 C477,322 477,330 477,350"></path>
+          <path id="edge-sg" class="edge" d="M385,378 C248,404 84,336 84,250 C84,188 98,162 126,142"></path>
 
           <text class="edge-label" x="310" y="70">草稿 + 意图</text>
-          <text class="edge-label" x="634" y="174">批评建议</text>
-          <text class="edge-label" x="310" y="286">迭代重写</text>
-          <text class="edge-label" x="508" y="336">停止判定</text>
+          <text class="edge-label" x="548" y="176">批评建议</text>
+          <text class="edge-label" x="520" y="336">停止判定</text>
+          <text class="edge-label" x="190" y="360">继续下一轮</text>
 
           <rect id="node-generator" class="node gen" x="60" y="52" rx="16" ry="16" width="170" height="86"></rect>
           <text class="node-label" x="145" y="85">Generator</text>
@@ -459,7 +459,7 @@
         },
         revise: {
           nodeId: 'node-revise',
-          edgeId: 'edge-rg',
+          edgeId: 'edge-rs',
           label: 'Revise',
           text: 'Revise 按反馈重写：补证据、修逻辑、提炼表达，形成新版本。',
           tokenDelta: 165,
@@ -467,7 +467,7 @@
         },
         stop: {
           nodeId: 'node-stop',
-          edgeId: 'edge-rs',
+          edgeId: 'edge-sg',
           label: 'Stop Check',
           text: '进入停止判定：若质量达到阈值或轮次用尽则结束，否则回到 Generator 开启下一轮。',
           tokenDelta: 28,
@@ -485,8 +485,8 @@
       const edges = {
         'edge-gc': document.getElementById('edge-gc'),
         'edge-cr': document.getElementById('edge-cr'),
-        'edge-rg': document.getElementById('edge-rg'),
         'edge-rs': document.getElementById('edge-rs'),
+        'edge-sg': document.getElementById('edge-sg'),
       };
 
       const controls = {
