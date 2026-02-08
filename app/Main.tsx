@@ -4,7 +4,7 @@ import Link from '@/components/Link'
 import Tag from '@/components/Tag'
 import siteMetadata from '@/data/siteMetadata'
 import { formatDate } from 'pliny/utils/formatDate'
-import NewsletterForm from 'pliny/ui/NewsletterForm'
+import NewsletterForm from '@/components/NewsletterForm'
 import TypeWriter from '@/components/TypeWriter'
 
 const MAX_DISPLAY = 5
@@ -31,10 +31,10 @@ export default function Home({ posts }: { posts: Post[] }) {
         {/* Hero Section with Typewriter */}
         <div className="space-y-6 pb-10 pt-8 md:space-y-8">
           {/* Animated gradient background */}
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#fdf4ff] via-[#eef5ff] to-[#e8f0ff] p-8 dark:from-[#030711] dark:via-[#0c1221] dark:to-[#111725] md:p-12 [.gradient_&]:from-[#f7fbff] [.gradient_&]:via-[#eef4ff] [.gradient_&]:to-[#ecf1ff] dark:[.gradient_&]:from-[#05060f] dark:[.gradient_&]:via-[#0d1425] dark:[.gradient_&]:to-[#151b31]">
-            <div className="bg-grid-pattern absolute inset-0 opacity-5" />
-            <div className="absolute -right-20 -top-20 h-60 w-60 rounded-full bg-gradient-to-br from-cyan-400/30 to-blue-500/30 blur-3xl" />
-            <div className="absolute -bottom-20 -left-20 h-60 w-60 rounded-full bg-gradient-to-br from-purple-400/30 to-pink-500/30 blur-3xl" />
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#f6faff] via-[#e9f2ff] to-[#ddebff] p-8 dark:from-[#0b1424] dark:via-[#0e1b33] dark:to-[#12264a] md:p-12 [.gradient_&]:from-[#f8fbff] [.gradient_&]:via-[#eef4ff] [.gradient_&]:to-[#e2edff] dark:[.gradient_&]:from-[#0a1221] dark:[.gradient_&]:via-[#0d1930] dark:[.gradient_&]:to-[#11264a]">
+            <div className="bg-grid-pattern absolute inset-0 opacity-[0.04]" />
+            <div className="from-sky-300/24 to-blue-500/22 absolute -right-20 -top-20 h-60 w-60 rounded-full bg-gradient-to-br blur-3xl" />
+            <div className="absolute -bottom-20 -left-20 h-60 w-60 rounded-full bg-gradient-to-br from-blue-300/20 to-indigo-500/20 blur-3xl" />
 
             <div className="relative z-10">
               <h1 className="bg-gradient-to-r from-gray-900 via-gray-700 to-gray-900 bg-clip-text text-4xl font-extrabold leading-tight tracking-tight text-transparent dark:from-white dark:via-gray-200 dark:to-white sm:text-5xl md:text-6xl">
