@@ -3,46 +3,202 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MySQL B+Tree 结构模拟</title>
+  <title>MySQL B+Tree 页分裂模拟</title>
   <style>
-    body{margin:0;padding:20px;background:#020617;color:#e5e7eb;font-family:"Segoe UI","Microsoft YaHei",sans-serif}
-    .w{max-width:920px;margin:0 auto;background:#0f172a;border:1px solid #1e293b;border-radius:14px;padding:18px}
-    h1{font-size:1.2rem;color:#38bdf8;margin-bottom:8px}
-    p{color:#94a3b8;font-size:.9rem;line-height:1.6;margin-bottom:12px}
-    .row{display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
-    button{border:1px solid #334155;background:#111827;color:#e5e7eb;border-radius:8px;padding:8px 12px;cursor:pointer}
-    canvas{width:100%;border:1px solid #334155;border-radius:10px;background:#020617}
+    :root {
+      color-scheme: dark;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #020617;
+      color: #e5e7eb;
+      font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+    }
+
+    .w {
+      max-width: 920px;
+      margin: 0 auto;
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 14px;
+      padding: 18px;
+    }
+
+    h1 {
+      font-size: 1.2rem;
+      color: #38bdf8;
+      margin: 0 0 8px;
+    }
+
+    p {
+      color: #94a3b8;
+      font-size: 0.9rem;
+      line-height: 1.6;
+      margin: 0 0 12px;
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: 1px solid #334155;
+      background: #111827;
+      color: #e5e7eb;
+      border-radius: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: border-color 0.18s ease, transform 0.18s ease;
+    }
+
+    button:hover {
+      border-color: #38bdf8;
+      transform: translateY(-1px);
+    }
+
+    canvas {
+      width: 100%;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      background: #020617;
+      display: block;
+    }
+
+    .meta {
+      color: #fbbf24;
+      font-size: 0.86rem;
+    }
   </style>
 </head>
 <body>
   <div class="w">
     <h1>B+Tree 页分裂模拟</h1>
-    <p>插入键值后，当叶子页超过容量会分裂。这个过程解释了为什么随机插入会带来页分裂开销。</p>
-    <div class="row"><button id="ins">插入随机键</button><button id="reset">重置</button><span id="keys" style="color:#fbbf24"></span></div>
+    <p>
+      点击“插入随机键”后，叶子页超过容量会触发分裂。你可以直观看到根节点到叶子页的连接如何变化。
+    </p>
+    <div class="row">
+      <button id="ins">插入随机键</button>
+      <button id="reset">重置</button>
+      <span id="keys" class="meta"></span>
+    </div>
     <canvas id="c" width="780" height="320"></canvas>
   </div>
+
   <script>
-    const c=document.getElementById('c'),ctx=c.getContext('2d'),keysEl=document.getElementById('keys');
-    let keys=[12,25,38,51,66];
-    function leafPages(){
-      const s=[...keys].sort((a,b)=>a-b), pages=[]; const cap=4;
-      for(let i=0;i<s.length;i+=cap) pages.push(s.slice(i,i+cap));
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    const keysEl = document.getElementById('keys');
+
+    let keys = [12, 25, 38, 51, 66];
+
+    function leafPages() {
+      const sorted = [...keys].sort((a, b) => a - b);
+      const pages = [];
+      const cap = 4;
+      for (let i = 0; i < sorted.length; i += cap) {
+        pages.push(sorted.slice(i, i + cap));
+      }
       return pages;
     }
-    function render(){
-      ctx.clearRect(0,0,c.width,c.height);
-      const pages=leafPages();
-      ctx.fillStyle='#22c55e'; ctx.fillRect(320,35,140,36); ctx.fillStyle='#0b1120'; ctx.fillText('Root',380,58);
-      pages.forEach((p,i)=>{
-        const x=80+i*170,y=190; ctx.fillStyle='#38bdf8'; ctx.fillRect(x,y,150,44); ctx.fillStyle='#0b1120'; ctx.fillText(p.join(', '),x+12,y+27);
-        ctx.strokeStyle='rgba(148,163,184,.7)'; ctx.beginPath(); ctx.moveTo(390,71); ctx.lineTo(x+75,y); ctx.stroke();
-      });
-      keysEl.textContent=`键数量: ${keys.length}`; reportHeight();
+
+    function drawRoundedRect(x, y, width, height, radius, fill) {
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + width - radius, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+      ctx.lineTo(x + width, y + height - radius);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+      ctx.lineTo(x + radius, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.closePath();
+      ctx.fillStyle = fill;
+      ctx.fill();
     }
-    document.getElementById('ins').addEventListener('click',()=>{keys.push(Math.floor(Math.random()*90)+5); render()});
-    document.getElementById('reset').addEventListener('click',()=>{keys=[12,25,38,51,66]; render()});
-    function reportHeight(){const h=Math.max(document.body.scrollHeight,document.documentElement.scrollHeight);window.parent.postMessage({type:'iframe-height',height:h},'*')}
-    window.addEventListener('load',()=>{render();const ro=new ResizeObserver(reportHeight);ro.observe(document.body);ro.observe(document.documentElement);setTimeout(reportHeight,120)});
+
+    function render() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.font = '14px "Segoe UI", "Microsoft YaHei", sans-serif';
+
+      const pages = leafPages();
+
+      const rootX = 320;
+      const rootY = 30;
+      const rootW = 140;
+      const rootH = 42;
+
+      drawRoundedRect(rootX, rootY, rootW, rootH, 8, '#22c55e');
+      ctx.fillStyle = '#0b1120';
+      ctx.fillText('Root 节点', rootX + 40, rootY + 26);
+
+      pages.forEach((page, index) => {
+        const x = 60 + index * 170;
+        const y = 190;
+        const w = 150;
+        const h = 48;
+
+        drawRoundedRect(x, y, w, h, 8, '#38bdf8');
+        ctx.fillStyle = '#0b1120';
+        ctx.fillText(page.join(', '), x + 14, y + 29);
+
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.75)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(rootX + rootW / 2, rootY + rootH);
+        ctx.lineTo(x + w / 2, y);
+        ctx.stroke();
+      });
+
+      keysEl.textContent = `当前键数量：${keys.length}（叶子页数：${pages.length}）`;
+      reportHeight();
+    }
+
+    document.getElementById('ins').addEventListener('click', () => {
+      keys.push(Math.floor(Math.random() * 90) + 5);
+      render();
+    });
+
+    document.getElementById('reset').addEventListener('click', () => {
+      keys = [12, 25, 38, 51, 66];
+      render();
+    });
+
+    function reportHeight() {
+      const body = document.body;
+      const root = document.documentElement;
+      const card = document.querySelector('.w');
+      const bodyStyle = getComputedStyle(body);
+      const bodyPadding = (parseFloat(bodyStyle.paddingTop) || 0) + (parseFloat(bodyStyle.paddingBottom) || 0);
+
+      const cardHeight = card ? Math.ceil(card.getBoundingClientRect().height + bodyPadding) : 0;
+      const bodyHeight = Math.max(body.scrollHeight, body.offsetHeight);
+      const rootHeight = Math.max(root.scrollHeight, root.offsetHeight);
+      const viewportHeight = window.innerHeight || root.clientHeight || 0;
+      const rootContentHeight = Math.abs(rootHeight - viewportHeight) <= 24 ? 0 : rootHeight;
+
+      const h = Math.max(cardHeight, bodyHeight, rootContentHeight);
+      window.parent.postMessage({ type: 'iframe-height', height: h }, '*');
+    }
+
+    window.addEventListener('load', () => {
+      render();
+      const ro = new ResizeObserver(reportHeight);
+      ro.observe(document.body);
+      ro.observe(document.documentElement);
+      setTimeout(reportHeight, 120);
+      setTimeout(reportHeight, 300);
+    });
   </script>
 </body>
 </html>

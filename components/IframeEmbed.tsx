@@ -16,7 +16,11 @@ const getDocumentHeight = (doc: Document) => {
     doc.documentElement?.scrollHeight ?? 0,
     doc.documentElement?.offsetHeight ?? 0
   )
-  return Math.max(bodyHeight, rootHeight)
+  const viewportHeight = doc.defaultView?.innerHeight ?? doc.documentElement?.clientHeight ?? 0
+
+  const rootContentHeight = Math.abs(rootHeight - viewportHeight) <= 24 ? 0 : rootHeight
+
+  return Math.max(bodyHeight, rootContentHeight)
 }
 
 export default function IframeEmbed({ src, minHeight = 600, title }: IframeEmbedProps) {
@@ -61,7 +65,19 @@ export default function IframeEmbed({ src, minHeight = 600, title }: IframeEmbed
       if (!payload || payload.type !== 'iframe-height') return
       const reportedHeight = Number(payload.height)
       if (!Number.isFinite(reportedHeight) || reportedHeight <= 0) return
-      setNextHeight(reportedHeight)
+      const measuredHeight = (() => {
+        try {
+          const doc = iframe.contentDocument || iframe.contentWindow?.document
+          return doc ? getDocumentHeight(doc) : reportedHeight
+        } catch {
+          return reportedHeight
+        }
+      })()
+
+      const maxTrustedHeight = measuredHeight > 0 ? measuredHeight + 320 : reportedHeight
+      const nextHeight = Math.min(reportedHeight, maxTrustedHeight)
+
+      setNextHeight(Math.max(nextHeight, measuredHeight))
     }
 
     window.addEventListener('message', onMessage)

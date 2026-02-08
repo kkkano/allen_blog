@@ -32,9 +32,8 @@
       ctx.strokeStyle='#ef4444';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(hx,hy);ctx.stroke();
       reportHeight();
     }
-    function reportHeight(){const h=Math.max(document.body.scrollHeight,document.documentElement.scrollHeight);window.parent.postMessage({type:'iframe-height',height:h},'*')}
-    window.addEventListener('load',()=>{render();const ro=new ResizeObserver(reportHeight);ro.observe(document.body);ro.observe(document.documentElement);setTimeout(reportHeight,120)});
+    function reportHeight(){const b=document.body,d=document.documentElement,c=document.querySelector('.w,.wrap,.container,.panel,.card')||b,s=getComputedStyle(b),p=(parseFloat(s.paddingTop)||0)+(parseFloat(s.paddingBottom)||0),ch=Math.ceil((c.getBoundingClientRect?c.getBoundingClientRect().height:0)+p),bh=Math.max(b.scrollHeight,b.offsetHeight),dh=Math.max(d.scrollHeight,d.offsetHeight),vh=window.innerHeight||d.clientHeight||0,dc=Math.abs(dh-vh)<=24?0:dh,h=Math.max(ch,bh,dc);window.parent.postMessage({type:'iframe-height',height:h},'*')}
+    window.addEventListener('load',()=>{render();const ro=new ResizeObserver(reportHeight);ro.observe(document.body);ro.observe(document.documentElement);setTimeout(reportHeight,120);setTimeout(reportHeight,300)});
   </script>
 </body>
 </html>
-
