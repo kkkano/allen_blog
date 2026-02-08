@@ -54,7 +54,7 @@ function Pagination({ totalPages, currentPage }: PaginationProps) {
           <Link
             href={currentPage - 1 === 1 ? `/${basePath}/` : `/${basePath}/page/${currentPage - 1}`}
             rel="prev"
-            className="flex items-center space-x-2 rounded-lg bg-gray-100 px-4 py-2 text-gray-700 transition-all duration-300 hover:bg-gradient-to-r hover:from-cyan-400/10 hover:via-blue-400/10 hover:to-purple-400/10 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gradient-to-r dark:hover:from-cyan-400/10 dark:hover:via-blue-400/10 dark:hover:to-purple-400/10"
+            className="flex items-center space-x-2 rounded-lg bg-gray-100 px-4 py-2 text-gray-700 transition-all duration-300 hover:bg-gradient-to-r hover:from-cyan-400/10 hover:via-blue-400/10 hover:to-purple-400/10 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gradient-to-r dark:hover:from-cyan-400/10 dark:hover:via-blue-400/10 dark:hover:to-purple-400/10 [.gradient_&]:hover:from-pink-400/10 [.gradient_&]:hover:via-rose-400/10 [.gradient_&]:hover:to-purple-400/10"
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path
@@ -85,7 +85,7 @@ function Pagination({ totalPages, currentPage }: PaginationProps) {
           <Link
             href={`/${basePath}/page/${currentPage + 1}`}
             rel="next"
-            className="flex items-center space-x-2 rounded-lg bg-gray-100 px-4 py-2 text-gray-700 transition-all duration-300 hover:bg-gradient-to-r hover:from-cyan-400/10 hover:via-blue-400/10 hover:to-purple-400/10 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gradient-to-r dark:hover:from-cyan-400/10 dark:hover:via-blue-400/10 dark:hover:to-purple-400/10"
+            className="flex items-center space-x-2 rounded-lg bg-gray-100 px-4 py-2 text-gray-700 transition-all duration-300 hover:bg-gradient-to-r hover:from-cyan-400/10 hover:via-blue-400/10 hover:to-purple-400/10 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gradient-to-r dark:hover:from-cyan-400/10 dark:hover:via-blue-400/10 dark:hover:to-purple-400/10 [.gradient_&]:hover:from-pink-400/10 [.gradient_&]:hover:via-rose-400/10 [.gradient_&]:hover:to-purple-400/10"
           >
             <span>Next</span>
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -129,7 +129,7 @@ export default function ListLayout({
                 type="text"
                 onChange={(e) => setSearchValue(e.target.value)}
                 placeholder="Search articles"
-                className="block w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-900 dark:bg-gray-800 dark:text-gray-100"
+                className="block w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-900 dark:bg-gray-800 dark:text-gray-100 [.gradient_&]:focus:border-pink-500 [.gradient_&]:focus:ring-pink-500"
               />
             </label>
             <svg
@@ -155,14 +155,14 @@ export default function ListLayout({
             return (
               <li key={path} className="py-4">
                 <article className="group relative rounded-xl p-4 transition-all duration-300 hover:shadow-xl">
-                  <div className="absolute inset-0 rounded-xl border-2 border-gray-200/60 transition-all duration-300 group-hover:border-transparent group-hover:bg-gradient-to-r group-hover:from-cyan-400/10 group-hover:via-blue-400/10 group-hover:to-purple-400/10 dark:border-gray-700/60" />
+                  <div className="absolute inset-0 rounded-xl border-2 border-gray-200/60 transition-all duration-300 group-hover:border-transparent group-hover:bg-gradient-to-r group-hover:from-cyan-400/10 group-hover:via-blue-400/10 group-hover:to-purple-400/10 dark:border-gray-700/60 [.gradient_&]:group-hover:from-pink-400/10 [.gradient_&]:group-hover:via-rose-400/10 [.gradient_&]:group-hover:to-purple-400/10" />
                   <div className="relative rounded-xl bg-white p-4 dark:bg-gray-900">
                     <div className="space-y-3">
                       <div>
                         <h2 className="text-2xl font-bold leading-8 tracking-tight">
                           <Link
                             href={`/${path}`}
-                            className="text-gray-900 transition-colors duration-300 group-hover:text-cyan-600 dark:text-gray-100 dark:group-hover:text-cyan-400"
+                            className="text-gray-900 transition-colors duration-300 group-hover:text-cyan-600 dark:text-gray-100 dark:group-hover:text-cyan-400 [.gradient_&]:group-hover:text-pink-500"
                           >
                             {title}
                           </Link>

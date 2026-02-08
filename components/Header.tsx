@@ -36,7 +36,7 @@ const Header = () => {
             <Logo className="h-10 w-10" />
           </div>
           {typeof siteMetadata.headerTitle === 'string' ? (
-            <div className="hidden bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-2xl font-bold text-transparent transition-all duration-300 group-hover:from-cyan-600 group-hover:to-blue-600 dark:from-white dark:to-gray-300 dark:group-hover:from-cyan-400 dark:group-hover:to-blue-400 sm:block">
+            <div className="hidden bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-2xl font-bold text-transparent transition-all duration-300 group-hover:from-cyan-600 group-hover:to-blue-600 dark:from-white dark:to-gray-300 dark:group-hover:from-cyan-400 dark:group-hover:to-blue-400 sm:block [.gradient_&]:group-hover:from-pink-400 [.gradient_&]:group-hover:to-rose-400">
               {siteMetadata.headerTitle}
             </div>
           ) : (
@@ -52,7 +52,7 @@ const Header = () => {
               <Link
                 key={link.title}
                 href={link.href}
-                className="relative rounded-lg px-3 py-2 font-medium text-gray-700 transition-all duration-300 hover:bg-gray-100 hover:text-cyan-600 dark:text-gray-200 dark:hover:bg-gray-800 dark:hover:text-cyan-400"
+                className="relative rounded-lg px-3 py-2 font-medium text-gray-700 transition-all duration-300 hover:bg-gray-100 hover:text-cyan-600 dark:text-gray-200 dark:hover:bg-gray-800 dark:hover:text-cyan-400 [.gradient_&]:hover:text-pink-500"
               >
                 {link.title}
               </Link>

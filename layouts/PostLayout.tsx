@@ -89,7 +89,7 @@ export default function PostLayout({
                           width={38}
                           height={38}
                           alt="avatar"
-                          className="h-10 w-10 rounded-full ring-2 ring-cyan-500/20"
+                          className="h-10 w-10 rounded-full ring-2 ring-cyan-500/20 [.gradient_&]:ring-pink-500/20"
                         />
                       )}
                       <dl className="whitespace-nowrap text-sm font-medium leading-5">
@@ -100,7 +100,7 @@ export default function PostLayout({
                           {author.twitter && (
                             <Link
                               href={author.twitter}
-                              className="text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300"
+                              className="text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 [.gradient_&]:text-pink-500 [.gradient_&]:hover:text-pink-600 dark:[.gradient_&]:text-pink-400 dark:[.gradient_&]:hover:text-pink-300"
                             >
                               {author.twitter
                                 .replace('https://twitter.com/', '@')
@@ -155,7 +155,7 @@ export default function PostLayout({
                         <h2 className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
                           Previous Article
                         </h2>
-                        <div className="text-cyan-600 transition-colors hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300">
+                        <div className="text-cyan-600 transition-colors hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 [.gradient_&]:text-pink-500 [.gradient_&]:hover:text-pink-600 dark:[.gradient_&]:text-pink-400 dark:[.gradient_&]:hover:text-pink-300">
                           <Link href={`/${prev.path}`}>{prev.title}</Link>
                         </div>
                       </div>
@@ -165,7 +165,7 @@ export default function PostLayout({
                         <h2 className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
                           Next Article
                         </h2>
-                        <div className="text-cyan-600 transition-colors hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300">
+                        <div className="text-cyan-600 transition-colors hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 [.gradient_&]:text-pink-500 [.gradient_&]:hover:text-pink-600 dark:[.gradient_&]:text-pink-400 dark:[.gradient_&]:hover:text-pink-300">
                           <Link href={`/${next.path}`}>{next.title}</Link>
                         </div>
                       </div>
@@ -176,7 +176,7 @@ export default function PostLayout({
               <div className="pt-4 xl:pt-8">
                 <Link
                   href={`/${basePath}`}
-                  className="inline-flex items-center space-x-2 text-cyan-600 transition-colors hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300"
+                  className="inline-flex items-center space-x-2 text-cyan-600 transition-colors hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 [.gradient_&]:text-pink-500 [.gradient_&]:hover:text-pink-600 dark:[.gradient_&]:text-pink-400 dark:[.gradient_&]:hover:text-pink-300"
                   aria-label="Back to the blog"
                 >
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

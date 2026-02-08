@@ -24,7 +24,7 @@ export default function AuthorLayout({ children, content }: Props) {
             <div className="relative">
               {avatar && (
                 <>
-                  <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 opacity-75 blur" />
+                  <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 opacity-75 blur [.gradient_&]:from-pink-500 [.gradient_&]:via-rose-400 [.gradient_&]:to-purple-500" />
                   <Image
                     src={avatar}
                     alt="avatar"
@@ -37,7 +37,9 @@ export default function AuthorLayout({ children, content }: Props) {
             </div>
             <div className="text-center">
               <h3 className="text-2xl font-bold leading-8 tracking-tight">{name}</h3>
-              <div className="mt-2 text-cyan-600 dark:text-cyan-400">{occupation}</div>
+              <div className="mt-2 text-cyan-600 dark:text-cyan-400 [.gradient_&]:text-pink-500 dark:[.gradient_&]:text-pink-400">
+                {occupation}
+              </div>
               <div className="text-gray-500 dark:text-gray-400">{company}</div>
             </div>
             <div className="flex space-x-4 pt-4">

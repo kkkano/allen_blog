@@ -81,7 +81,7 @@ export default function NewsletterForm({
               required
               disabled={isSubmitting || isSubscribed}
               placeholder={isSubscribed ? "You're subscribed! 🎉" : 'Enter your email'}
-              className="w-72 rounded-md px-4 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary-600 dark:bg-black"
+              className="w-72 rounded-md px-4 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary-600 dark:bg-black [.gradient_&]:focus:ring-pink-600"
             />
           </label>
         </div>
@@ -90,10 +90,10 @@ export default function NewsletterForm({
           <button
             type="submit"
             disabled={isSubmitting || isSubscribed}
-            className={`w-full rounded-md bg-primary-500 px-4 py-2 font-medium text-white focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2 dark:ring-offset-black sm:py-0 ${
+            className={`w-full rounded-md bg-primary-500 px-4 py-2 font-medium text-white focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2 dark:ring-offset-black sm:py-0 [.gradient_&]:bg-pink-500 [.gradient_&]:focus:ring-pink-600 ${
               isSubmitting || isSubscribed
                 ? 'cursor-default opacity-80'
-                : 'hover:bg-primary-700 dark:hover:bg-primary-400'
+                : 'hover:bg-primary-700 dark:hover:bg-primary-400 [.gradient_&]:hover:bg-pink-600 dark:[.gradient_&]:hover:bg-pink-400'
             }`}
           >
             {isSubmitting ? 'Submitting...' : isSubscribed ? 'Thank you!' : 'Sign up'}
@@ -109,7 +109,7 @@ export default function NewsletterForm({
               Prefer email?{' '}
               <a
                 href={fallbackUrl}
-                className="text-primary-500 underline underline-offset-2 hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-300"
+                className="text-primary-500 underline underline-offset-2 hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-300 [.gradient_&]:text-pink-500 [.gradient_&]:hover:text-pink-600 dark:[.gradient_&]:text-pink-400 dark:[.gradient_&]:hover:text-pink-300"
               >
                 Subscribe via fallback link
               </a>

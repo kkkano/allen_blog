@@ -33,7 +33,7 @@ export default function Home({ posts, topTags }: { posts: Post[]; topTags?: stri
         {/* Hero Section with Typewriter */}
         <div className="space-y-6 pb-10 pt-8 md:space-y-8">
           {/* Animated gradient background */}
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#f6faff] via-[#e9f2ff] to-[#ddebff] p-8 dark:from-[#0b1424] dark:via-[#0e1b33] dark:to-[#12264a] md:p-12 [.gradient_&]:from-[#fff5f7] [.gradient_&]:via-[#fef0ff] [.gradient_&]:to-[#f0f4ff] dark:[.gradient_&]:from-[#1a0a14] dark:[.gradient_&]:via-[#120a1e] dark:[.gradient_&]:to-[#0a0f1e]">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#f6faff] via-[#e9f2ff] to-[#ddebff] p-8 dark:from-[#0b1424] dark:via-[#0e1b33] dark:to-[#12264a] md:p-12 [.gradient_&]:from-[#fffcfd] [.gradient_&]:via-[#fffbfe] [.gradient_&]:to-[#f8faff] dark:[.gradient_&]:from-[#1a0a14] dark:[.gradient_&]:via-[#120a1e] dark:[.gradient_&]:to-[#0a0f1e]">
             <div className="bg-grid-pattern absolute inset-0 opacity-[0.04] [.gradient_&]:opacity-0" />
             {/* A-style: subtle static glow orbs for light/dark */}
             <div className="from-sky-300/24 to-blue-500/22 absolute -right-20 -top-20 h-60 w-60 rounded-full bg-gradient-to-br blur-3xl [.gradient_&]:hidden" />

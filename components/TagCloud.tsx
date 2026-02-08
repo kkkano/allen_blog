@@ -25,7 +25,7 @@ export default function TagCloud({ tags }: TagCloudProps) {
 
   // Color classes for tags
   const colorClasses = [
-    'text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300',
+    'text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 [.gradient_&]:text-pink-600 [.gradient_&]:hover:text-pink-700 dark:[.gradient_&]:text-pink-400 dark:[.gradient_&]:hover:text-pink-300',
     'text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300',
     'text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300',
     'text-pink-600 hover:text-pink-700 dark:text-pink-400 dark:hover:text-pink-300',
@@ -51,7 +51,7 @@ export default function TagCloud({ tags }: TagCloudProps) {
             <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-gray-100 text-xs font-medium text-gray-600 opacity-0 transition-opacity duration-300 group-hover:opacity-100 dark:bg-gray-700 dark:text-gray-300">
               {count}
             </span>
-            <span className="absolute inset-0 -z-10 rounded-lg bg-gradient-to-r from-cyan-500/10 to-blue-500/10 opacity-0 blur transition-opacity duration-300 group-hover:opacity-100" />
+            <span className="absolute inset-0 -z-10 rounded-lg bg-gradient-to-r from-cyan-500/10 to-blue-500/10 opacity-0 blur transition-opacity duration-300 group-hover:opacity-100 [.gradient_&]:from-pink-500/10 [.gradient_&]:to-rose-500/10" />
           </Link>
         )
       })}

@@ -61,7 +61,7 @@ export default function TOCSidebar({ toc }: TOCSidebarProps) {
                 style={{ paddingLeft: `${paddingLeft}px` }}
                 className={`-ml-[2px] block border-l-2 py-1 text-sm transition-all duration-200 ${
                   isActive
-                    ? 'border-cyan-500 font-medium text-cyan-600 dark:text-cyan-400'
+                    ? 'border-cyan-500 font-medium text-cyan-600 dark:text-cyan-400 [.gradient_&]:border-pink-500 [.gradient_&]:text-pink-600 dark:[.gradient_&]:text-pink-400'
                     : 'border-transparent text-gray-600 hover:border-gray-400 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
                 }`}
                 onClick={(e) => {
