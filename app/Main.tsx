@@ -48,7 +48,7 @@ export default function Home({ posts, topTags }: { posts: Post[]; topTags?: stri
             <div className="relative z-10">
               <h1 className="bg-gradient-to-r from-gray-900 via-gray-700 to-gray-900 bg-clip-text text-4xl font-extrabold leading-tight tracking-tight text-transparent dark:from-white dark:via-gray-200 dark:to-white sm:text-5xl md:text-6xl">
                 Welcome to{' '}
-                <span className="bg-gradient-to-r from-cyan-500 to-blue-500 bg-clip-text text-transparent [.gradient_&]:from-pink-500 [.gradient_&]:to-rose-400">
+                <span className="bg-gradient-to-r from-cyan-500 to-blue-500 bg-clip-text text-transparent [.gradient_&]:from-pink-400 [.gradient_&]:via-rose-300 [.gradient_&]:to-purple-400">
                   {siteMetadata.headerTitle || 'My Blog'}
                 </span>
               </h1>
