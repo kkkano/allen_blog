@@ -128,7 +128,6 @@ import numpy as np
 ratings = pd.read_csv('path/to/ratings.csv')
 
 # 转换为用户-电影矩阵
-df禁止的词语: pivot_table
 df = pd.pivot_table(ratings, index='movieId', columns='userId', values='rating')
 
 # 创建 Y 和 R 矩阵

@@ -1,451 +1,771 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>偏差-方差权衡可视化</title>
-    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 20px;
-            background: linear-gradient(135deg, #1d4ed8 0%, #0f766e 100%);
-        }
-        .container {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 14px 36px rgba(15, 23, 42, 0.12);
-        }
-        h1 {
-            color: #1d4ed8;
-            text-align: center;
-            margin-bottom: 10px;
-        }
-        .subtitle {
-            text-align: center;
-            color: #666;
-            margin-bottom: 30px;
-        }
-        .controls {
-            background: #f4f8ff;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-        .control-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 5px;
-            color: #333;
-        }
-        input[type="range"] {
-            width: 100%;
-            height: 8px;
-            border-radius: 5px;
-            background: #ddd;
-            outline: none;
-        }
-        input[type="range"]::-webkit-slider-thumb {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: #1d4ed8;
-            cursor: pointer;
-        }
-        .value-display {
-            display: inline-block;
-            background: #1d4ed8;
-            color: white;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-weight: bold;
-            margin-left: 10px;
-        }
-        .metrics {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        .metric-card {
-            background: linear-gradient(135deg, #1d4ed8 0%, #0f766e 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-        }
-        .metric-value {
-            font-size: 28px;
-            font-weight: bold;
-            margin: 10px 0;
-        }
-        .metric-label {
-            font-size: 14px;
-            opacity: 0.9;
-        }
-        .info-box {
-            background: #e3f2fd;
-            border-left: 4px solid #2196f3;
-            padding: 15px;
-            margin-top: 20px;
-            border-radius: 5px;
-        }
-        .status-indicator {
-            display: inline-block;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-weight: bold;
-            margin-left: 10px;
-        }
-        .status-good { background: #4caf50; color: white; }
-        .status-warning { background: #ff9800; color: white; }
-        .status-bad { background: #f44336; color: white; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>偏差-方差权衡可视化</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --bg-card: rgba(30, 41, 59, 0.7);
+      --bg-card-solid: #1e293b;
+      --border: rgba(59, 130, 246, 0.25);
+      --primary: #3b82f6;
+      --accent: #10b981;
+      --lora: #8b5cf6;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --text: #e2e8f0;
+      --text-sub: #94a3b8;
+      --text-dim: #64748b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      padding: 20px;
+      min-height: 0;
+    }
+
+    .wrapper {
+      max-width: 1060px;
+      margin: 0 auto;
+      background: var(--bg-card);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 28px 24px 20px;
+      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.4);
+    }
+
+    .title {
+      font-size: 1.7rem;
+      font-weight: 700;
+      text-align: center;
+      background: linear-gradient(135deg, var(--primary), var(--accent), var(--lora));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: var(--text-sub);
+      font-size: 0.92rem;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .section {
+      position: relative;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .section::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 16px;
+      right: 16px;
+      height: 2px;
+      background: linear-gradient(90deg, var(--primary), var(--accent), var(--lora));
+      border-radius: 2px;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .metric-card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .metric-label {
+      color: var(--text-sub);
+      font-size: 0.78rem;
+      margin-bottom: 4px;
+    }
+
+    .metric-value {
+      font-size: 1.15rem;
+      font-weight: 700;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    .metric-value.bias { color: var(--primary); }
+    .metric-value.variance { color: var(--lora); }
+    .metric-value.total { color: var(--danger); }
+    .metric-value.status { font-size: 0.95rem; }
+    .status-underfit { color: var(--warn); }
+    .status-good { color: var(--accent); }
+    .status-overfit { color: var(--danger); }
+
+    .canvas-shell {
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      border-radius: 12px;
+      background: rgba(8, 16, 42, 0.9);
+      padding: 8px;
+      margin-bottom: 12px;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 8px;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .control {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .control-label {
+      color: var(--text-sub);
+      font-size: 0.84rem;
+      min-width: 140px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .control-value {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      color: var(--warn);
+      font-weight: 600;
+      font-size: 0.84rem;
+      min-width: 28px;
+      text-align: right;
+    }
+
+    input[type="range"] {
+      flex: 1;
+      accent-color: var(--primary);
+      height: 6px;
+    }
+
+    .chart-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .insight-box {
+      margin-top: 4px;
+      background: rgba(59, 130, 246, 0.08);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-size: 0.84rem;
+      color: var(--text-sub);
+      line-height: 1.65;
+    }
+
+    .insight-box strong { color: var(--text); }
+    .insight-box li { margin-bottom: 4px; }
+    .insight-box ul { padding-left: 18px; margin-top: 6px; }
+
+    .region-tag {
+      display: inline-block;
+      padding: 1px 8px;
+      border-radius: 4px;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+
+    .region-tag.under { background: rgba(245, 158, 11, 0.2); color: var(--warn); }
+    .region-tag.good { background: rgba(16, 185, 129, 0.2); color: var(--accent); }
+    .region-tag.over { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+
+    @media (max-width: 760px) {
+      body { padding: 10px; }
+      .wrapper { padding: 16px 12px 14px; }
+      .title { font-size: 1.3rem; }
+      .metrics { grid-template-columns: repeat(2, 1fr); }
+      .chart-row { grid-template-columns: 1fr; }
+      .control-label { min-width: 110px; font-size: 0.78rem; }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>📊 偏差-方差权衡可视化</h1>
-        <p class="subtitle">探索模型复杂度如何影响欠拟合和过拟合</p>
+  <div class="wrapper">
+    <h1 class="title">偏差-方差权衡可视化</h1>
+    <p class="subtitle">探索模型复杂度如何影响偏差、方差与泛化误差 -- 滑动多项式阶数观察欠拟合与过拟合</p>
 
-        <div class="controls">
-            <div class="control-group">
-                <label>
-                    多项式阶数 (Model Complexity):
-                    <span class="value-display" id="degreeValue">1</span>
-                    <span class="status-indicator" id="statusIndicator">欠拟合</span>
-                </label>
-                <input type="range" id="degree" min="1" max="15" step="1" value="1">
-            </div>
-            <div class="control-group">
-                <label>
-                    数据噪声水平:
-                    <span class="value-display" id="noiseValue">0.3</span>
-                </label>
-                <input type="range" id="noise" min="0.1" max="1.0" step="0.1" value="0.3">
-            </div>
-            <div class="control-group">
-                <label>
-                    训练样本数量:
-                    <span class="value-display" id="samplesValue">30</span>
-                </label>
-                <input type="range" id="samples" min="10" max="100" step="10" value="30">
-            </div>
-        </div>
-
-        <div class="metrics">
-            <div class="metric-card">
-                <div class="metric-label">训练误差</div>
-                <div class="metric-value" id="trainError">-</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-label">验证误差</div>
-                <div class="metric-value" id="valError">-</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-label">误差比值</div>
-                <div class="metric-value" id="errorRatio">-</div>
-            </div>
-        </div>
-
-        <div id="fittingChart"></div>
-        <div id="errorChart"></div>
-
-        <div class="info-box">
-            <strong>🎯 关键洞察：</strong>
-            <ul>
-                <li><strong>欠拟合（高偏差）</strong>: 阶数1-2时，模型过于简单，训练和验证误差都很高</li>
-                <li><strong>最优拟合</strong>: 阶数3-5时，模型复杂度适中，验证误差最低</li>
-                <li><strong>过拟合（高方差）</strong>: 阶数>8时，训练误差很低但验证误差激增</li>
-                <li><strong>判断标准</strong>: 当验证误差 > 2×训练误差时，说明过拟合严重</li>
-            </ul>
-        </div>
+    <div class="metrics">
+      <div class="metric-card">
+        <div class="metric-label">偏差 (Bias)</div>
+        <div class="metric-value bias" id="metricBias">--</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">方差 (Variance)</div>
+        <div class="metric-value variance" id="metricVariance">--</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">总误差 (Total)</div>
+        <div class="metric-value total" id="metricTotal">--</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">模型状态</div>
+        <div class="metric-value status" id="metricStatus">--</div>
+      </div>
     </div>
 
-    <script>
-        // 生成真实函数（三次多项式）
-        function trueFunction(x) {
-            return 0.5 * x**3 - 2 * x**2 + x + 3;
+    <div class="section">
+      <div class="chart-row">
+        <div class="canvas-shell">
+          <canvas id="fittingCanvas" width="500" height="380"></canvas>
+        </div>
+        <div class="canvas-shell">
+          <canvas id="errorCanvas" width="500" height="380"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="controls">
+        <div class="control">
+          <div class="control-label">多项式阶数 <span class="control-value" id="degreeVal">3</span></div>
+          <input type="range" id="sliderDegree" min="1" max="10" step="1" value="3" />
+        </div>
+        <div class="control">
+          <div class="control-label">噪声水平 <span class="control-value" id="noiseVal">0.3</span></div>
+          <input type="range" id="sliderNoise" min="0.1" max="1.0" step="0.05" value="0.3" />
+        </div>
+        <div class="control">
+          <div class="control-label">训练样本数 <span class="control-value" id="samplesVal">30</span></div>
+          <input type="range" id="sliderSamples" min="10" max="80" step="5" value="30" />
+        </div>
+      </div>
+    </div>
+
+    <div class="insight-box">
+      <strong>关键洞察</strong>
+      <ul>
+        <li><span class="region-tag under">欠拟合 / 高偏差</span> 阶数 1-2 时模型过于简单，训练和验证误差都偏高</li>
+        <li><span class="region-tag good">最优拟合</span> 阶数 3-5 时模型复杂度适中，验证误差最低</li>
+        <li><span class="region-tag over">过拟合 / 高方差</span> 阶数 > 7 时训练误差极低但验证误差激增</li>
+        <li>右图中垂直虚线标记当前阶数，可观察其处于 U 型曲线的哪个区间</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    /* ---- seeded RNG for reproducibility within a session ---- */
+    let seed = 42;
+    function seededRandom() {
+      seed = (seed * 16807 + 0) % 2147483647;
+      return (seed - 1) / 2147483646;
+    }
+    function resetSeed() { seed = 42; }
+
+    /* ---- DOM refs ---- */
+    const fittingCanvas = document.getElementById('fittingCanvas');
+    const errorCanvas   = document.getElementById('errorCanvas');
+    const fCtx = fittingCanvas.getContext('2d');
+    const eCtx = errorCanvas.getContext('2d');
+
+    const sliderDegree  = document.getElementById('sliderDegree');
+    const sliderNoise   = document.getElementById('sliderNoise');
+    const sliderSamples = document.getElementById('sliderSamples');
+
+    const degreeVal  = document.getElementById('degreeVal');
+    const noiseVal   = document.getElementById('noiseVal');
+    const samplesVal = document.getElementById('samplesVal');
+
+    const metricBias     = document.getElementById('metricBias');
+    const metricVariance = document.getElementById('metricVariance');
+    const metricTotal    = document.getElementById('metricTotal');
+    const metricStatus   = document.getElementById('metricStatus');
+
+    /* ---- constants ---- */
+    const PAD = { left: 58, right: 20, top: 28, bottom: 44 };
+    const COLORS = {
+      primary: '#3b82f6',
+      accent:  '#10b981',
+      lora:    '#8b5cf6',
+      warn:    '#f59e0b',
+      danger:  '#ef4444',
+      grid:    'rgba(148, 163, 184, 0.12)',
+      axis:    'rgba(148, 163, 184, 0.35)',
+      text:    'rgba(226, 232, 240, 0.8)',
+      textDim: 'rgba(148, 163, 184, 0.6)',
+    };
+
+    /* ---- true function ---- */
+    function trueFunc(x) {
+      return 0.5 * x * x * x - 2 * x * x + x + 3;
+    }
+
+    /* ---- data generation ---- */
+    function generateData(n, noise) {
+      resetSeed();
+      const X = [];
+      const y = [];
+      for (let i = 0; i < n; i++) {
+        const x = seededRandom() * 4 - 2;
+        const yTrue = trueFunc(x);
+        const yNoisy = yTrue + (seededRandom() - 0.5) * noise * 10;
+        X.push(x);
+        y.push(yNoisy);
+      }
+      return { X, y };
+    }
+
+    function generateValData(noise) {
+      const prevSeed = seed;
+      seed = 9999;
+      const X = [];
+      const y = [];
+      for (let i = 0; i < 40; i++) {
+        const x = seededRandom() * 4 - 2;
+        const yTrue = trueFunc(x);
+        const yNoisy = yTrue + (seededRandom() - 0.5) * noise * 10;
+        X.push(x);
+        y.push(yNoisy);
+      }
+      seed = prevSeed;
+      return { X, y };
+    }
+
+    /* ---- polynomial fitting via normal equation (small matrix) ---- */
+    function polyFit(X, y, deg) {
+      const n = X.length;
+      const m = deg + 1;
+
+      /* build X^T X */
+      const xtx = Array.from({ length: m }, () => new Float64Array(m));
+      const xty = new Float64Array(m);
+
+      for (let i = 0; i < n; i++) {
+        const row = new Float64Array(m);
+        let v = 1;
+        for (let j = 0; j < m; j++) {
+          row[j] = v;
+          v *= X[i];
         }
-
-        // 生成训练数据
-        function generateData(n, noise) {
-            const X = [];
-            const y = [];
-            for (let i = 0; i < n; i++) {
-                const x = Math.random() * 4 - 2;
-                const yTrue = trueFunction(x);
-                const yNoisy = yTrue + (Math.random() - 0.5) * noise * 10;
-                X.push(x);
-                y.push(yNoisy);
-            }
-            return { X, y };
+        for (let a = 0; a < m; a++) {
+          for (let b = 0; b < m; b++) {
+            xtx[a][b] += row[a] * row[b];
+          }
+          xty[a] += row[a] * y[i];
         }
+      }
 
-        // 多项式拟合（简化版最小二乘法）
-        function polynomialFit(X, y, degree) {
-            // 构建设计矩阵
-            const n = X.length;
-            const A = [];
-            for (let i = 0; i < n; i++) {
-                const row = [];
-                for (let j = 0; j <= degree; j++) {
-                    row.push(Math.pow(X[i], j));
-                }
-                A.push(row);
-            }
+      /* add tiny ridge to stabilise */
+      for (let i = 0; i < m; i++) xtx[i][i] += 1e-8;
 
-            // 使用正规方程求解（简化实现）
-            // 实际应用中应使用数值稳定的方法
-            const coeffs = Array(degree + 1).fill(0);
+      /* Gauss-Jordan elimination */
+      const aug = xtx.map((r, i) => {
+        const row = new Float64Array(m + 1);
+        row.set(r);
+        row[m] = xty[i];
+        return row;
+      });
 
-            // 简化的梯度下降求解
-            const lr = 0.001;
-            const iterations = 1000;
-
-            for (let iter = 0; iter < iterations; iter++) {
-                const gradients = Array(degree + 1).fill(0);
-
-                for (let i = 0; i < n; i++) {
-                    let pred = 0;
-                    for (let j = 0; j <= degree; j++) {
-                        pred += coeffs[j] * Math.pow(X[i], j);
-                    }
-                    const error = pred - y[i];
-
-                    for (let j = 0; j <= degree; j++) {
-                        gradients[j] += error * Math.pow(X[i], j);
-                    }
-                }
-
-                for (let j = 0; j <= degree; j++) {
-                    coeffs[j] -= lr * gradients[j] / n;
-                }
-            }
-
-            return coeffs;
+      for (let col = 0; col < m; col++) {
+        let maxRow = col;
+        for (let r = col + 1; r < m; r++) {
+          if (Math.abs(aug[r][col]) > Math.abs(aug[maxRow][col])) maxRow = r;
         }
+        [aug[col], aug[maxRow]] = [aug[maxRow], aug[col]];
 
-        // 预测
-        function predict(x, coeffs) {
-            let y = 0;
-            for (let i = 0; i < coeffs.length; i++) {
-                y += coeffs[i] * Math.pow(x, i);
-            }
-            return y;
+        const pivot = aug[col][col];
+        if (Math.abs(pivot) < 1e-14) continue;
+        for (let j = col; j <= m; j++) aug[col][j] /= pivot;
+        for (let r = 0; r < m; r++) {
+          if (r === col) continue;
+          const factor = aug[r][col];
+          for (let j = col; j <= m; j++) aug[r][j] -= factor * aug[col][j];
         }
+      }
 
-        // 计算MSE
-        function mse(X, y, coeffs) {
-            let sum = 0;
-            for (let i = 0; i < X.length; i++) {
-                const pred = predict(X[i], coeffs);
-                sum += Math.pow(pred - y[i], 2);
-            }
-            return sum / X.length;
+      const coeffs = new Float64Array(m);
+      for (let i = 0; i < m; i++) coeffs[i] = aug[i][m];
+      return coeffs;
+    }
+
+    function polyPredict(x, coeffs) {
+      let y = 0;
+      let v = 1;
+      for (let i = 0; i < coeffs.length; i++) {
+        y += coeffs[i] * v;
+        v *= x;
+      }
+      return y;
+    }
+
+    function mse(X, y, coeffs) {
+      let sum = 0;
+      for (let i = 0; i < X.length; i++) {
+        const d = polyPredict(X[i], coeffs) - y[i];
+        sum += d * d;
+      }
+      return sum / X.length;
+    }
+
+    /* ---- canvas helpers ---- */
+    function plotArea(canvas) {
+      return {
+        x: PAD.left,
+        y: PAD.top,
+        w: canvas.width - PAD.left - PAD.right,
+        h: canvas.height - PAD.top - PAD.bottom,
+      };
+    }
+
+    function clearCanvas(ctx, canvas) {
+      ctx.fillStyle = '#0a1128';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function drawGrid(ctx, area, xTicks, yTicks, xMin, xMax, yMin, yMax) {
+      ctx.strokeStyle = COLORS.grid;
+      ctx.lineWidth = 1;
+
+      for (const xt of xTicks) {
+        const px = area.x + ((xt - xMin) / (xMax - xMin)) * area.w;
+        ctx.beginPath();
+        ctx.moveTo(px, area.y);
+        ctx.lineTo(px, area.y + area.h);
+        ctx.stroke();
+      }
+      for (const yt of yTicks) {
+        const py = area.y + area.h - ((yt - yMin) / (yMax - yMin)) * area.h;
+        ctx.beginPath();
+        ctx.moveTo(area.x, py);
+        ctx.lineTo(area.x + area.w, py);
+        ctx.stroke();
+      }
+    }
+
+    function drawAxes(ctx, area, xLabel, yLabel, xTicks, yTicks, xMin, xMax, yMin, yMax) {
+      ctx.strokeStyle = COLORS.axis;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(area.x, area.y);
+      ctx.lineTo(area.x, area.y + area.h);
+      ctx.lineTo(area.x + area.w, area.y + area.h);
+      ctx.stroke();
+
+      ctx.fillStyle = COLORS.text;
+      ctx.font = '11px "Segoe UI", sans-serif';
+      ctx.textAlign = 'center';
+
+      for (const xt of xTicks) {
+        const px = area.x + ((xt - xMin) / (xMax - xMin)) * area.w;
+        ctx.fillText(String(xt), px, area.y + area.h + 16);
+      }
+
+      ctx.textAlign = 'right';
+      for (const yt of yTicks) {
+        const py = area.y + area.h - ((yt - yMin) / (yMax - yMin)) * area.h;
+        ctx.fillText(yt.toFixed(1), area.x - 8, py + 4);
+      }
+
+      ctx.fillStyle = COLORS.textDim;
+      ctx.font = '12px "Segoe UI", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(xLabel, area.x + area.w / 2, area.y + area.h + 36);
+
+      ctx.save();
+      ctx.translate(14, area.y + area.h / 2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText(yLabel, 0, 0);
+      ctx.restore();
+    }
+
+    function drawLine(ctx, area, pts, xMin, xMax, yMin, yMax, color, width, dash) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = width;
+      ctx.setLineDash(dash || []);
+      ctx.beginPath();
+      let started = false;
+      for (const [x, y] of pts) {
+        const px = area.x + ((x - xMin) / (xMax - xMin)) * area.w;
+        const py = area.y + area.h - ((y - yMin) / (yMax - yMin)) * area.h;
+        if (!started) { ctx.moveTo(px, py); started = true; }
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    function drawDots(ctx, area, X, y, xMin, xMax, yMin, yMax, color, radius) {
+      for (let i = 0; i < X.length; i++) {
+        const px = area.x + ((X[i] - xMin) / (xMax - xMin)) * area.w;
+        const py = area.y + area.h - ((y[i] - yMin) / (yMax - yMin)) * area.h;
+        ctx.beginPath();
+        ctx.arc(px, py, radius, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+      }
+    }
+
+    function drawRegionBands(ctx, area, xMin, xMax, yMin, yMax, underEnd, overStart) {
+      /* underfitting region */
+      const ux2 = area.x + ((underEnd - xMin) / (xMax - xMin)) * area.w;
+      ctx.fillStyle = 'rgba(245, 158, 11, 0.06)';
+      ctx.fillRect(area.x, area.y, ux2 - area.x, area.h);
+
+      /* overfitting region */
+      const ox1 = area.x + ((overStart - xMin) / (xMax - xMin)) * area.w;
+      ctx.fillStyle = 'rgba(239, 68, 68, 0.06)';
+      ctx.fillRect(ox1, area.y, area.x + area.w - ox1, area.h);
+
+      /* labels */
+      ctx.font = '10px "Segoe UI", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = 'rgba(245, 158, 11, 0.5)';
+      ctx.fillText('欠拟合', (area.x + ux2) / 2, area.y + 14);
+      ctx.fillStyle = 'rgba(239, 68, 68, 0.5)';
+      ctx.fillText('过拟合', (ox1 + area.x + area.w) / 2, area.y + 14);
+      ctx.fillStyle = 'rgba(16, 185, 129, 0.5)';
+      ctx.fillText('最优区', (ux2 + ox1) / 2, area.y + 14);
+    }
+
+    function drawChartTitle(ctx, canvas, text) {
+      ctx.fillStyle = COLORS.text;
+      ctx.font = 'bold 13px "Segoe UI", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(text, canvas.width / 2, 18);
+    }
+
+    /* ---- main render ---- */
+    function render() {
+      const degree  = parseInt(sliderDegree.value);
+      const noise   = parseFloat(sliderNoise.value);
+      const nSamp   = parseInt(sliderSamples.value);
+
+      degreeVal.textContent  = degree;
+      noiseVal.textContent   = noise.toFixed(2);
+      samplesVal.textContent = nSamp;
+
+      const trainData = generateData(nSamp, noise);
+      const valData   = generateValData(noise);
+
+      /* ---- Fitting chart (left) ---- */
+      const coeffs = polyFit(trainData.X, trainData.y, degree);
+
+      const xMin = -2.2, xMax = 2.2;
+      let allY = trainData.y.slice();
+      const truePts = [];
+      const predPts = [];
+      for (let x = -2; x <= 2; x += 0.04) {
+        const yt = trueFunc(x);
+        const yp = polyPredict(x, coeffs);
+        truePts.push([x, yt]);
+        predPts.push([x, yp]);
+        allY.push(yt, yp);
+      }
+      const yMinF = Math.min(...allY) - 1;
+      const yMaxF = Math.max(...allY) + 1;
+      const yMinC = Math.max(yMinF, -20);
+      const yMaxC = Math.min(yMaxF, 25);
+
+      clearCanvas(fCtx, fittingCanvas);
+      const areaF = plotArea(fittingCanvas);
+
+      const yTicksF = [];
+      for (let t = Math.ceil(yMinC); t <= Math.floor(yMaxC); t += Math.max(1, Math.round((yMaxC - yMinC) / 6))) {
+        yTicksF.push(t);
+      }
+
+      drawGrid(fCtx, areaF, [-2, -1, 0, 1, 2], yTicksF, xMin, xMax, yMinC, yMaxC);
+      drawAxes(fCtx, areaF, 'x', 'y', [-2, -1, 0, 1, 2], yTicksF, xMin, xMax, yMinC, yMaxC);
+      drawLine(fCtx, areaF, truePts, xMin, xMax, yMinC, yMaxC, COLORS.accent, 2.5, [6, 4]);
+      drawLine(fCtx, areaF, predPts, xMin, xMax, yMinC, yMaxC, COLORS.danger, 2.5, []);
+      drawDots(fCtx, areaF, trainData.X, trainData.y, xMin, xMax, yMinC, yMaxC, COLORS.primary, 4);
+      drawChartTitle(fCtx, fittingCanvas, '多项式拟合效果 (阶数 = ' + degree + ')');
+
+      /* legend */
+      const lx = areaF.x + areaF.w - 130, ly = areaF.y + 10;
+      fCtx.font = '10px "Segoe UI", sans-serif';
+      [
+        { color: COLORS.primary, label: '训练数据', dash: [] },
+        { color: COLORS.accent, label: '真实函数', dash: [6, 4] },
+        { color: COLORS.danger, label: '拟合曲线', dash: [] },
+      ].forEach(function (item, i) {
+        const y = ly + i * 16;
+        fCtx.strokeStyle = item.color;
+        fCtx.lineWidth = 2;
+        fCtx.setLineDash(item.dash);
+        if (item.dash.length === 0 && i === 0) {
+          fCtx.beginPath();
+          fCtx.arc(lx + 6, y + 4, 3, 0, Math.PI * 2);
+          fCtx.fillStyle = item.color;
+          fCtx.fill();
+        } else {
+          fCtx.beginPath();
+          fCtx.moveTo(lx, y + 4);
+          fCtx.lineTo(lx + 14, y + 4);
+          fCtx.stroke();
         }
+        fCtx.setLineDash([]);
+        fCtx.fillStyle = COLORS.text;
+        fCtx.textAlign = 'left';
+        fCtx.fillText(item.label, lx + 20, y + 8);
+      });
 
-        function safeFinite(value, fallback = 0) {
-            return Number.isFinite(value) ? value : fallback;
-        }
+      /* ---- Error chart (right) ---- */
+      const degrees = [];
+      for (let d = 1; d <= 10; d++) degrees.push(d);
 
-        function build2DLayout(layout) {
-            const axisBase = {
-                gridcolor: '#dbe6f8',
-                zerolinecolor: '#c5d6f3',
-                linecolor: '#8ea9de',
-                tickcolor: '#8ea9de',
-                ticks: 'outside',
-                automargin: true,
-            };
+      const trainErrors = [];
+      const valErrors = [];
+      for (const d of degrees) {
+        const c = polyFit(trainData.X, trainData.y, d);
+        trainErrors.push(mse(trainData.X, trainData.y, c));
+        valErrors.push(mse(valData.X, valData.y, c));
+      }
 
-            return {
-                paper_bgcolor: '#f8fbff',
-                plot_bgcolor: '#f8fbff',
-                font: { color: '#0f172a' },
-                margin: { t: 56, r: 24, b: 52, l: 60 },
-                ...layout,
-                xaxis: {
-                    ...axisBase,
-                    ...(layout?.xaxis || {}),
-                },
-                yaxis: {
-                    ...axisBase,
-                    ...(layout?.yaxis || {}),
-                },
-            };
-        }
+      const eMax = Math.min(Math.max(...valErrors, ...trainErrors) * 1.15, 100);
+      const eMin = 0;
 
+      clearCanvas(eCtx, errorCanvas);
+      const areaE = plotArea(errorCanvas);
 
-        function updateVisualization() {
-            const degree = parseInt(document.getElementById('degree').value);
-            const noise = parseFloat(document.getElementById('noise').value);
-            const nSamples = parseInt(document.getElementById('samples').value);
+      const eTickStep = Math.max(1, Math.round(eMax / 5));
+      const eTicks = [];
+      for (let t = 0; t <= eMax; t += eTickStep) eTicks.push(t);
 
-            document.getElementById('degreeValue').textContent = degree;
-            document.getElementById('noiseValue').textContent = noise.toFixed(1);
-            document.getElementById('samplesValue').textContent = nSamples;
+      drawRegionBands(eCtx, areaE, 0.5, 10.5, eMin, eMax, 2.5, 7.5);
+      drawGrid(eCtx, areaE, degrees, eTicks, 0.5, 10.5, eMin, eMax);
+      drawAxes(eCtx, areaE, '多项式阶数', 'MSE', degrees, eTicks, 0.5, 10.5, eMin, eMax);
 
-            // 生成数据
-            const trainData = generateData(nSamples, noise);
-            const valData = generateData(30, noise);
+      /* training error line */
+      const trainPts = degrees.map(function (d, i) { return [d, trainErrors[i]]; });
+      const valPts   = degrees.map(function (d, i) { return [d, valErrors[i]]; });
+      drawLine(eCtx, areaE, trainPts, 0.5, 10.5, eMin, eMax, COLORS.primary, 2.5, []);
+      drawLine(eCtx, areaE, valPts,   0.5, 10.5, eMin, eMax, COLORS.danger, 2.5, []);
 
-            // 拟合模型
-            const coeffs = polynomialFit(trainData.X, trainData.y, degree);
+      /* dots on lines */
+      for (let i = 0; i < degrees.length; i++) {
+        const px = areaE.x + ((degrees[i] - 0.5) / 10) * areaE.w;
+        [
+          { val: trainErrors[i], color: COLORS.primary },
+          { val: valErrors[i],   color: COLORS.danger },
+        ].forEach(function (item) {
+          const py = areaE.y + areaE.h - ((item.val - eMin) / (eMax - eMin)) * areaE.h;
+          eCtx.beginPath();
+          eCtx.arc(px, py, 3.5, 0, Math.PI * 2);
+          eCtx.fillStyle = item.color;
+          eCtx.fill();
+        });
+      }
 
-            // 计算误差
-            const trainError = mse(trainData.X, trainData.y, coeffs);
-            const valError = mse(valData.X, valData.y, coeffs);
-            const ratio = valError / trainError;
+      /* current degree line */
+      const dx = areaE.x + ((degree - 0.5) / 10) * areaE.w;
+      eCtx.strokeStyle = 'rgba(226, 232, 240, 0.35)';
+      eCtx.lineWidth = 1.5;
+      eCtx.setLineDash([4, 4]);
+      eCtx.beginPath();
+      eCtx.moveTo(dx, areaE.y);
+      eCtx.lineTo(dx, areaE.y + areaE.h);
+      eCtx.stroke();
+      eCtx.setLineDash([]);
 
-            document.getElementById('trainError').textContent = trainError.toFixed(3);
-            document.getElementById('valError').textContent = valError.toFixed(3);
-            document.getElementById('errorRatio').textContent = ratio.toFixed(2) + 'x';
+      drawChartTitle(eCtx, errorCanvas, '误差随模型复杂度变化');
 
-            // 更新状态指示器
-            const statusElem = document.getElementById('statusIndicator');
-            if (degree <= 2) {
-                statusElem.textContent = '欠拟合';
-                statusElem.className = 'status-indicator status-bad';
-            } else if (degree <= 5) {
-                statusElem.textContent = '最优拟合';
-                statusElem.className = 'status-indicator status-good';
-            } else {
-                statusElem.textContent = '过拟合';
-                statusElem.className = 'status-indicator status-warning';
-            }
+      /* legend */
+      const lx2 = areaE.x + areaE.w - 100, ly2 = areaE.y + 24;
+      eCtx.font = '10px "Segoe UI", sans-serif';
+      [
+        { color: COLORS.primary, label: '训练误差' },
+        { color: COLORS.danger,  label: '验证误差' },
+      ].forEach(function (item, i) {
+        const y = ly2 + i * 16;
+        eCtx.beginPath();
+        eCtx.arc(lx2 + 6, y + 3, 3, 0, Math.PI * 2);
+        eCtx.fillStyle = item.color;
+        eCtx.fill();
+        eCtx.fillStyle = COLORS.text;
+        eCtx.textAlign = 'left';
+        eCtx.fillText(item.label, lx2 + 16, y + 7);
+      });
 
-            // 绘制拟合曲线
-            const xRange = [];
-            const yTrue = [];
-            const yPred = [];
-            for (let x = -2; x <= 2; x += 0.05) {
-                xRange.push(x);
-                yTrue.push(trueFunction(x));
-                yPred.push(safeFinite(predict(x, coeffs), null));
-            }
+      /* ---- Metrics ---- */
+      const idx = degree - 1;
+      const tErr = trainErrors[idx];
+      const vErr = valErrors[idx];
+      const biasVal = tErr;
+      const varianceVal = Math.max(0, vErr - tErr);
+      const totalVal = vErr;
 
-            const trace1 = {
-                x: trainData.X,
-                y: trainData.y,
-                mode: 'markers',
-                type: 'scatter',
-                name: '训练数据',
-                marker: { size: 8, color: '#1d4ed8' }
-            };
+      metricBias.textContent     = biasVal.toFixed(3);
+      metricVariance.textContent = varianceVal.toFixed(3);
+      metricTotal.textContent    = totalVal.toFixed(3);
 
-            const trace2 = {
-                x: xRange,
-                y: yTrue,
-                mode: 'lines',
-                type: 'scatter',
-                name: '真实函数',
-                line: { color: '#4caf50', width: 3, dash: 'dash' }
-            };
+      if (degree <= 2) {
+        metricStatus.textContent = '欠拟合';
+        metricStatus.className = 'metric-value status status-underfit';
+      } else if (degree <= 6) {
+        metricStatus.textContent = '良好拟合';
+        metricStatus.className = 'metric-value status status-good';
+      } else {
+        metricStatus.textContent = '过拟合';
+        metricStatus.className = 'metric-value status status-overfit';
+      }
+    }
 
-            const trace3 = {
-                x: xRange,
-                y: yPred,
-                mode: 'lines',
-                type: 'scatter',
-                name: `拟合曲线 (阶数=${degree})`,
-                line: { color: '#f44336', width: 3 }
-            };
+    /* ---- events ---- */
+    sliderDegree.addEventListener('input', render);
+    sliderNoise.addEventListener('input', render);
+    sliderSamples.addEventListener('input', render);
 
-            Plotly.newPlot('fittingChart', [trace1, trace2, trace3], build2DLayout({
-                title: '多项式拟合效果',
-                xaxis: { title: 'x' },
-                yaxis: { title: 'y' },
-                height: 400
-            }));
+    /* ---- init ---- */
+    render();
+  })();
+  </script>
 
-            // 绘制误差曲线（不同阶数）
-            const degrees = Array.from({ length: 15 }, (_, i) => i + 1);
-            const trainErrors = [];
-            const valErrors = [];
-
-            for (let d of degrees) {
-                const c = polynomialFit(trainData.X, trainData.y, d);
-                trainErrors.push(mse(trainData.X, trainData.y, c));
-                valErrors.push(mse(valData.X, valData.y, c));
-            }
-
-            const trace4 = {
-                x: degrees,
-                y: trainErrors,
-                mode: 'lines+markers',
-                type: 'scatter',
-                name: '训练误差',
-                line: { color: '#1d4ed8', width: 3 }
-            };
-
-            const trace5 = {
-                x: degrees,
-                y: valErrors,
-                mode: 'lines+markers',
-                type: 'scatter',
-                name: '验证误差',
-                line: { color: '#f44336', width: 3 }
-            };
-
-            Plotly.newPlot('errorChart', [trace4, trace5], build2DLayout({
-                title: '误差随模型复杂度变化',
-                xaxis: { title: '多项式阶数' },
-                yaxis: { title: 'MSE' },
-                height: 400,
-                shapes: [{
-                    type: 'line',
-                    x0: degree,
-                    x1: degree,
-                    y0: 0,
-                    y1: Math.max(...valErrors.filter(Number.isFinite), 1),
-                    line: { color: 'gray', width: 2, dash: 'dot' }
-                }]
-            }));
-        }
-
-        // 事件监听
-        document.getElementById('degree').addEventListener('input', updateVisualization);
-        document.getElementById('noise').addEventListener('input', updateVisualization);
-        document.getElementById('samples').addEventListener('input', updateVisualization);
-
-        // 初始化
-        updateVisualization();
-    </script>
-
-<script>
-(function () {
-  const sendHeight = () => {
-    if (window.parent === window) return;
-    const body = document.body;
-    const root = document.documentElement;
-    const height = Math.max(
-      body ? body.scrollHeight : 0,
-      body ? body.offsetHeight : 0,
-      root ? root.scrollHeight : 0,
-      root ? root.offsetHeight : 0
-    );
-    window.parent.postMessage({ type: 'iframe-height', height }, '*');
-  };
-
-  window.addEventListener('load', sendHeight);
-  window.addEventListener('resize', sendHeight);
-
-  if ('ResizeObserver' in window) {
-    const observer = new ResizeObserver(sendHeight);
-    if (document.body) observer.observe(document.body);
-    if (document.documentElement) observer.observe(document.documentElement);
-  }
-
-  requestAnimationFrame(sendHeight);
-  setTimeout(sendHeight, 250);
-  setTimeout(sendHeight, 1000);
-})();
-</script>
+  <script>
+  (function () {
+    var sendHeight = function () {
+      if (window.parent === window) return;
+      var body = document.body;
+      var root = document.documentElement;
+      var height = Math.max(
+        body ? body.scrollHeight : 0,
+        body ? body.offsetHeight : 0,
+        root ? root.scrollHeight : 0,
+        root ? root.offsetHeight : 0
+      );
+      window.parent.postMessage({ type: 'iframe-height', height: height }, '*');
+    };
+    window.addEventListener('load', sendHeight);
+    window.addEventListener('resize', sendHeight);
+    if ('ResizeObserver' in window) {
+      var observer = new ResizeObserver(sendHeight);
+      if (document.body) observer.observe(document.body);
+      if (document.documentElement) observer.observe(document.documentElement);
+    }
+    requestAnimationFrame(sendHeight);
+    setTimeout(sendHeight, 250);
+    setTimeout(sendHeight, 1000);
+  })();
+  </script>
 </body>
 </html>

@@ -1,618 +1,815 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>训练过程动画</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <style>
-    :root {
-      --bg-a: #e4ecff;
-      --bg-b: #f1f5ff;
-      --card: #ffffff;
-      --border: #dbe5ff;
-      --title: #27365f;
-      --sub: #6679a8;
-      --btn-a: #5f78e5;
-      --btn-b: #6d5bc9;
-      --ok: #4caf50;
-      --warn: #ff9800;
-      --danger: #f44336;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Training Process Animation</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --text: #e2e8f0;
+    --primary: #3b82f6;
+    --accent: #10b981;
+    --loss-color: #ef4444;
+    --acc-color: #10b981;
+    --lr-color: #f59e0b;
+    --card-bg: rgba(30, 41, 59, 0.7);
+  }
 
-    * { box-sizing: border-box; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    body {
-      margin: 0;
-      padding: 16px;
-      min-height: 0;
-      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
-      background: linear-gradient(135deg, var(--bg-a) 0%, var(--bg-b) 100%);
-      color: #28395f;
-    }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 0;
+    overflow-x: hidden;
+    line-height: 1.6;
+  }
 
-    .wrap {
-      max-width: 1020px;
-      margin: 0 auto;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      box-shadow: 0 12px 28px rgba(77, 104, 198, 0.15);
-      padding: 14px;
-      overflow: hidden;
-    }
+  .container { max-width: 1020px; margin: 0 auto; padding: 24px 16px; }
 
-    .head {
-      text-align: center;
-      margin-bottom: 10px;
-    }
+  h1 {
+    text-align: center; font-size: 1.6rem; font-weight: 700; margin-bottom: 4px;
+    background: linear-gradient(135deg, var(--loss-color), var(--primary), var(--accent));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
 
-    .head h1 {
-      margin: 0;
-      color: var(--title);
-      font-size: 1.8rem;
-      letter-spacing: 0.2px;
-    }
+  .subtitle {
+    text-align: center; font-size: 0.85rem; color: #94a3b8; margin-bottom: 24px;
+  }
 
-    .head p {
-      margin: 6px 0 0;
-      color: var(--sub);
-      font-size: 0.92rem;
-    }
+  .section {
+    background: var(--card-bg); border-radius: 14px; padding: 20px;
+    margin-bottom: 20px; border: 1px solid rgba(100, 116, 139, 0.2);
+    backdrop-filter: blur(10px); position: relative; overflow: hidden;
+  }
 
-    .layout {
-      display: grid;
-      grid-template-columns: 1.1fr 0.9fr;
-      gap: 10px;
-    }
+  .section::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--loss-color), var(--primary), var(--accent));
+  }
 
-    .panel {
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      background: #fbfdff;
-      padding: 10px;
-    }
+  .section-title {
+    font-size: 1.05rem; font-weight: 600; margin-bottom: 16px; color: var(--primary);
+    display: flex; align-items: center; gap: 8px;
+  }
 
-    .charts {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 8px;
-    }
+  .section-title::before {
+    content: ''; width: 4px; height: 18px; background: var(--accent); border-radius: 2px;
+  }
 
-    .chart-box {
-      border: 1px solid #dde6ff;
-      border-radius: 10px;
-      background: #fff;
-      padding: 8px;
-      min-height: 228px;
-      display: grid;
-      grid-template-rows: auto 1fr;
-    }
+  /* Layout */
+  .layout {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 20px;
+  }
 
-    .chart-box h3 {
-      margin: 0 0 4px;
-      text-align: center;
-      font-size: 0.94rem;
-      color: #334a7d;
-    }
+  /* Chart containers */
+  .chart-stack { display: grid; gap: 16px; }
 
-    .chart-box canvas {
-      width: 100%;
-      height: 180px !important;
-      display: block;
-    }
+  .chart-box {
+    background: rgba(15, 23, 42, 0.5);
+    border: 1px solid rgba(100, 116, 139, 0.2);
+    border-radius: 10px;
+    padding: 12px;
+    position: relative;
+  }
 
-    .controls {
-      display: grid;
-      gap: 8px;
-      align-content: start;
-    }
+  .chart-box h3 {
+    margin: 0 0 8px;
+    text-align: center;
+    font-size: 0.92rem;
+    font-weight: 600;
+  }
 
-    .controls h3 {
-      margin: 0;
-      color: #314777;
-      font-size: 0.95rem;
-    }
+  .chart-box h3.loss-title { color: var(--loss-color); }
+  .chart-box h3.acc-title { color: var(--acc-color); }
 
-    .line {
-      display: grid;
-      gap: 5px;
-    }
+  .chart-box canvas {
+    width: 100%; height: 200px; display: block;
+    border-radius: 6px;
+  }
 
-    .line label {
-      display: flex;
-      justify-content: space-between;
-      color: #4f6394;
-      font-size: 0.8rem;
-    }
+  /* Controls */
+  .controls { display: grid; gap: 14px; align-content: start; }
 
-    .val {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      color: #314d8b;
-      font-weight: 600;
-    }
+  .slider-group { display: grid; gap: 6px; }
 
-    input[type='range'] {
-      width: 100%;
-      accent-color: #6785e7;
-    }
+  .slider-label {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.84rem; color: #94a3b8;
+  }
 
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 8px;
-      margin-top: 2px;
-    }
+  .slider-value {
+    font-family: 'Cambria Math', 'Consolas', monospace;
+    font-weight: 700; color: var(--primary); font-size: 0.92rem;
+  }
 
-    .stat {
-      border: 1px solid #d7e2ff;
-      border-radius: 10px;
-      background: linear-gradient(135deg, #eef3ff 0%, #e4ecff 100%);
-      padding: 8px;
-      text-align: center;
-    }
+  input[type='range'] {
+    -webkit-appearance: none; appearance: none; width: 100%;
+    height: 6px; border-radius: 3px; outline: none;
+    background: linear-gradient(90deg, rgba(59, 130, 246, 0.3), rgba(16, 185, 129, 0.3));
+  }
 
-    .stat-k {
-      color: #586d9f;
-      font-size: 0.76rem;
-      margin-bottom: 4px;
-    }
+  input[type='range']::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%;
+    background: var(--primary); cursor: pointer; border: 3px solid var(--bg);
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+    transition: box-shadow 0.2s;
+  }
 
-    .stat-v {
-      color: #2e4379;
-      font-size: 1.2rem;
-      font-weight: 700;
-    }
+  input[type='range']::-webkit-slider-thumb:hover {
+    box-shadow: 0 0 18px rgba(59, 130, 246, 0.8);
+  }
 
-    .btn-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 4px;
-    }
+  input[type='range']::-moz-range-thumb {
+    width: 20px; height: 20px; border-radius: 50%; background: var(--primary);
+    cursor: pointer; border: 3px solid var(--bg);
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+  }
 
-    button {
-      border: none;
-      border-radius: 999px;
-      padding: 8px 14px;
-      background: linear-gradient(135deg, var(--btn-a), var(--btn-b));
-      color: #fff;
-      font-size: 0.84rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
-    }
+  /* Stats grid */
+  .stats-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
+  }
 
-    button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 8px 18px rgba(82, 109, 204, 0.3);
-    }
+  .stat-card {
+    background: rgba(15, 23, 42, 0.6); border-radius: 10px; padding: 12px;
+    border: 1px solid rgba(100, 116, 139, 0.2); text-align: center;
+    transition: border-color 0.3s, transform 0.3s;
+  }
 
-    button.secondary {
-      background: linear-gradient(135deg, #7a8ec0, #6c7ca9);
-    }
+  .stat-card:hover {
+    border-color: var(--primary); transform: translateY(-2px);
+  }
 
-    button:disabled {
-      opacity: 0.55;
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
-    }
+  .stat-label {
+    font-size: 0.72rem; color: #94a3b8; text-transform: uppercase;
+    letter-spacing: 0.5px; margin-bottom: 4px;
+  }
 
-    .status-box {
-      border: 1px solid #d8e2ff;
-      border-radius: 10px;
-      padding: 8px;
-      background: #f6f9ff;
-      font-size: 0.82rem;
-      line-height: 1.5;
-      color: #4b6093;
-      min-height: 56px;
-    }
+  .stat-value {
+    font-size: 1.2rem; font-weight: 700;
+    font-family: 'Cambria Math', 'Consolas', monospace;
+  }
 
-    .hint {
-      margin-top: 6px;
-      border: 1px dashed #cfdbff;
-      border-radius: 10px;
-      padding: 8px;
-      font-size: 0.8rem;
-      color: #5a71a3;
-      background: #f9fbff;
-      line-height: 1.48;
-    }
+  .stat-value.c-primary { color: var(--primary); }
+  .stat-value.c-loss { color: var(--loss-color); }
+  .stat-value.c-acc { color: var(--acc-color); }
+  .stat-value.c-lr { color: var(--lr-color); }
 
-    @media (max-width: 940px) {
-      .layout { grid-template-columns: 1fr; }
-      .head h1 { font-size: 1.5rem; }
-    }
+  /* Buttons */
+  .btn-row { display: flex; flex-wrap: wrap; gap: 8px; }
 
-    @media (max-width: 560px) {
-      body { padding: 10px; }
-      .wrap { padding: 10px; }
-      .stats { grid-template-columns: 1fr 1fr; }
-      .btn-row button { flex: 1 1 auto; }
-    }
-  </style>
+  .btn {
+    border: none; border-radius: 8px; padding: 9px 16px; font-size: 0.84rem;
+    font-weight: 600; cursor: pointer; color: #fff;
+    transition: transform 0.2s, box-shadow 0.2s, background 0.3s;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--primary), #6366f1);
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.35);
+  }
+
+  .btn-accent {
+    background: linear-gradient(135deg, var(--accent), #06b6d4);
+  }
+
+  .btn-accent:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.35);
+  }
+
+  .btn-warn {
+    background: linear-gradient(135deg, var(--lr-color), #f97316);
+  }
+
+  .btn-warn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(245, 158, 11, 0.35);
+  }
+
+  .btn-secondary {
+    background: rgba(100, 116, 139, 0.35);
+    border: 1px solid rgba(100, 116, 139, 0.3);
+  }
+
+  .btn-secondary:hover {
+    background: rgba(100, 116, 139, 0.5);
+    transform: translateY(-1px);
+  }
+
+  .btn:disabled {
+    opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none;
+  }
+
+  /* Status */
+  .status-bar {
+    font-size: 0.82rem; color: #94a3b8; min-height: 2.8rem;
+    padding: 10px 12px; border-radius: 8px;
+    background: rgba(15, 23, 42, 0.5);
+    border: 1px solid rgba(100, 116, 139, 0.15);
+    line-height: 1.5;
+  }
+
+  /* Hint */
+  .hint-card {
+    background: rgba(15, 23, 42, 0.5); border-radius: 10px; padding: 14px;
+    border: 1px solid rgba(139, 92, 246, 0.15);
+    font-size: 0.8rem; color: #cbd5e1; line-height: 1.55;
+  }
+
+  .hint-card strong { color: var(--lr-color); }
+
+  /* Progress bar */
+  .progress-wrap {
+    height: 4px; border-radius: 2px;
+    background: rgba(100, 116, 139, 0.2);
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%; border-radius: 2px; width: 0%;
+    background: linear-gradient(90deg, var(--primary), var(--accent));
+    transition: width 0.3s ease;
+  }
+
+  @media (max-width: 860px) {
+    .layout { grid-template-columns: 1fr; }
+    h1 { font-size: 1.3rem; }
+  }
+
+  @media (max-width: 500px) {
+    .container { padding: 16px 10px; }
+    .section { padding: 14px; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .btn-row .btn { flex: 1 1 auto; }
+  }
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="head">
-      <h1>📈 训练过程动画</h1>
-      <p>同步观察 Loss 下降、Accuracy 上升、学习率调度和过拟合风险提示</p>
+<div class="container">
+  <h1>Training Process Animation</h1>
+  <p class="subtitle">Watch Loss decrease and Accuracy increase as the neural network learns epoch by epoch</p>
+
+  <div class="layout">
+    <!-- Left: Charts -->
+    <div class="chart-stack">
+      <div class="section" style="margin-bottom:0">
+        <div class="section-title">Loss & Accuracy Curves</div>
+
+        <div class="chart-box">
+          <h3 class="loss-title">Loss (lower is better)</h3>
+          <canvas id="lossCanvas" width="600" height="200"></canvas>
+        </div>
+
+        <div class="chart-box" style="margin-top:12px">
+          <h3 class="acc-title">Accuracy (higher is better)</h3>
+          <canvas id="accCanvas" width="600" height="200"></canvas>
+        </div>
+
+        <div class="progress-wrap" style="margin-top:12px">
+          <div id="progressFill" class="progress-fill"></div>
+        </div>
+      </div>
     </div>
 
-    <div class="layout">
-      <div class="panel charts">
-        <div class="chart-box">
-          <h3>损失函数变化（越低越好）</h3>
-          <canvas id="lossChart"></canvas>
+    <!-- Right: Controls -->
+    <div>
+      <div class="section" style="margin-bottom:12px">
+        <div class="section-title">Training Controls</div>
+
+        <div class="slider-group">
+          <div class="slider-label">
+            <span>Total Epochs</span>
+            <span id="epochsVal" class="slider-value">20</span>
+          </div>
+          <input id="epochs" type="range" min="10" max="50" step="1" value="20">
         </div>
-        <div class="chart-box">
-          <h3>准确率变化（越高越好）</h3>
-          <canvas id="accuracyChart"></canvas>
+
+        <div class="slider-group">
+          <div class="slider-label">
+            <span>Learning Rate</span>
+            <span id="lrVal" class="slider-value">0.010</span>
+          </div>
+          <input id="lr" type="range" min="0.001" max="0.03" step="0.001" value="0.010">
+        </div>
+
+        <div class="slider-group">
+          <div class="slider-label">
+            <span>Noise Level</span>
+            <span id="noiseVal" class="slider-value">0.020</span>
+          </div>
+          <input id="noise" type="range" min="0" max="0.08" step="0.005" value="0.020">
+        </div>
+
+        <div class="slider-group">
+          <div class="slider-label">
+            <span>Playback Speed</span>
+            <span id="speedVal" class="slider-value">1.00</span>
+          </div>
+          <input id="speed" type="range" min="0.5" max="2.5" step="0.1" value="1.00">
         </div>
       </div>
 
-      <div class="panel controls">
-        <h3>训练控制</h3>
-
-        <div class="line">
-          <label>总 Epoch <span id="epochsVal" class="val">20</span></label>
-          <input id="epochs" type="range" min="10" max="50" step="1" value="20" />
+      <div class="section" style="margin-bottom:12px">
+        <div class="section-title">Live Metrics</div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Current Epoch</div>
+            <div id="statEpoch" class="stat-value c-primary">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Current Loss</div>
+            <div id="statLoss" class="stat-value c-loss">0.680</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Accuracy</div>
+            <div id="statAcc" class="stat-value c-acc">50.0%</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">LR Schedule</div>
+            <div id="statLrMode" class="stat-value c-lr" style="font-size:0.95rem">Warmup</div>
+          </div>
         </div>
+      </div>
 
-        <div class="line">
-          <label>学习率 <span id="lrVal" class="val">0.010</span></label>
-          <input id="lr" type="range" min="0.001" max="0.03" step="0.001" value="0.010" />
-        </div>
-
-        <div class="line">
-          <label>噪声强度 <span id="noiseVal" class="val">0.020</span></label>
-          <input id="noise" type="range" min="0" max="0.08" step="0.005" value="0.020" />
-        </div>
-
-        <div class="line">
-          <label>播放速度 <span id="speedVal" class="val">1.00</span></label>
-          <input id="speed" type="range" min="0.5" max="2.5" step="0.1" value="1.00" />
-        </div>
-
-        <div class="stats">
-          <div class="stat"><div class="stat-k">当前 Epoch</div><div id="statEpoch" class="stat-v">0</div></div>
-          <div class="stat"><div class="stat-k">当前 Loss</div><div id="statLoss" class="stat-v">0.680</div></div>
-          <div class="stat"><div class="stat-k">当前 Accuracy</div><div id="statAcc" class="stat-v">50.0%</div></div>
-          <div class="stat"><div class="stat-k">学习率状态</div><div id="statLrMode" class="stat-v" style="font-size:1rem">Warmup</div></div>
-        </div>
-
+      <div class="section" style="margin-bottom:12px">
         <div class="btn-row">
-          <button id="startBtn">▶ 开始训练</button>
-          <button id="pauseBtn">⏸ 暂停</button>
-          <button id="stepBtn">⏭ 单步</button>
-          <button id="resetBtn" class="secondary">↺ 重置</button>
+          <button class="btn btn-primary" id="startBtn">Start Training</button>
+          <button class="btn btn-warn" id="pauseBtn">Pause</button>
+          <button class="btn btn-accent" id="stepBtn">Single Step</button>
+          <button class="btn btn-secondary" id="resetBtn">Reset</button>
         </div>
 
-        <div id="statusBox" class="status-box">
-          准备就绪：点击“开始训练”观察曲线随 epoch 的动态变化。
+        <div id="statusBox" class="status-bar" style="margin-top:10px">
+          Ready: Click "Start Training" to watch the loss curve and accuracy evolve dynamically.
         </div>
+      </div>
 
-        <div class="hint">
-          <strong>读图提示：</strong>如果 Loss 下降很慢且准确率卡住，通常是学习率过小；若曲线剧烈抖动，可能是学习率过大或噪声过高。
+      <div class="section">
+        <div class="section-title">Reading Guide</div>
+        <div class="hint-card">
+          <strong>Slow convergence with stalled accuracy:</strong> Learning rate is likely too small.<br>
+          <strong>Wildly oscillating curves:</strong> Learning rate is too large or noise level is too high.<br>
+          <strong>Architecture:</strong> Input(400) - Hidden1(25) - Hidden2(15) - Output(1) with 10,431 total parameters.
         </div>
       </div>
     </div>
   </div>
+</div>
 
-  <script>
-    (function () {
-      const controls = {
-        epochs: document.getElementById('epochs'),
-        lr: document.getElementById('lr'),
-        noise: document.getElementById('noise'),
-        speed: document.getElementById('speed'),
-      };
+<script>
+(function () {
+  // DOM references
+  var epochsSlider = document.getElementById('epochs');
+  var lrSlider = document.getElementById('lr');
+  var noiseSlider = document.getElementById('noise');
+  var speedSlider = document.getElementById('speed');
 
-      const labels = {
-        epochs: document.getElementById('epochsVal'),
-        lr: document.getElementById('lrVal'),
-        noise: document.getElementById('noiseVal'),
-        speed: document.getElementById('speedVal'),
-      };
+  var epochsLabel = document.getElementById('epochsVal');
+  var lrLabel = document.getElementById('lrVal');
+  var noiseLabel = document.getElementById('noiseVal');
+  var speedLabel = document.getElementById('speedVal');
 
-      const stat = {
-        epoch: document.getElementById('statEpoch'),
-        loss: document.getElementById('statLoss'),
-        acc: document.getElementById('statAcc'),
-        lrMode: document.getElementById('statLrMode'),
-      };
+  var statEpoch = document.getElementById('statEpoch');
+  var statLoss = document.getElementById('statLoss');
+  var statAcc = document.getElementById('statAcc');
+  var statLrMode = document.getElementById('statLrMode');
 
-      const statusBox = document.getElementById('statusBox');
+  var startBtn = document.getElementById('startBtn');
+  var pauseBtn = document.getElementById('pauseBtn');
+  var stepBtn = document.getElementById('stepBtn');
+  var resetBtn = document.getElementById('resetBtn');
+  var statusBox = document.getElementById('statusBox');
+  var progressFill = document.getElementById('progressFill');
 
-      const buttons = {
-        start: document.getElementById('startBtn'),
-        pause: document.getElementById('pauseBtn'),
-        step: document.getElementById('stepBtn'),
-        reset: document.getElementById('resetBtn'),
-      };
+  var lossCanvas = document.getElementById('lossCanvas');
+  var accCanvas = document.getElementById('accCanvas');
+  var lossCtx = lossCanvas.getContext('2d');
+  var accCtx = accCanvas.getContext('2d');
 
-      const palette = {
-        loss: '#f44336',
-        acc: '#4caf50',
-      };
+  // State
+  var state = {
+    totalEpochs: Number(epochsSlider.value),
+    baseLr: Number(lrSlider.value),
+    noise: Number(noiseSlider.value),
+    speed: Number(speedSlider.value),
+    currentEpoch: 0,
+    running: false,
+    lossHistory: [],
+    accHistory: []
+  };
 
-      const state = {
-        totalEpochs: Number(controls.epochs.value),
-        baseLr: Number(controls.lr.value),
-        noise: Number(controls.noise.value),
-        speed: Number(controls.speed.value),
-        currentEpoch: 0,
-        running: false,
-        lossHistory: [],
-        accHistory: [],
-      };
+  var timer = null;
 
-      let timer = null;
+  // Colors
+  var LOSS_COLOR = '#ef4444';
+  var LOSS_FILL = 'rgba(239, 68, 68, 0.12)';
+  var ACC_COLOR = '#10b981';
+  var ACC_FILL = 'rgba(16, 185, 129, 0.12)';
+  var GRID_COLOR = 'rgba(100, 116, 139, 0.15)';
+  var AXIS_COLOR = 'rgba(148, 163, 184, 0.5)';
+  var LABEL_COLOR = '#94a3b8';
 
-      function randomGaussian() {
-        const u = Math.max(1e-8, Math.random());
-        const v = Math.random();
-        return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
-      }
+  // Chart layout constants
+  var CHART_PAD_LEFT = 50;
+  var CHART_PAD_RIGHT = 16;
+  var CHART_PAD_TOP = 12;
+  var CHART_PAD_BOTTOM = 28;
 
-      function syncLabels() {
-        labels.epochs.textContent = String(state.totalEpochs);
-        labels.lr.textContent = state.baseLr.toFixed(3);
-        labels.noise.textContent = state.noise.toFixed(3);
-        labels.speed.textContent = state.speed.toFixed(2);
-      }
+  function randomGaussian() {
+    var u = Math.max(1e-8, Math.random());
+    var v = Math.random();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
 
-      function effectiveLr(epoch) {
-        const warmupEpochs = Math.max(2, Math.floor(state.totalEpochs * 0.15));
-        if (epoch <= warmupEpochs) {
-          return state.baseLr * (0.4 + (0.6 * epoch) / warmupEpochs);
+  function syncLabels() {
+    epochsLabel.textContent = String(state.totalEpochs);
+    lrLabel.textContent = state.baseLr.toFixed(3);
+    noiseLabel.textContent = state.noise.toFixed(3);
+    speedLabel.textContent = state.speed.toFixed(2);
+  }
+
+  function effectiveLr(epoch) {
+    var warmupEpochs = Math.max(2, Math.floor(state.totalEpochs * 0.15));
+    if (epoch <= warmupEpochs) {
+      return state.baseLr * (0.4 + (0.6 * epoch) / warmupEpochs);
+    }
+    var progress = (epoch - warmupEpochs) / Math.max(1, state.totalEpochs - warmupEpochs);
+    return state.baseLr * (1 - 0.55 * progress);
+  }
+
+  function lrMode(epoch) {
+    var warmupEpochs = Math.max(2, Math.floor(state.totalEpochs * 0.15));
+    return epoch <= warmupEpochs ? 'Warmup' : 'Decay';
+  }
+
+  function simulatePoint(epoch) {
+    var lr = effectiveLr(epoch);
+    var smoothProgress = epoch / Math.max(1, state.totalEpochs);
+    var baseLoss = 0.68 * Math.exp(-3.6 * smoothProgress * (0.6 + lr * 28));
+    var noisyLoss = Math.max(0.02, baseLoss + state.noise * 0.6 * randomGaussian());
+    var baseAcc = 50 + 48 * (1 - Math.exp(-4.4 * smoothProgress * (0.8 + lr * 22)));
+    var noisyAcc = Math.max(45, Math.min(99.5, baseAcc + state.noise * 30 * randomGaussian()));
+    return { epoch: epoch, loss: noisyLoss, accuracy: noisyAcc, lr: lr };
+  }
+
+  // --- Native Canvas Chart Drawing ---
+
+  function setupCanvas(canvas) {
+    var rect = canvas.getBoundingClientRect();
+    var dpr = window.devicePixelRatio || 1;
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    var ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    return { w: rect.width, h: rect.height, ctx: ctx };
+  }
+
+  function drawChart(canvas, ctx, data, opts) {
+    var rect = canvas.getBoundingClientRect();
+    var w = rect.width;
+    var h = rect.height;
+
+    ctx.clearRect(0, 0, w, h);
+
+    var plotLeft = CHART_PAD_LEFT;
+    var plotRight = w - CHART_PAD_RIGHT;
+    var plotTop = CHART_PAD_TOP;
+    var plotBottom = h - CHART_PAD_BOTTOM;
+    var plotW = plotRight - plotLeft;
+    var plotH = plotBottom - plotTop;
+
+    // Compute Y range
+    var yMin = opts.yMin;
+    var yMax = opts.yMax;
+
+    if (yMax === undefined || yMin === undefined) {
+      yMin = 0;
+      yMax = 1;
+      if (data.length > 0) {
+        var dataMax = -Infinity;
+        for (var i = 0; i < data.length; i++) {
+          if (data[i] > dataMax) dataMax = data[i];
         }
-        const progress = (epoch - warmupEpochs) / Math.max(1, state.totalEpochs - warmupEpochs);
-        return state.baseLr * (1 - 0.55 * progress);
+        yMax = Math.max(yMax, dataMax * 1.15);
       }
+    }
 
-      function lrMode(epoch) {
-        const warmupEpochs = Math.max(2, Math.floor(state.totalEpochs * 0.15));
-        return epoch <= warmupEpochs ? 'Warmup' : 'Decay';
+    // Draw grid lines
+    var numGridY = 5;
+    ctx.strokeStyle = GRID_COLOR;
+    ctx.lineWidth = 1;
+
+    ctx.font = '11px system-ui';
+    ctx.fillStyle = LABEL_COLOR;
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+
+    for (var gi = 0; gi <= numGridY; gi++) {
+      var yFrac = gi / numGridY;
+      var yPx = plotBottom - yFrac * plotH;
+      var yVal = yMin + yFrac * (yMax - yMin);
+
+      ctx.beginPath();
+      ctx.moveTo(plotLeft, yPx);
+      ctx.lineTo(plotRight, yPx);
+      ctx.stroke();
+
+      var label = opts.yFormat ? opts.yFormat(yVal) : yVal.toFixed(2);
+      ctx.fillText(label, plotLeft - 6, yPx);
+    }
+
+    // X axis labels
+    if (data.length > 0) {
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+
+      var step = Math.max(1, Math.floor(data.length / 8));
+      for (var xi = 0; xi < data.length; xi += step) {
+        var xPx = plotLeft + (xi / Math.max(1, state.totalEpochs - 1)) * plotW;
+        ctx.fillText('E' + (xi + 1), xPx, plotBottom + 4);
       }
-
-      function simulatePoint(epoch) {
-        const lr = effectiveLr(epoch);
-        const smoothProgress = epoch / Math.max(1, state.totalEpochs);
-
-        const baseLoss = 0.68 * Math.exp(-3.6 * smoothProgress * (0.6 + lr * 28));
-        const noisyLoss = Math.max(0.02, baseLoss + state.noise * 0.6 * randomGaussian());
-
-        const baseAcc = 50 + 48 * (1 - Math.exp(-4.4 * smoothProgress * (0.8 + lr * 22)));
-        const noisyAcc = Math.max(45, Math.min(99.5, baseAcc + state.noise * 30 * randomGaussian()));
-
-        return {
-          epoch,
-          loss: noisyLoss,
-          accuracy: noisyAcc,
-          lr,
-        };
+      // Always show last point
+      if (data.length > 1) {
+        var lastXPx = plotLeft + ((data.length - 1) / Math.max(1, state.totalEpochs - 1)) * plotW;
+        ctx.fillText('E' + data.length, lastXPx, plotBottom + 4);
       }
+    }
 
-      const lossChart = new Chart(document.getElementById('lossChart'), {
-        type: 'line',
-        data: {
-          labels: [],
-          datasets: [{
-            label: 'Loss',
-            data: [],
-            borderColor: palette.loss,
-            backgroundColor: 'rgba(244, 67, 54, 0.12)',
-            pointRadius: 2,
-            tension: 0.25,
-            fill: true,
-          }],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          animation: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { grid: { color: 'rgba(130,150,210,0.15)' } },
-            y: {
-              beginAtZero: true,
-              suggestedMax: 0.75,
-              grid: { color: 'rgba(130,150,210,0.15)' },
-            },
-          },
-        },
-      });
+    // Draw axis lines
+    ctx.strokeStyle = AXIS_COLOR;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(plotLeft, plotTop);
+    ctx.lineTo(plotLeft, plotBottom);
+    ctx.lineTo(plotRight, plotBottom);
+    ctx.stroke();
 
-      const accChart = new Chart(document.getElementById('accuracyChart'), {
-        type: 'line',
-        data: {
-          labels: [],
-          datasets: [{
-            label: 'Accuracy',
-            data: [],
-            borderColor: palette.acc,
-            backgroundColor: 'rgba(76, 175, 80, 0.12)',
-            pointRadius: 2,
-            tension: 0.25,
-            fill: true,
-          }],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          animation: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { grid: { color: 'rgba(130,150,210,0.15)' } },
-            y: {
-              beginAtZero: true,
-              max: 100,
-              grid: { color: 'rgba(130,150,210,0.15)' },
-            },
-          },
-        },
-      });
+    if (data.length === 0) return;
 
-      function updateStats(point) {
-        stat.epoch.textContent = String(point.epoch);
-        stat.loss.textContent = point.loss.toFixed(3);
-        stat.acc.textContent = `${point.accuracy.toFixed(1)}%`;
-        stat.lrMode.textContent = lrMode(point.epoch);
-      }
+    // Map data to pixels
+    var maxEpochs = Math.max(state.totalEpochs, data.length);
+    var points = [];
+    for (var di = 0; di < data.length; di++) {
+      var px = plotLeft + (di / Math.max(1, maxEpochs - 1)) * plotW;
+      var fraction = (data[di] - yMin) / (yMax - yMin);
+      fraction = Math.max(0, Math.min(1, fraction));
+      var py = plotBottom - fraction * plotH;
+      points.push({ x: px, y: py });
+    }
 
-      function drawOneStep() {
-        if (state.currentEpoch >= state.totalEpochs) {
-          stopTraining('训练完成：已达到设定的总 Epoch。');
-          return;
-        }
+    // Draw filled area
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, plotBottom);
+    for (var pi = 0; pi < points.length; pi++) {
+      ctx.lineTo(points[pi].x, points[pi].y);
+    }
+    ctx.lineTo(points[points.length - 1].x, plotBottom);
+    ctx.closePath();
+    ctx.fillStyle = opts.fillColor;
+    ctx.fill();
 
-        state.currentEpoch += 1;
-        const point = simulatePoint(state.currentEpoch);
-
-        state.lossHistory.push(point.loss);
-        state.accHistory.push(point.accuracy);
-
-        lossChart.data.labels.push(`E${point.epoch}`);
-        lossChart.data.datasets[0].data.push(point.loss);
-        lossChart.update();
-
-        accChart.data.labels.push(`E${point.epoch}`);
-        accChart.data.datasets[0].data.push(point.accuracy);
-        accChart.update();
-
-        updateStats(point);
-        statusBox.textContent = `训练中：Epoch ${point.epoch}/${state.totalEpochs}，Loss=${point.loss.toFixed(3)}，Accuracy=${point.accuracy.toFixed(1)}%，LR=${point.lr.toFixed(4)}。`;
-        reportHeight();
-      }
-
-      function startTraining() {
-        if (state.running) return;
-        state.running = true;
-        statusBox.textContent = '训练开始：正在实时更新损失与准确率曲线。';
-
-        const interval = Math.max(120, 520 / Math.max(0.5, state.speed));
-        timer = setInterval(drawOneStep, interval);
-      }
-
-      function stopTraining(customMessage) {
-        if (timer) {
-          clearInterval(timer);
-          timer = null;
-        }
-        state.running = false;
-        if (customMessage) {
-          statusBox.textContent = customMessage;
-        }
-      }
-
-      function pauseTraining() {
-        if (!state.running) {
-          statusBox.textContent = '当前未在训练：可以点击“开始训练”或“单步”。';
-          return;
-        }
-        stopTraining('训练已暂停：可继续训练或单步观察。');
-      }
-
-      function resetTraining() {
-        stopTraining();
-
-        state.currentEpoch = 0;
-        state.lossHistory = [];
-        state.accHistory = [];
-
-        lossChart.data.labels = [];
-        lossChart.data.datasets[0].data = [];
-        lossChart.update();
-
-        accChart.data.labels = [];
-        accChart.data.datasets[0].data = [];
-        accChart.update();
-
-        stat.epoch.textContent = '0';
-        stat.loss.textContent = '0.680';
-        stat.acc.textContent = '50.0%';
-        stat.lrMode.textContent = 'Warmup';
-        statusBox.textContent = '已重置：点击“开始训练”观察完整过程。';
-        reportHeight();
-      }
-
-      function bind() {
-        buttons.start.addEventListener('click', startTraining);
-        buttons.pause.addEventListener('click', pauseTraining);
-        buttons.step.addEventListener('click', () => {
-          if (state.running) {
-            pauseTraining();
-          }
-          drawOneStep();
-        });
-        buttons.reset.addEventListener('click', resetTraining);
-
-        controls.epochs.addEventListener('input', () => {
-          state.totalEpochs = Number(controls.epochs.value);
-          syncLabels();
-          statusBox.textContent = `已设置总 Epoch 为 ${state.totalEpochs}。`;
-          reportHeight();
-        });
-
-        controls.lr.addEventListener('input', () => {
-          state.baseLr = Number(controls.lr.value);
-          syncLabels();
-          reportHeight();
-        });
-
-        controls.noise.addEventListener('input', () => {
-          state.noise = Number(controls.noise.value);
-          syncLabels();
-          reportHeight();
-        });
-
-        controls.speed.addEventListener('input', () => {
-          state.speed = Number(controls.speed.value);
-          syncLabels();
-          if (state.running) {
-            stopTraining('速度已变化：请点击“开始训练”继续。');
-          }
-          reportHeight();
-        });
-
-        window.addEventListener('resize', reportHeight, { passive: true });
-        if ('ResizeObserver' in window) {
-          const observer = new ResizeObserver(reportHeight);
-          observer.observe(document.body);
-          observer.observe(document.documentElement);
-        }
-      }
-
-      function reportHeight() {
-        if (window.parent === window) return;
-        const body = document.body;
-        const root = document.documentElement;
-        const h = Math.max(
-          body ? body.scrollHeight : 0,
-          body ? body.offsetHeight : 0,
-          root ? root.scrollHeight : 0,
-          root ? root.offsetHeight : 0
-        );
-        window.parent.postMessage({ type: 'iframe-height', height: h }, '*');
-      }
-
-      function init() {
-        syncLabels();
-        bind();
-        resetTraining();
-        setTimeout(reportHeight, 120);
-        setTimeout(reportHeight, 480);
-      }
-
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init, { once: true });
+    // Draw line
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (var li = 1; li < points.length; li++) {
+      // Smooth bezier between points
+      if (li < points.length - 1) {
+        var cpX = (points[li].x + points[li + 1].x) / 2;
+        var cpY = (points[li].y + points[li + 1].y) / 2;
+        ctx.quadraticCurveTo(points[li].x, points[li].y, cpX, cpY);
       } else {
-        init();
+        ctx.lineTo(points[li].x, points[li].y);
       }
-    })();
-  </script>
+    }
+    ctx.strokeStyle = opts.lineColor;
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    // Draw data points
+    for (var dpi = 0; dpi < points.length; dpi++) {
+      ctx.beginPath();
+      ctx.arc(points[dpi].x, points[dpi].y, 3, 0, Math.PI * 2);
+      ctx.fillStyle = opts.lineColor;
+      ctx.fill();
+    }
+
+    // Highlight last point with glow
+    if (points.length > 0) {
+      var last = points[points.length - 1];
+      ctx.save();
+      ctx.shadowColor = opts.lineColor;
+      ctx.shadowBlur = 12;
+      ctx.beginPath();
+      ctx.arc(last.x, last.y, 5, 0, Math.PI * 2);
+      ctx.fillStyle = opts.lineColor;
+      ctx.fill();
+      ctx.restore();
+
+      // Show value near last point
+      ctx.font = 'bold 11px system-ui';
+      ctx.fillStyle = opts.lineColor;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'bottom';
+      var valText = opts.yFormat ? opts.yFormat(data[data.length - 1]) : data[data.length - 1].toFixed(3);
+      ctx.fillText(valText, last.x + 8, last.y - 4);
+    }
+  }
+
+  function renderLossChart() {
+    var setup = setupCanvas(lossCanvas);
+    drawChart(lossCanvas, setup.ctx, state.lossHistory, {
+      lineColor: LOSS_COLOR,
+      fillColor: LOSS_FILL,
+      yMin: 0,
+      yMax: 0.75,
+      yFormat: function (v) { return v.toFixed(2); }
+    });
+  }
+
+  function renderAccChart() {
+    var setup = setupCanvas(accCanvas);
+    drawChart(accCanvas, setup.ctx, state.accHistory, {
+      lineColor: ACC_COLOR,
+      fillColor: ACC_FILL,
+      yMin: 0,
+      yMax: 100,
+      yFormat: function (v) { return v.toFixed(0) + '%'; }
+    });
+  }
+
+  function renderCharts() {
+    renderLossChart();
+    renderAccChart();
+  }
+
+  function updateStats(point) {
+    statEpoch.textContent = String(point.epoch);
+    statLoss.textContent = point.loss.toFixed(3);
+    statAcc.textContent = point.accuracy.toFixed(1) + '%';
+    statLrMode.textContent = lrMode(point.epoch);
+
+    var pct = (point.epoch / state.totalEpochs) * 100;
+    progressFill.style.width = pct + '%';
+  }
+
+  function drawOneStep() {
+    if (state.currentEpoch >= state.totalEpochs) {
+      stopTraining('Training complete: Reached the configured total epochs.');
+      return;
+    }
+
+    state.currentEpoch += 1;
+    var point = simulatePoint(state.currentEpoch);
+
+    state.lossHistory = state.lossHistory.concat([point.loss]);
+    state.accHistory = state.accHistory.concat([point.accuracy]);
+
+    renderCharts();
+    updateStats(point);
+
+    statusBox.textContent =
+      'Training: Epoch ' + point.epoch + '/' + state.totalEpochs +
+      ', Loss=' + point.loss.toFixed(3) +
+      ', Accuracy=' + point.accuracy.toFixed(1) + '%' +
+      ', LR=' + point.lr.toFixed(4);
+  }
+
+  function startTraining() {
+    if (state.running) return;
+    state.running = true;
+    statusBox.textContent = 'Training started: Loss and accuracy curves are updating in real time.';
+
+    var interval = Math.max(120, 520 / Math.max(0.5, state.speed));
+    timer = setInterval(drawOneStep, interval);
+  }
+
+  function stopTraining(customMessage) {
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+    }
+    state.running = false;
+    if (customMessage) {
+      statusBox.textContent = customMessage;
+    }
+  }
+
+  function pauseTraining() {
+    if (!state.running) {
+      statusBox.textContent = 'Not currently training. Click "Start Training" or "Single Step".';
+      return;
+    }
+    stopTraining('Training paused. You can resume or take single steps.');
+  }
+
+  function resetTraining() {
+    stopTraining();
+    state.currentEpoch = 0;
+    state.lossHistory = [];
+    state.accHistory = [];
+
+    renderCharts();
+
+    statEpoch.textContent = '0';
+    statLoss.textContent = '0.680';
+    statAcc.textContent = '50.0%';
+    statLrMode.textContent = 'Warmup';
+    progressFill.style.width = '0%';
+    statusBox.textContent = 'Reset complete. Click "Start Training" to begin a new run.';
+  }
+
+  function bind() {
+    startBtn.addEventListener('click', startTraining);
+    pauseBtn.addEventListener('click', pauseTraining);
+
+    stepBtn.addEventListener('click', function () {
+      if (state.running) {
+        pauseTraining();
+      }
+      drawOneStep();
+    });
+
+    resetBtn.addEventListener('click', resetTraining);
+
+    epochsSlider.addEventListener('input', function () {
+      state.totalEpochs = Number(epochsSlider.value);
+      syncLabels();
+      statusBox.textContent = 'Total epochs set to ' + state.totalEpochs + '.';
+    });
+
+    lrSlider.addEventListener('input', function () {
+      state.baseLr = Number(lrSlider.value);
+      syncLabels();
+    });
+
+    noiseSlider.addEventListener('input', function () {
+      state.noise = Number(noiseSlider.value);
+      syncLabels();
+    });
+
+    speedSlider.addEventListener('input', function () {
+      state.speed = Number(speedSlider.value);
+      syncLabels();
+      if (state.running) {
+        stopTraining('Speed changed. Click "Start Training" to continue at the new speed.');
+      }
+    });
+
+    // Redraw charts on resize
+    window.addEventListener('resize', function () {
+      renderCharts();
+    });
+  }
+
+  function init() {
+    syncLabels();
+    bind();
+    renderCharts();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init, { once: true });
+  } else {
+    init();
+  }
+})();
+</script>
+
+<script>
+(function () {
+  const sendHeight = () => {
+    if (window.parent === window) return;
+    const body = document.body;
+    const root = document.documentElement;
+    const height = Math.max(
+      body ? body.scrollHeight : 0,
+      body ? body.offsetHeight : 0,
+      root ? root.scrollHeight : 0,
+      root ? root.offsetHeight : 0
+    );
+    window.parent.postMessage({ type: 'iframe-height', height }, '*');
+  };
+  window.addEventListener('load', sendHeight);
+  window.addEventListener('resize', sendHeight);
+  if ('ResizeObserver' in window) {
+    const observer = new ResizeObserver(sendHeight);
+    if (document.body) observer.observe(document.body);
+    if (document.documentElement) observer.observe(document.documentElement);
+  }
+  requestAnimationFrame(sendHeight);
+  setTimeout(sendHeight, 250);
+  setTimeout(sendHeight, 1000);
+})();
+</script>
 </body>
 </html>

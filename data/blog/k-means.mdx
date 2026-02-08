@@ -82,7 +82,7 @@ for iter in range(iterations):
 import numpy as np
 
 def find_closest_centroids(X, centroids):
-
+    """
     为每个数据点分配最近的质心。
 
     参数:
@@ -91,7 +91,7 @@ def find_closest_centroids(X, centroids):
 
     返回:
         idx (array_like): 形状 (m,)，每个数据点的最近质心索引
-
+    """
     K = centroids.shape[0]
     idx = np.zeros(X.shape[0], dtype=int)
 
@@ -155,7 +155,7 @@ print("前三个数据点的最近质心索引:", idx[:3])
 
 ```python
 def compute_centroids(X, idx, K):
-
+    """
     根据分配结果更新质心位置。
 
     参数:
@@ -165,7 +165,7 @@ def compute_centroids(X, idx, K):
 
     返回:
         centroids (ndarray): 形状 (K, n)，更新后的质心
-
+    """
     m, n = X.shape
     centroids = np.zeros((K, n))
 
@@ -216,7 +216,7 @@ print("更新后的质心:", centroids)
 import matplotlib.pyplot as plt
 
 def run_kMeans(X, initial_centroids, max_iters=10, plot_progress=False):
-
+    """
     在数据集 X 上运行 K-means 算法。
 
     参数:
@@ -228,7 +228,7 @@ def run_kMeans(X, initial_centroids, max_iters=10, plot_progress=False):
     返回:
         centroids (ndarray): 最终质心
         idx (ndarray): 数据点分配
-
+    """
     m, n = X.shape
     K = initial_centroids.shape[0]
     centroids = initial_centroids
@@ -276,7 +276,7 @@ centroids, idx = run_kMeans(X, initial_centroids, max_iters=10, plot_progress=Tr
 
 ```python
 def kMeans_init_centroids(X, K):
-
+    """
     随机选择 K 个数据点作为初始质心。
 
     参数:
@@ -285,7 +285,7 @@ def kMeans_init_centroids(X, K):
 
     返回:
         centroids (ndarray): 初始质心
-
+    """
     randidx = np.random.permutation(X.shape[0])
     return X[randidx[:K]]
 ```

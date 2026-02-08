@@ -1,30 +1,52 @@
 ---
 title: '基于深度Q学习的月球着陆'
 date: '2025-05-04'
-tags: ['Reinforcement Learning', 'Deep Q-Learning', 'DQN', 'Experience Replay', 'Target Network', 'OpenAI Gym', 'Lunar Lander']
+tags:
+  [
+    'Reinforcement Learning',
+    'Deep Q-Learning',
+    'DQN',
+    'Experience Replay',
+    'Target Network',
+    'OpenAI Gym',
+    'Lunar Lander',
+  ]
 draft: false
 summary: '跟随本教程，学习如何应用深度Q学习（DQN）、经验回放和目标网络，从零开始训练一个能成功完成OpenAI Gym月球着陆器（Lunar Lander）任务的智能体。包含理论讲解、代码实现与结果展示。'
 authors: ['allen']
 ---
-# Deep Q-Learning - Lunar Lander
-### 关键点
--   研究表明，深度 Q 学习（Deep Q-Learning）结合经验回放（Experience Replay）和目标网络（Target Network）是一种有效的强化学习方法，用于训练智能体安全着陆月球着陆器。
--   证据显示，这种方法在连续状态空间问题中表现良好，但训练稳定性可能因超参数选择而异。
-### 环境介绍
+
+## 关键点
+
+- 研究表明，深度 Q 学习（Deep Q-Learning）结合经验回放（Experience Replay）和目标网络（Target Network）是一种有效的强化学习方法，用于训练智能体安全着陆月球着陆器。
+- 证据显示，这种方法在连续状态空间问题中表现良好，但训练稳定性可能因超参数选择而异。
+
+## 环境介绍
+
 月球着陆器（Lunar Lander）环境的目标是让智能体控制着陆器安全降落在月球表面的着陆台上。着陆台由两个旗杆标示，中心在坐标 (0,0)，着陆器可选择在着陆台内或外着陆。初始状态为顶部中心，施加随机初始力，燃料无限。解决环境的标准是智能体在过去 100 个回合中获得平均 200 分的奖励。
--   **动作空间**：有 4 个离散动作：无操作（0）、点燃右侧引擎（1）、点燃主引擎（2）、点燃左侧引擎（3）。
--   **观察空间**：状态向量包含 8 个变量：x、y 坐标，x、y 方向线速度，角度 $\theta$，角速度 $\dot \theta$，左右腿是否接触地面的布尔值。
--   **奖励**：每步奖励基于距离着陆台远近、速度快慢、倾斜角度、腿接触地面（每条腿 +10 分）、引擎点火惩罚（侧引擎每帧 -0.03，主引擎每帧 -0.3），坠毁额外 -100 分，安全着陆额外 +100 分。
--   **回合终止**：当着陆器坠毁或其 x 坐标绝对值大于 1 时结束。
-### 实现深度 Q 学习
-深度 Q 学习使用神经网络近似最优动作值函数 $ Q(s,a) \approx Q^*(s,a) $。为了稳定训练过程，采用了目标网络和经验回放技术。目标网络的权重更新缓慢，而经验回放则存储经验元组 $(s, a, r, s', done)$ 并从中随机采样，以打破数据间的相关性。
--   **网络结构**：Q 网络和目标网络均为 3 层全连接神经网络。输入层接收 8 维状态向量，接着是两个各有 64 个单元的 ReLU 激活隐藏层，最后是一个具有 4 个单元（对应动作数量）的线性激活输出层。
--   **训练过程**：采用 ε-贪婪策略进行动作选择，ε 值从 1.0 逐渐衰减至 0.01，以平衡探索与利用。智能体与环境交互产生的经验存储在经验回放缓冲区中。每隔一定步数，从缓冲区中采样一个小批量（mini-batch）的经验，计算损失（均方误差 MSE），并更新 Q 网络的权重。目标网络的权重则通过软更新（soft update）方式缓慢向 Q 网络靠拢。
-### 训练与结果
+
+- **动作空间**：有 4 个离散动作：无操作（0）、点燃右侧引擎（1）、点燃主引擎（2）、点燃左侧引擎（3）。
+- **观察空间**：状态向量包含 8 个变量：x、y 坐标，x、y 方向线速度，角度 $\theta$，角速度 $\dot \theta$，左右腿是否接触地面的布尔值。
+- **奖励**：每步奖励基于距离着陆台远近、速度快慢、倾斜角度、腿接触地面（每条腿 +10 分）、引擎点火惩罚（侧引擎每帧 -0.03，主引擎每帧 -0.3），坠毁额外 -100 分，安全着陆额外 +100 分。
+- **回合终止**：当着陆器坠毁或其 x 坐标绝对值大于 1 时结束。
+
+## 实现深度 Q 学习
+
+深度 Q 学习使用神经网络近似最优动作值函数 $ Q(s,a) \approx Q^\*(s,a) $。为了稳定训练过程，采用了目标网络和经验回放技术。目标网络的权重更新缓慢，而经验回放则存储经验元组 $(s, a, r, s', done)$ 并从中随机采样，以打破数据间的相关性。
+
+- **网络结构**：Q 网络和目标网络均为 3 层全连接神经网络。输入层接收 8 维状态向量，接着是两个各有 64 个单元的 ReLU 激活隐藏层，最后是一个具有 4 个单元（对应动作数量）的线性激活输出层。
+- **训练过程**：采用 ε-贪婪策略进行动作选择，ε 值从 1.0 逐渐衰减至 0.01，以平衡探索与利用。智能体与环境交互产生的经验存储在经验回放缓冲区中。每隔一定步数，从缓冲区中采样一个小批量（mini-batch）的经验，计算损失（均方误差 MSE），并更新 Q 网络的权重。目标网络的权重则通过软更新（soft update）方式缓慢向 Q 网络靠拢。
+
+## 训练与结果
+
 训练智能体最多 2000 个回合（episodes），每个回合最多 1000 步（timesteps）。设置初始探索率 ε = 1.0，并随回合数增加而指数衰减至 0.01。当最近 100 个回合的平均奖励达到 200 分时，认为环境已解决，训练提前结束。训练完成后，应绘制奖励历史图以展示学习曲线，并生成智能体成功着陆的视频。
+
 ## 详细报告
+
 ### 引言
+
 欢迎来到基于深度 Q 学习（Deep Q-Learning, DQN）的月球着陆探索之旅！在本博客中，我们将深入探讨如何使用 DQN 训练一个智能体，使其能够熟练地将月球着陆器安全降落在月球表面的指定着陆台上。我们将利用 OpenAI Gym 提供的 `LunarLander-v2` 环境，并结合经验回放（Experience Replay）和目标网络（Target Network）这两项关键技术，来确保训练过程的稳定性和效率。无论您是强化学习的新手，还是已有一定基础的学习者，这篇文章都将为您提供清晰、详尽且实用的指导。
+
 <br />
 {/* 在 figure 元素上添加 Flexbox 样式 */}
 <figure style={{
@@ -80,7 +102,7 @@ authors: ['allen']
 2.  **飞出边界**: 着陆器的 x 坐标绝对值大于 1，即飞出了环境的左右边界。
 3.  **成功着陆**: 着陆器安全地停在地面上（即使在着陆台外，只要是安全静止状态也可能触发，但奖励会有所不同）。
 回合结束后，环境会自动重置，开始新的回合。
-您可以参考  获取关于此环境更全面的信息和版本历史。
+您可以参考 [Gymnasium 官方文档](https://gymnasium.farama.org/environments/box2d/lunar_lander/) 获取关于此环境更全面的信息和版本历史。
 ### 深度 Q 学习概览
 #### 深度 Q 学习原理
 在传统的强化学习中，如果状态空间和动作空间都是离散且有限的，我们可以使用表格方法，通过贝尔曼方程（Bellman equation）迭代地估计每个状态-动作对的价值（即动作值函数 Q(s,a)）：
@@ -127,6 +149,7 @@ experience = namedtuple("Experience", field_names=["state", "action", "reward", 
 首先，我们使用 `gym` 库加载 `LunarLander-v2` 环境。推荐使用这个版本，因为它是 Lunar Lander 环境的最新稳定版。
 ```python
 import gym
+# 注意: OpenAI Gym 已停止维护，建议使用 Gymnasium (pip install gymnasium)
 import numpy as np
 import tensorflow as tf
 import PIL.Image
@@ -141,22 +164,29 @@ initial_state = env.reset()
 ```
 *(环境初始状态渲染图)*
 
-*![第一帧](/static/images/MLc3/firstframe.png)
+\*![第一帧](/static/images/MLc3/firstframe.png)
 为了构建适应环境的神经网络，我们需要知道状态向量的大小（观察空间的维度）和可用离散动作的数量（动作空间的维度）。
+
 ```python
 state_size = env.observation_space.shape
 num_actions = env.action_space.n
 print('State Shape:', state_size)
 print('Number of actions:', num_actions)
 ```
+
 输出：
+
 ```
 State Shape: (8,)
 Number of actions: 4
 ```
+
 这告诉我们状态是 8 维的，有 4 个可选动作。
+
 #### 与环境交互
+
 Gym 环境遵循标准的“智能体-环境”交互循环范式。
+
 <br />
 <center>
 <video src = "/static/images/MLc3/rl_formalism.m4v" width="840" height="480" controls autoplay loop poster="/static/images/MLc3/rl_formalism.png"> </video>

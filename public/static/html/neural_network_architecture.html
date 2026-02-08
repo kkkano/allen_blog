@@ -1,560 +1,767 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>神经网络结构可视化</title>
-  <style>
-    :root {
-      --bg: #f4f7ff;
-      --card: #ffffff;
-      --border: #d8e2ff;
-      --text: #1f2a44;
-      --sub: #5f6f97;
-      --line: #a6b8ec;
-      --line-active: #4f6fe6;
-      --in: #4caf50;
-      --h1: #2f8df8;
-      --h2: #ff9800;
-      --out: #f44336;
-      --chip: #eef3ff;
-      --btn-a: #5d78e8;
-      --btn-b: #6f58c9;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neural Network Architecture Visualization</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --text: #e2e8f0;
+    --primary: #3b82f6;
+    --accent: #10b981;
+    --card-bg: rgba(30, 41, 59, 0.7);
+    --input-color: #10b981;
+    --h1-color: #3b82f6;
+    --h2-color: #f59e0b;
+    --out-color: #ef4444;
+    --conn-idle: rgba(100, 116, 139, 0.22);
+    --conn-active: rgba(59, 130, 246, 0.6);
+  }
 
-    * { box-sizing: border-box; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    body {
-      margin: 0;
-      padding: 16px;
-      background: linear-gradient(135deg, #dfe8ff 0%, #edf2ff 100%);
-      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
-      min-height: 0;
-      color: var(--text);
-    }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 0;
+    overflow-x: hidden;
+    line-height: 1.6;
+  }
 
-    .wrap {
-      max-width: 1000px;
-      margin: 0 auto;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 14px;
-      box-shadow: 0 12px 30px rgba(75, 103, 196, 0.14);
-      overflow: hidden;
-    }
+  .container { max-width: 1000px; margin: 0 auto; padding: 24px 16px; }
 
-    .head {
-      text-align: center;
-      margin-bottom: 10px;
-    }
+  h1 {
+    text-align: center; font-size: 1.6rem; font-weight: 700; margin-bottom: 4px;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
 
-    .head h1 {
-      margin: 0;
-      font-size: 1.8rem;
-      color: #2d3b63;
-      letter-spacing: 0.2px;
-    }
+  .subtitle {
+    text-align: center; font-size: 0.85rem; color: #94a3b8; margin-bottom: 24px;
+  }
 
-    .head p {
-      margin: 6px 0 0;
-      color: var(--sub);
-      font-size: 0.92rem;
-    }
+  .section {
+    background: var(--card-bg); border-radius: 14px; padding: 20px;
+    margin-bottom: 20px; border: 1px solid rgba(100, 116, 139, 0.2);
+    backdrop-filter: blur(10px); position: relative; overflow: hidden;
+  }
 
-    .layout {
-      display: grid;
-      grid-template-columns: 1.15fr 0.85fr;
-      gap: 10px;
-    }
+  .section::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--input-color), var(--h1-color), var(--h2-color), var(--out-color));
+  }
 
-    .panel {
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      background: #fafcff;
-      padding: 10px;
-    }
+  .section-title {
+    font-size: 1.05rem; font-weight: 600; margin-bottom: 16px; color: var(--primary);
+    display: flex; align-items: center; gap: 8px;
+  }
 
-    .network-shell {
-      position: relative;
-      overflow: hidden;
-    }
+  .section-title::before {
+    content: ''; width: 4px; height: 18px; background: var(--accent); border-radius: 2px;
+  }
 
-    #networkCanvas {
-      width: 100%;
-      height: auto;
-      display: block;
-      border: 1px solid #d0dcff;
-      border-radius: 10px;
-      background: linear-gradient(180deg, #f8fbff 0%, #f2f7ff 100%);
-    }
+  /* Layout */
+  .layout {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 20px;
+  }
 
-    .legend {
-      margin-top: 8px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      justify-content: center;
-    }
+  /* Canvas container */
+  .canvas-wrap {
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+  }
 
-    .chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      border: 1px solid #d8e2ff;
-      background: var(--chip);
-      border-radius: 999px;
-      padding: 4px 9px;
-      font-size: 0.78rem;
-      color: #3d4d75;
-      white-space: nowrap;
-    }
+  #networkCanvas {
+    width: 100%; height: auto; display: block;
+    border-radius: 10px;
+    background: radial-gradient(ellipse at center, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.8) 100%);
+  }
 
-    .dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      border: 1px solid #2a3654;
-    }
+  /* Legend */
+  .legend {
+    display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;
+    margin-top: 12px;
+  }
 
-    .controls {
-      display: grid;
-      gap: 8px;
-    }
+  .legend-item {
+    display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: #94a3b8;
+  }
 
-    .controls h3 {
-      margin: 0;
-      color: #30416c;
-      font-size: 0.95rem;
-    }
+  .legend-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    box-shadow: 0 0 6px currentColor;
+  }
 
-    .line {
-      display: grid;
-      gap: 5px;
-    }
+  /* Controls panel */
+  .controls { display: grid; gap: 14px; align-content: start; }
 
-    .line label {
-      display: flex;
-      justify-content: space-between;
-      color: #465a89;
-      font-size: 0.8rem;
-      gap: 8px;
-    }
+  .slider-group { display: grid; gap: 6px; }
 
-    .val {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      color: #2b3f79;
-      font-weight: 600;
-    }
+  .slider-label {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.84rem; color: #94a3b8;
+  }
 
-    input[type='range'] {
-      width: 100%;
-      accent-color: #607ee6;
-    }
+  .slider-value {
+    font-family: 'Cambria Math', 'Consolas', monospace;
+    font-weight: 700; color: var(--primary); font-size: 0.92rem;
+  }
 
-    .btn-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 4px;
-    }
+  input[type='range'] {
+    -webkit-appearance: none; appearance: none; width: 100%;
+    height: 6px; border-radius: 3px; outline: none;
+    background: linear-gradient(90deg, rgba(59, 130, 246, 0.3), rgba(16, 185, 129, 0.3));
+  }
 
-    button {
-      border: none;
-      border-radius: 999px;
-      padding: 8px 14px;
-      background: linear-gradient(135deg, var(--btn-a), var(--btn-b));
-      color: #fff;
-      font-size: 0.84rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
-    }
+  input[type='range']::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%;
+    background: var(--primary); cursor: pointer; border: 3px solid var(--bg);
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+    transition: box-shadow 0.2s;
+  }
 
-    button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 8px 18px rgba(97, 122, 220, 0.3);
-    }
+  input[type='range']::-webkit-slider-thumb:hover {
+    box-shadow: 0 0 18px rgba(59, 130, 246, 0.8);
+  }
 
-    button.secondary {
-      background: linear-gradient(135deg, #8194cb, #6f80b4);
-    }
+  input[type='range']::-moz-range-thumb {
+    width: 20px; height: 20px; border-radius: 50%; background: var(--primary);
+    cursor: pointer; border: 3px solid var(--bg);
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+  }
 
-    .status {
-      margin-top: 6px;
-      font-size: 0.82rem;
-      color: #4a5d8f;
-      min-height: 1.2rem;
-    }
+  /* Buttons */
+  .btn-row { display: flex; flex-wrap: wrap; gap: 8px; }
 
-    .stats {
-      border: 1px solid #d8e2ff;
-      border-radius: 10px;
-      background: #f6f9ff;
-      padding: 8px;
-      font-size: 0.82rem;
-      line-height: 1.5;
-      color: #3f537f;
-    }
+  .btn {
+    border: none; border-radius: 8px; padding: 9px 16px; font-size: 0.84rem;
+    font-weight: 600; cursor: pointer; color: #fff;
+    transition: transform 0.2s, box-shadow 0.2s, background 0.3s;
+  }
 
-    .stats strong {
-      color: #2c3f6d;
-    }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--primary), #6366f1);
+  }
 
-    @media (max-width: 940px) {
-      .layout {
-        grid-template-columns: 1fr;
-      }
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.35);
+  }
 
-      .head h1 {
-        font-size: 1.5rem;
-      }
-    }
+  .btn-accent {
+    background: linear-gradient(135deg, var(--accent), #06b6d4);
+  }
 
-    @media (max-width: 560px) {
-      body { padding: 10px; }
-      .wrap { padding: 10px; }
-      .head h1 { font-size: 1.28rem; }
-      .btn-row button { flex: 1 1 auto; }
-    }
-  </style>
+  .btn-accent:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.35);
+  }
+
+  .btn-secondary {
+    background: rgba(100, 116, 139, 0.35);
+    border: 1px solid rgba(100, 116, 139, 0.3);
+  }
+
+  .btn-secondary:hover {
+    background: rgba(100, 116, 139, 0.5);
+    transform: translateY(-1px);
+  }
+
+  /* Status */
+  .status-bar {
+    font-size: 0.82rem; color: #94a3b8; min-height: 1.4rem;
+    padding: 8px 12px; border-radius: 8px;
+    background: rgba(15, 23, 42, 0.5);
+    border: 1px solid rgba(100, 116, 139, 0.15);
+  }
+
+  /* Stats grid */
+  .stats-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  }
+
+  .stat-card {
+    background: rgba(15, 23, 42, 0.6); border-radius: 10px; padding: 12px;
+    border: 1px solid rgba(100, 116, 139, 0.2); text-align: center;
+    transition: border-color 0.3s, transform 0.3s;
+  }
+
+  .stat-card:hover {
+    border-color: var(--primary); transform: translateY(-2px);
+  }
+
+  .stat-label {
+    font-size: 0.72rem; color: #94a3b8; text-transform: uppercase;
+    letter-spacing: 0.5px; margin-bottom: 4px;
+  }
+
+  .stat-value {
+    font-size: 1.15rem; font-weight: 700;
+    font-family: 'Cambria Math', 'Consolas', monospace;
+  }
+
+  .stat-value.c-input { color: var(--input-color); }
+  .stat-value.c-h1 { color: var(--h1-color); }
+  .stat-value.c-h2 { color: var(--h2-color); }
+  .stat-value.c-out { color: var(--out-color); }
+  .stat-value.c-accent { color: var(--accent); }
+  .stat-value.c-primary { color: var(--primary); }
+
+  /* Architecture info */
+  .arch-info {
+    font-size: 0.8rem; line-height: 1.65; color: #cbd5e1;
+    padding: 12px; border-radius: 8px;
+    background: rgba(15, 23, 42, 0.5);
+    border: 1px solid rgba(100, 116, 139, 0.15);
+  }
+
+  .arch-info strong { color: var(--primary); }
+  .arch-info .highlight { color: var(--accent); font-weight: 600; }
+
+  @media (max-width: 800px) {
+    .layout { grid-template-columns: 1fr; }
+    h1 { font-size: 1.3rem; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  @media (max-width: 500px) {
+    .container { padding: 16px 10px; }
+    .section { padding: 14px; }
+    .btn-row .btn { flex: 1 1 auto; }
+    .stats-grid { grid-template-columns: 1fr; }
+  }
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="head">
-      <h1>🧠 神经网络结构可视化</h1>
-      <p>手写数字 0/1 识别：输入层(400) → 隐藏层1(25) → 隐藏层2(15) → 输出层(1)</p>
-    </div>
+<div class="container">
+  <h1>Neural Network Architecture</h1>
+  <p class="subtitle">Handwritten Digit 0/1 Recognition: Input(400) - Hidden1(25) - Hidden2(15) - Output(1)</p>
 
-    <div class="layout">
-      <div class="panel network-shell">
-        <canvas id="networkCanvas" width="860" height="420"></canvas>
-
+  <div class="layout">
+    <!-- Left: Network Visualization -->
+    <div>
+      <div class="section" style="margin-bottom:0">
+        <div class="section-title">Network Topology</div>
+        <div class="canvas-wrap">
+          <canvas id="networkCanvas" width="900" height="460"></canvas>
+        </div>
         <div class="legend">
-          <span class="chip"><span class="dot" style="background:#4caf50"></span>输入层（400）</span>
-          <span class="chip"><span class="dot" style="background:#2f8df8"></span>隐藏层1（25）</span>
-          <span class="chip"><span class="dot" style="background:#ff9800"></span>隐藏层2（15）</span>
-          <span class="chip"><span class="dot" style="background:#f44336"></span>输出层（1）</span>
+          <span class="legend-item"><span class="legend-dot" style="color:#10b981;background:#10b981"></span>Input (400)</span>
+          <span class="legend-item"><span class="legend-dot" style="color:#3b82f6;background:#3b82f6"></span>Hidden 1 (25)</span>
+          <span class="legend-item"><span class="legend-dot" style="color:#f59e0b;background:#f59e0b"></span>Hidden 2 (15)</span>
+          <span class="legend-item"><span class="legend-dot" style="color:#ef4444;background:#ef4444"></span>Output (1)</span>
         </div>
       </div>
+    </div>
 
-      <div class="panel controls">
-        <h3>交互控制</h3>
+    <!-- Right: Controls -->
+    <div>
+      <div class="section" style="margin-bottom:12px">
+        <div class="section-title">Interactive Controls</div>
 
-        <div class="line">
-          <label>线条密度 <span id="densityVal" class="val">0.80</span></label>
-          <input id="density" type="range" min="0.3" max="1" step="0.05" value="0.8" />
+        <div class="slider-group">
+          <div class="slider-label">
+            <span>Connection Density</span>
+            <span id="densityVal" class="slider-value">0.80</span>
+          </div>
+          <input id="density" type="range" min="0.3" max="1" step="0.05" value="0.8">
         </div>
 
-        <div class="line">
-          <label>激活强度 <span id="activationVal" class="val">0.70</span></label>
-          <input id="activation" type="range" min="0.2" max="1" step="0.05" value="0.7" />
+        <div class="slider-group">
+          <div class="slider-label">
+            <span>Activation Intensity</span>
+            <span id="activationVal" class="slider-value">0.70</span>
+          </div>
+          <input id="activation" type="range" min="0.2" max="1" step="0.05" value="0.7">
         </div>
 
-        <div class="line">
-          <label>传播速度 <span id="speedVal" class="val">1.00</span></label>
-          <input id="speed" type="range" min="0.5" max="2" step="0.1" value="1.0" />
+        <div class="slider-group">
+          <div class="slider-label">
+            <span>Propagation Speed</span>
+            <span id="speedVal" class="slider-value">1.00</span>
+          </div>
+          <input id="speed" type="range" min="0.5" max="2" step="0.1" value="1.0">
         </div>
 
         <div class="btn-row">
-          <button id="forwardBtn">▶ 前向传播</button>
-          <button id="autoBtn">🔄 自动演示</button>
-          <button id="resetBtn" class="secondary">↺ 重置</button>
+          <button class="btn btn-primary" id="forwardBtn">Forward Pass</button>
+          <button class="btn btn-accent" id="autoBtn">Auto Demo</button>
+          <button class="btn btn-secondary" id="resetBtn">Reset</button>
         </div>
 
-        <div id="status" class="status">准备就绪：点击“前向传播”查看信号从左到右流动。</div>
+        <div id="status" class="status-bar">Ready: Click "Forward Pass" to watch the signal propagate left to right.</div>
+      </div>
 
-        <div class="stats">
-          <strong>参数规模（真实层宽）</strong><br />
-          第1层：400 × 25 + 25 = <strong>10,025</strong><br />
-          第2层：25 × 15 + 15 = <strong>390</strong><br />
-          输出层：15 × 1 + 1 = <strong>16</strong><br />
-          总参数：<strong>10,431</strong>
+      <div class="section" style="margin-bottom:12px">
+        <div class="section-title">Parameter Statistics</div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Layer 1 Params</div>
+            <div class="stat-value c-h1">10,025</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Layer 2 Params</div>
+            <div class="stat-value c-h2">390</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Output Params</div>
+            <div class="stat-value c-out">16</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Total Params</div>
+            <div class="stat-value c-accent">10,431</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Architecture Details</div>
+        <div class="arch-info">
+          <strong>Layer 1:</strong> 400 x 25 + 25 = <span class="highlight">10,025</span><br>
+          <strong>Layer 2:</strong> 25 x 15 + 15 = <span class="highlight">390</span><br>
+          <strong>Output:</strong> 15 x 1 + 1 = <span class="highlight">16</span><br>
+          <strong>Total:</strong> <span class="highlight">10,431</span> trainable parameters<br>
+          <strong>Activation:</strong> ReLU (hidden) + Sigmoid (output)
         </div>
       </div>
     </div>
   </div>
+</div>
 
-  <script>
-    (function () {
-      const canvas = document.getElementById('networkCanvas');
-      const context = canvas.getContext('2d');
+<script>
+(function () {
+  var canvas = document.getElementById('networkCanvas');
+  var ctx = canvas.getContext('2d');
 
-      const controls = {
-        density: document.getElementById('density'),
-        activation: document.getElementById('activation'),
-        speed: document.getElementById('speed'),
-      };
+  var densitySlider = document.getElementById('density');
+  var activationSlider = document.getElementById('activation');
+  var speedSlider = document.getElementById('speed');
 
-      const labels = {
-        density: document.getElementById('densityVal'),
-        activation: document.getElementById('activationVal'),
-        speed: document.getElementById('speedVal'),
-      };
+  var densityLabel = document.getElementById('densityVal');
+  var activationLabel = document.getElementById('activationVal');
+  var speedLabel = document.getElementById('speedVal');
 
-      const forwardBtn = document.getElementById('forwardBtn');
-      const autoBtn = document.getElementById('autoBtn');
-      const resetBtn = document.getElementById('resetBtn');
-      const statusEl = document.getElementById('status');
+  var forwardBtn = document.getElementById('forwardBtn');
+  var autoBtn = document.getElementById('autoBtn');
+  var resetBtn = document.getElementById('resetBtn');
+  var statusEl = document.getElementById('status');
 
-      const layers = [
-        { name: '输入层\n(400)', x: 95, shown: 10, color: '#4caf50', real: 400 },
-        { name: '隐藏层1\n(25)', x: 305, shown: 8, color: '#2f8df8', real: 25 },
-        { name: '隐藏层2\n(15)', x: 520, shown: 6, color: '#ff9800', real: 15 },
-        { name: '输出层\n(1)', x: 740, shown: 1, color: '#f44336', real: 1 },
-      ];
+  var layers = [
+    { name: 'Input', sub: '(400)', x: 100, shown: 10, color: '#10b981', real: 400 },
+    { name: 'Hidden 1', sub: '(25)', x: 325, shown: 8, color: '#3b82f6', real: 25 },
+    { name: 'Hidden 2', sub: '(15)', x: 560, shown: 6, color: '#f59e0b', real: 15 },
+    { name: 'Output', sub: '(1)', x: 790, shown: 1, color: '#ef4444', real: 1 }
+  ];
 
-      const state = {
-        density: Number(controls.density.value),
-        activation: Number(controls.activation.value),
-        speed: Number(controls.speed.value),
-        auto: false,
-        phase: -1,
-      };
+  var state = {
+    density: Number(densitySlider.value),
+    activation: Number(activationSlider.value),
+    speed: Number(speedSlider.value),
+    auto: false,
+    phase: -1
+  };
 
-      let animationTimer = null;
-      let autoTimer = null;
+  var animationTimer = null;
+  var autoTimer = null;
+  var autoLocalTimer = null;
 
-      function syncLabels() {
-        labels.density.textContent = state.density.toFixed(2);
-        labels.activation.textContent = state.activation.toFixed(2);
-        labels.speed.textContent = state.speed.toFixed(2);
-      }
+  // Particle system for forward propagation
+  var particles = [];
 
-      function neuronY(index, total) {
-        const top = 90;
-        const height = 270;
-        if (total === 1) return top + height / 2;
-        const gap = height / (total - 1);
-        return top + gap * index;
-      }
+  function syncLabels() {
+    densityLabel.textContent = state.density.toFixed(2);
+    activationLabel.textContent = state.activation.toFixed(2);
+    speedLabel.textContent = state.speed.toFixed(2);
+  }
 
-      function drawLayerTitles() {
-        context.fillStyle = '#2a385d';
-        context.textAlign = 'center';
-        context.font = 'bold 18px Segoe UI';
-        layers.forEach((layer) => {
-          const lines = layer.name.split('\n');
-          context.fillText(lines[0], layer.x, 30);
-          context.fillStyle = '#4a5f8f';
-          context.font = 'bold 16px Segoe UI';
-          context.fillText(lines[1], layer.x, 53);
-          context.fillStyle = '#2a385d';
-          context.font = 'bold 18px Segoe UI';
-        });
-      }
+  function neuronY(index, total) {
+    var topMargin = 95;
+    var usableHeight = 300;
+    if (total === 1) return topMargin + usableHeight / 2;
+    var gap = usableHeight / (total - 1);
+    return topMargin + gap * index;
+  }
 
-      function shouldDrawConnection(fromIndex, toIndex) {
-        const key = (fromIndex + 1) * 131 + (toIndex + 1) * 197;
-        const normalized = (Math.sin(key) + 1) / 2;
-        return normalized <= state.density;
-      }
+  function shouldDrawConnection(fromIndex, toIndex) {
+    var key = (fromIndex + 1) * 131 + (toIndex + 1) * 197;
+    var normalized = (Math.sin(key) + 1) / 2;
+    return normalized <= state.density;
+  }
 
-      function drawConnections() {
-        for (let layerIndex = 0; layerIndex < layers.length - 1; layerIndex += 1) {
-          const current = layers[layerIndex];
-          const next = layers[layerIndex + 1];
-          const activeBand = state.phase === layerIndex;
+  function hexToRgb(hex) {
+    var r = parseInt(hex.slice(1, 3), 16);
+    var g = parseInt(hex.slice(3, 5), 16);
+    var b = parseInt(hex.slice(5, 7), 16);
+    return { r: r, g: g, b: b };
+  }
 
-          for (let i = 0; i < current.shown; i += 1) {
-            const fromY = neuronY(i, current.shown);
-            for (let j = 0; j < next.shown; j += 1) {
-              if (!shouldDrawConnection(i + layerIndex * 10, j + layerIndex * 20)) {
-                continue;
-              }
+  function drawConnections() {
+    for (var li = 0; li < layers.length - 1; li++) {
+      var current = layers[li];
+      var next = layers[li + 1];
+      var activeBand = state.phase === li;
 
-              const toY = neuronY(j, next.shown);
-              context.beginPath();
-              context.moveTo(current.x + 14, fromY);
-              context.lineTo(next.x - 14, toY);
+      for (var i = 0; i < current.shown; i++) {
+        var fromY = neuronY(i, current.shown);
+        for (var j = 0; j < next.shown; j++) {
+          if (!shouldDrawConnection(i + li * 10, j + li * 20)) continue;
 
-              if (activeBand) {
-                context.strokeStyle = `rgba(79, 111, 230, ${0.35 + state.activation * 0.45})`;
-                context.lineWidth = 1.8;
-              } else {
-                context.strokeStyle = 'rgba(150, 171, 231, 0.52)';
-                context.lineWidth = 1.05;
-              }
-              context.stroke();
-            }
+          var toY = neuronY(j, next.shown);
+
+          ctx.beginPath();
+          ctx.moveTo(current.x + 16, fromY);
+          ctx.lineTo(next.x - 16, toY);
+
+          if (activeBand) {
+            var rgb = hexToRgb(next.color);
+            ctx.strokeStyle = 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',' + (0.25 + state.activation * 0.45) + ')';
+            ctx.lineWidth = 1.6 + state.activation * 0.8;
+          } else {
+            ctx.strokeStyle = state.phase > li
+              ? 'rgba(100, 116, 139, 0.18)'
+              : 'rgba(100, 116, 139, 0.12)';
+            ctx.lineWidth = 0.8;
           }
+          ctx.stroke();
         }
       }
+    }
+  }
 
-      function drawNeurons() {
-        layers.forEach((layer, layerIndex) => {
-          for (let i = 0; i < layer.shown; i += 1) {
-            const y = neuronY(i, layer.shown);
-            const active = state.phase >= layerIndex;
+  function drawNeurons() {
+    for (var li = 0; li < layers.length; li++) {
+      var layer = layers[li];
+      var rgb = hexToRgb(layer.color);
 
-            context.beginPath();
-            context.arc(layer.x, y, 14, 0, Math.PI * 2);
-            context.fillStyle = active ? layer.color : '#f0f4ff';
-            context.fill();
+      for (var i = 0; i < layer.shown; i++) {
+        var y = neuronY(i, layer.shown);
+        var active = state.phase >= li;
+        var radius = 14;
 
-            context.strokeStyle = layer.color;
-            context.lineWidth = 2;
-            context.stroke();
+        ctx.save();
 
-            if (active) {
-              context.shadowColor = layer.color;
-              context.shadowBlur = 10 + state.activation * 10;
-              context.beginPath();
-              context.arc(layer.x, y, 14, 0, Math.PI * 2);
-              context.strokeStyle = `rgba(255,255,255,${0.2 + state.activation * 0.3})`;
-              context.lineWidth = 1;
-              context.stroke();
-              context.shadowBlur = 0;
-            }
-          }
-        });
-      }
+        // Glow effect for active neurons
+        if (active) {
+          ctx.shadowColor = layer.color;
+          ctx.shadowBlur = 12 + state.activation * 14;
 
-      function drawCountHints() {
-        context.fillStyle = '#6c80b1';
-        context.font = '12px Segoe UI';
-        context.textAlign = 'center';
-        layers.forEach((layer) => {
-          if (layer.real !== layer.shown) {
-            context.fillText(`示意 ${layer.shown}/${layer.real}`, layer.x, 390);
-          }
-        });
-      }
+          // Filled circle
+          ctx.beginPath();
+          ctx.arc(layer.x, y, radius, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',' + (0.3 + state.activation * 0.4) + ')';
+          ctx.fill();
 
-      function render() {
-        context.clearRect(0, 0, canvas.width, canvas.height);
-        drawLayerTitles();
-        drawConnections();
-        drawNeurons();
-        drawCountHints();
-        reportHeight();
-      }
+          // Border
+          ctx.beginPath();
+          ctx.arc(layer.x, y, radius, 0, Math.PI * 2);
+          ctx.strokeStyle = layer.color;
+          ctx.lineWidth = 2.2;
+          ctx.stroke();
+        } else {
+          // Inactive neuron
+          ctx.beginPath();
+          ctx.arc(layer.x, y, radius, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(30, 41, 59, 0.6)';
+          ctx.fill();
 
-      function stopForward() {
-        if (animationTimer) {
-          clearInterval(animationTimer);
-          animationTimer = null;
-        }
-      }
-
-      function startForward() {
-        if (animationTimer) {
-          return;
-        }
-        stopAutoPlay();
-        state.phase = -1;
-        statusEl.textContent = '前向传播中：信号从输入层依次流向隐藏层与输出层。';
-        render();
-
-        const interval = Math.max(220, 650 / Math.max(0.5, state.speed));
-        animationTimer = setInterval(() => {
-          state.phase += 1;
-          render();
-
-          if (state.phase >= layers.length - 1) {
-            stopForward();
-            statusEl.textContent = '前向传播完成：输出层已得到分类概率。';
-          }
-        }, interval);
-      }
-
-      function startAutoPlay() {
-        if (state.auto) {
-          stopAutoPlay();
-          return;
+          ctx.beginPath();
+          ctx.arc(layer.x, y, radius, 0, Math.PI * 2);
+          ctx.strokeStyle = 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.4)';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
         }
 
-        stopForward();
-        state.auto = true;
-        autoBtn.textContent = '⏸ 停止自动演示';
-        statusEl.textContent = '自动演示中：循环展示前向传播过程。';
-
-        const cycle = () => {
-          state.phase = -1;
-          render();
-
-          const interval = Math.max(180, 530 / Math.max(0.5, state.speed));
-          let localTimer = setInterval(() => {
-            state.phase += 1;
-            render();
-            if (state.phase >= layers.length - 1) {
-              clearInterval(localTimer);
-            }
-          }, interval);
-        };
-
-        cycle();
-        autoTimer = setInterval(cycle, Math.max(1400, 3000 / Math.max(0.5, state.speed)));
+        ctx.restore();
       }
+    }
+  }
 
-      function stopAutoPlay() {
-        if (!state.auto && !autoTimer) {
-          return;
-        }
-        state.auto = false;
-        if (autoTimer) {
-          clearInterval(autoTimer);
-          autoTimer = null;
-        }
-        autoBtn.textContent = '🔄 自动演示';
+  function drawLayerLabels() {
+    ctx.save();
+    ctx.textAlign = 'center';
+
+    for (var li = 0; li < layers.length; li++) {
+      var layer = layers[li];
+      // Layer name
+      ctx.font = 'bold 15px system-ui';
+      ctx.fillStyle = layer.color;
+      ctx.fillText(layer.name, layer.x, 32);
+
+      // Layer size
+      ctx.font = '13px system-ui';
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillText(layer.sub, layer.x, 52);
+
+      // "Showing X / Real" count
+      if (layer.real !== layer.shown) {
+        ctx.font = '11px system-ui';
+        ctx.fillStyle = 'rgba(148, 163, 184, 0.6)';
+        ctx.fillText(layer.shown + ' / ' + layer.real + ' shown', layer.x, 430);
       }
+    }
 
-      function resetAll() {
-        stopForward();
-        stopAutoPlay();
-        state.phase = -1;
-        statusEl.textContent = '准备就绪：点击“前向传播”查看信号从左到右流动。';
-        render();
-      }
+    ctx.restore();
+  }
 
-      function bind() {
-        forwardBtn.addEventListener('click', startForward);
-        autoBtn.addEventListener('click', startAutoPlay);
-        resetBtn.addEventListener('click', resetAll);
+  function drawSignalParticles() {
+    if (state.phase < 0) return;
 
-        Object.entries(controls).forEach(([key, element]) => {
-          element.addEventListener('input', () => {
-            state[key] = Number(element.value);
-            syncLabels();
-            render();
-          });
-        });
+    for (var pi = 0; pi < particles.length; pi++) {
+      var p = particles[pi];
+      if (p.layerIndex !== state.phase) continue;
 
-        window.addEventListener('resize', reportHeight, { passive: true });
-        if ('ResizeObserver' in window) {
-          const observer = new ResizeObserver(reportHeight);
-          observer.observe(document.body);
-          observer.observe(document.documentElement);
-        }
-      }
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.shadowColor = p.color;
+      ctx.shadowBlur = 10;
+      ctx.globalAlpha = p.alpha;
+      ctx.fill();
+      ctx.restore();
+    }
+  }
 
-      function reportHeight() {
-        if (window.parent === window) return;
-        const body = document.body;
-        const root = document.documentElement;
-        const h = Math.max(
-          body ? body.scrollHeight : 0,
-          body ? body.offsetHeight : 0,
-          root ? root.scrollHeight : 0,
-          root ? root.offsetHeight : 0
-        );
-        window.parent.postMessage({ type: 'iframe-height', height: h }, '*');
-      }
+  function updateParticles() {
+    for (var pi = particles.length - 1; pi >= 0; pi--) {
+      var p = particles[pi];
+      if (p.layerIndex !== state.phase) continue;
 
-      function init() {
-        syncLabels();
-        bind();
-        render();
-        setTimeout(reportHeight, 120);
-        setTimeout(reportHeight, 500);
-      }
+      p.progress += 0.012 * state.speed;
+      p.x = p.fromX + (p.toX - p.fromX) * p.progress;
+      p.y = p.fromY + (p.toY - p.fromY) * p.progress;
 
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init, { once: true });
+      if (p.progress < 0.1) {
+        p.alpha = p.progress / 0.1;
+      } else if (p.progress > 0.85) {
+        p.alpha = (1 - p.progress) / 0.15;
       } else {
-        init();
+        p.alpha = 0.85;
       }
-    })();
-  </script>
+
+      if (p.progress >= 1) {
+        particles.splice(pi, 1);
+      }
+    }
+  }
+
+  function spawnParticles(layerIndex) {
+    var current = layers[layerIndex];
+    var next = layers[layerIndex + 1];
+    if (!next) return;
+
+    var count = Math.min(current.shown, 6);
+    for (var i = 0; i < count; i++) {
+      var fromI = Math.floor(Math.random() * current.shown);
+      var toI = Math.floor(Math.random() * next.shown);
+      var rgb = hexToRgb(next.color);
+
+      particles.push({
+        layerIndex: layerIndex,
+        fromX: current.x + 16,
+        fromY: neuronY(fromI, current.shown),
+        toX: next.x - 16,
+        toY: neuronY(toI, next.shown),
+        x: current.x + 16,
+        y: neuronY(fromI, current.shown),
+        progress: Math.random() * 0.3,
+        alpha: 0,
+        size: 2 + Math.random() * 2,
+        color: 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.9)'
+      });
+    }
+  }
+
+  var rafId = null;
+
+  function renderLoop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawLayerLabels();
+    drawConnections();
+    drawNeurons();
+
+    if (state.phase >= 0) {
+      updateParticles();
+      drawSignalParticles();
+
+      // Keep spawning particles for active phase
+      if (particles.filter(function (p) { return p.layerIndex === state.phase; }).length < 4) {
+        spawnParticles(state.phase);
+      }
+    }
+
+    rafId = requestAnimationFrame(renderLoop);
+  }
+
+  function stopAnimLoop() {
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+  }
+
+  function startAnimLoop() {
+    if (!rafId) {
+      renderLoop();
+    }
+  }
+
+  function render() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawLayerLabels();
+    drawConnections();
+    drawNeurons();
+  }
+
+  function stopForward() {
+    if (animationTimer) {
+      clearInterval(animationTimer);
+      animationTimer = null;
+    }
+  }
+
+  function startForward() {
+    if (animationTimer) return;
+    stopAutoPlay();
+    state.phase = -1;
+    particles = [];
+    statusEl.textContent = 'Forward propagation: Signal flows from Input to Output layer.';
+    startAnimLoop();
+
+    var interval = Math.max(220, 650 / Math.max(0.5, state.speed));
+    animationTimer = setInterval(function () {
+      state.phase += 1;
+      spawnParticles(state.phase);
+
+      if (state.phase >= layers.length - 1) {
+        stopForward();
+        statusEl.textContent = 'Forward pass complete: Output layer has produced the classification probability.';
+        // Let particles finish
+        setTimeout(function () {
+          if (!state.auto && !animationTimer) {
+            particles = [];
+          }
+        }, 1200);
+      }
+    }, interval);
+  }
+
+  function startAutoPlay() {
+    if (state.auto) {
+      stopAutoPlay();
+      return;
+    }
+    stopForward();
+    state.auto = true;
+    autoBtn.textContent = 'Stop Auto';
+    statusEl.textContent = 'Auto demo: Continuously showing forward propagation cycle.';
+
+    var cycle = function () {
+      state.phase = -1;
+      particles = [];
+
+      var interval = Math.max(180, 530 / Math.max(0.5, state.speed));
+      if (autoLocalTimer) clearInterval(autoLocalTimer);
+      autoLocalTimer = setInterval(function () {
+        state.phase += 1;
+        spawnParticles(state.phase);
+        if (state.phase >= layers.length - 1) {
+          clearInterval(autoLocalTimer);
+          autoLocalTimer = null;
+        }
+      }, interval);
+    };
+
+    startAnimLoop();
+    cycle();
+    autoTimer = setInterval(cycle, Math.max(1400, 3000 / Math.max(0.5, state.speed)));
+  }
+
+  function stopAutoPlay() {
+    if (!state.auto && !autoTimer) return;
+    state.auto = false;
+    if (autoTimer) { clearInterval(autoTimer); autoTimer = null; }
+    if (autoLocalTimer) { clearInterval(autoLocalTimer); autoLocalTimer = null; }
+    autoBtn.textContent = 'Auto Demo';
+  }
+
+  function resetAll() {
+    stopForward();
+    stopAutoPlay();
+    stopAnimLoop();
+    state.phase = -1;
+    particles = [];
+    statusEl.textContent = 'Ready: Click "Forward Pass" to watch the signal propagate left to right.';
+    render();
+  }
+
+  function bind() {
+    forwardBtn.addEventListener('click', startForward);
+    autoBtn.addEventListener('click', startAutoPlay);
+    resetBtn.addEventListener('click', resetAll);
+
+    densitySlider.addEventListener('input', function () {
+      state.density = Number(densitySlider.value);
+      syncLabels();
+      if (!rafId) render();
+    });
+
+    activationSlider.addEventListener('input', function () {
+      state.activation = Number(activationSlider.value);
+      syncLabels();
+      if (!rafId) render();
+    });
+
+    speedSlider.addEventListener('input', function () {
+      state.speed = Number(speedSlider.value);
+      syncLabels();
+    });
+  }
+
+  function init() {
+    syncLabels();
+    bind();
+    render();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init, { once: true });
+  } else {
+    init();
+  }
+})();
+</script>
+
+<script>
+(function () {
+  const sendHeight = () => {
+    if (window.parent === window) return;
+    const body = document.body;
+    const root = document.documentElement;
+    const height = Math.max(
+      body ? body.scrollHeight : 0,
+      body ? body.offsetHeight : 0,
+      root ? root.scrollHeight : 0,
+      root ? root.offsetHeight : 0
+    );
+    window.parent.postMessage({ type: 'iframe-height', height }, '*');
+  };
+  window.addEventListener('load', sendHeight);
+  window.addEventListener('resize', sendHeight);
+  if ('ResizeObserver' in window) {
+    const observer = new ResizeObserver(sendHeight);
+    if (document.body) observer.observe(document.body);
+    if (document.documentElement) observer.observe(document.documentElement);
+  }
+  requestAnimationFrame(sendHeight);
+  setTimeout(sendHeight, 250);
+  setTimeout(sendHeight, 1000);
+})();
+</script>
 </body>
 </html>

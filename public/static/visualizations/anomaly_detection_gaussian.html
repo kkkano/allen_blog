@@ -4,391 +4,722 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>高斯分布与异常检测交互式可视化</title>
-    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
     <style>
+        :root {
+            --bg: #0f172a;
+            --surface: rgba(30, 41, 59, 0.7);
+            --border: rgba(59, 130, 246, 0.2);
+            --primary: #3b82f6;
+            --accent: #10b981;
+            --lora: #8b5cf6;
+            --danger: #ef4444;
+            --text: #e2e8f0;
+            --text-dim: #94a3b8;
+            --text-bright: #f8fafc;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            padding: 24px;
             min-height: 0;
         }
+
         .container {
-            max-width: 1400px;
+            max-width: 900px;
             margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         }
+
         h1 {
             text-align: center;
-            color: #2d3748;
-            margin-bottom: 10px;
-            font-size: 2em;
+            font-size: 1.75em;
+            font-weight: 700;
+            margin-bottom: 6px;
+            background: linear-gradient(135deg, var(--primary), var(--lora), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
+
         .subtitle {
             text-align: center;
-            color: #718096;
-            margin-bottom: 30px;
-            font-size: 1.1em;
+            color: var(--text-dim);
+            font-size: 0.95em;
+            margin-bottom: 24px;
         }
-        .controls {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-            padding: 20px;
-            background: #f7fafc;
+
+        .section {
+            position: relative;
+            background: var(--surface);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
             border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
         }
-        .control-group {
-            display: flex;
-            flex-direction: column;
+
+        .section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary), var(--lora), var(--accent));
+            border-radius: 12px 12px 0 0;
         }
-        label {
+
+        .section-title {
+            font-size: 0.8em;
             font-weight: 600;
-            color: #2d3748;
-            margin-bottom: 8px;
-            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-dim);
+            margin-bottom: 14px;
         }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+        }
+
+        .control-group label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.85em;
+            font-weight: 500;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .value-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--primary), var(--lora));
+            color: #fff;
+            padding: 2px 10px;
+            border-radius: 10px;
+            font-size: 0.8em;
+            font-weight: 600;
+            min-width: 48px;
+            text-align: center;
+        }
+
         input[type="range"] {
             width: 100%;
-            height: 6px;
-            border-radius: 3px;
-            background: #e2e8f0;
+            height: 4px;
+            border-radius: 2px;
+            background: rgba(59, 130, 246, 0.2);
             outline: none;
             -webkit-appearance: none;
+            appearance: none;
         }
+
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 18px;
-            height: 18px;
+            width: 16px;
+            height: 16px;
             border-radius: 50%;
-            background: #667eea;
+            background: var(--primary);
             cursor: pointer;
-            transition: all 0.2s;
+            border: 2px solid var(--bg);
+            box-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
+            transition: transform 0.15s;
         }
+
         input[type="range"]::-webkit-slider-thumb:hover {
-            background: #5a67d8;
-            transform: scale(1.2);
+            transform: scale(1.25);
         }
-        .value-display {
-            display: inline-block;
-            background: #667eea;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 0.85em;
-            font-weight: 600;
-            margin-left: 10px;
+
+        input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            border: 2px solid var(--bg);
+            box-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
         }
-        .plot-container {
-            margin-bottom: 30px;
-            border-radius: 12px;
+
+        .canvas-wrap {
+            position: relative;
+            width: 100%;
+            border-radius: 8px;
             overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            background: rgba(15, 23, 42, 0.6);
         }
-        .info-box {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 12px;
-            margin-top: 20px;
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
         }
-        .info-box h3 {
-            margin-top: 0;
-            font-size: 1.3em;
-        }
+
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
         }
+
         .stat-card {
-            background: rgba(255,255,255,0.2);
-            padding: 15px;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid var(--border);
             border-radius: 8px;
-            backdrop-filter: blur(10px);
+            padding: 14px;
+            text-align: center;
         }
+
         .stat-label {
-            font-size: 0.85em;
-            opacity: 0.9;
-            margin-bottom: 5px;
+            font-size: 0.75em;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 6px;
         }
+
         .stat-value {
-            font-size: 1.5em;
+            font-size: 1.4em;
             font-weight: 700;
+            font-variant-numeric: tabular-nums;
         }
-        @media (prefers-color-scheme: dark) {
-            body {
-                background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
-            }
-            .container {
-                background: #2d3748;
-                color: #e2e8f0;
-            }
-            h1, label {
-                color: #e2e8f0;
-            }
-            .subtitle {
-                color: #a0aec0;
-            }
-            .controls {
-                background: #1a202c;
-            }
+
+        .stat-value.anomaly { color: var(--danger); }
+        .stat-value.normal { color: var(--accent); }
+        .stat-value.rate { color: var(--lora); }
+        .stat-value.threshold { color: var(--primary); }
+
+        .legend {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8em;
+            color: var(--text-dim);
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .legend-line {
+            width: 20px;
+            height: 2px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🎯 高斯分布与异常检测</h1>
+        <h1>高斯分布与异常检测</h1>
         <p class="subtitle">交互式探索正态分布参数对异常检测的影响</p>
 
-        <div class="controls">
-            <div class="control-group">
-                <label>
-                    均值 μ (Mean): <span class="value-display" id="muValue">0</span>
-                </label>
-                <input type="range" id="muSlider" min="-5" max="5" step="0.1" value="0">
-            </div>
-
-            <div class="control-group">
-                <label>
-                    标准差 σ (Std Dev): <span class="value-display" id="sigmaValue">1.0</span>
-                </label>
-                <input type="range" id="sigmaSlider" min="0.5" max="3" step="0.1" value="1">
-            </div>
-
-            <div class="control-group">
-                <label>
-                    异常阈值 ε (Epsilon): <span class="value-display" id="epsilonValue">0.05</span>
-                </label>
-                <input type="range" id="epsilonSlider" min="0.001" max="0.2" step="0.001" value="0.05">
-            </div>
-
-            <div class="control-group">
-                <label>
-                    样本数量: <span class="value-display" id="samplesValue">300</span>
-                </label>
-                <input type="range" id="samplesSlider" min="100" max="1000" step="50" value="300">
+        <div class="section">
+            <div class="section-title">参数控制</div>
+            <div class="controls-grid">
+                <div class="control-group">
+                    <label>
+                        <span>均值 μ</span>
+                        <span class="value-badge" id="muValue">0.00</span>
+                    </label>
+                    <input type="range" id="muSlider" min="-5" max="5" step="0.1" value="0">
+                </div>
+                <div class="control-group">
+                    <label>
+                        <span>标准差 σ</span>
+                        <span class="value-badge" id="sigmaValue">1.00</span>
+                    </label>
+                    <input type="range" id="sigmaSlider" min="0.5" max="3" step="0.1" value="1">
+                </div>
+                <div class="control-group">
+                    <label>
+                        <span>阈值 ε</span>
+                        <span class="value-badge" id="epsilonValue">0.050</span>
+                    </label>
+                    <input type="range" id="epsilonSlider" min="0.001" max="0.2" step="0.001" value="0.05">
+                </div>
+                <div class="control-group">
+                    <label>
+                        <span>样本数量</span>
+                        <span class="value-badge" id="samplesValue">300</span>
+                    </label>
+                    <input type="range" id="samplesSlider" min="100" max="1000" step="50" value="300">
+                </div>
             </div>
         </div>
 
-        <div class="plot-container" id="gaussianPlot"></div>
-        <div class="plot-container" id="scatterPlot"></div>
+        <div class="section">
+            <div class="section-title">高斯概率密度函数 (PDF)</div>
+            <div class="canvas-wrap">
+                <canvas id="pdfCanvas" width="1600" height="600"></canvas>
+            </div>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-line" style="background:var(--primary);"></div>
+                    <span>高斯 PDF</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-line" style="background:var(--danger); border-top:2px dashed var(--danger); height:0;"></div>
+                    <span>异常阈值线</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-line" style="background:rgba(59,130,246,0.25); height:8px; border-radius:2px;"></div>
+                    <span>正常区域</span>
+                </div>
+            </div>
+        </div>
 
-        <div class="info-box">
-            <h3>📊 实时统计</h3>
+        <div class="section">
+            <div class="section-title">二维特征空间异常检测</div>
+            <div class="canvas-wrap">
+                <canvas id="scatterCanvas" width="1600" height="700"></canvas>
+            </div>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-dot" style="background:var(--accent);"></div>
+                    <span>正常样本</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background:var(--danger);"></div>
+                    <span>异常样本</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">实时统计</div>
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-label">检测到的异常</div>
-                    <div class="stat-value" id="anomalyCount">0</div>
+                    <div class="stat-value anomaly" id="anomalyCount">0</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-label">异常比例</div>
-                    <div class="stat-value" id="anomalyRate">0%</div>
+                    <div class="stat-value rate" id="anomalyRate">0%</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-label">正常样本</div>
-                    <div class="stat-value" id="normalCount">0</div>
+                    <div class="stat-value normal" id="normalCount">0</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-label">概率阈值</div>
-                    <div class="stat-value" id="probThreshold">0</div>
+                    <div class="stat-value threshold" id="probThreshold">0</div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // 生成高斯分布数据
-        function gaussianPDF(x, mu, sigma) {
-            const coefficient = 1 / (sigma * Math.sqrt(2 * Math.PI));
-            const exponent = -Math.pow(x - mu, 2) / (2 * Math.pow(sigma, 2));
-            return coefficient * Math.exp(exponent);
-        }
+        (function () {
+            var pdfCanvas = document.getElementById('pdfCanvas');
+            var scatterCanvas = document.getElementById('scatterCanvas');
+            var pdfCtx = pdfCanvas.getContext('2d');
+            var scatterCtx = scatterCanvas.getContext('2d');
 
-        // 生成正态分布随机数 (Box-Muller变换)
-        function randomGaussian(mu, sigma) {
-            let u1 = Math.random();
-            let u2 = Math.random();
-            let z0 = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
-            return z0 * sigma + mu;
-        }
+            var COLORS = {
+                primary: '#3b82f6',
+                accent: '#10b981',
+                lora: '#8b5cf6',
+                danger: '#ef4444',
+                text: '#e2e8f0',
+                textDim: '#94a3b8',
+                gridLine: 'rgba(59, 130, 246, 0.08)',
+                gridLineStrong: 'rgba(59, 130, 246, 0.15)',
+                fill: 'rgba(59, 130, 246, 0.12)',
+                anomalyFill: 'rgba(239, 68, 68, 0.08)',
+                bg: '#0f172a'
+            };
 
-        // 更新可视化
-        function updateVisualization() {
-            const mu = parseFloat(document.getElementById('muSlider').value);
-            const sigma = parseFloat(document.getElementById('sigmaSlider').value);
-            const epsilon = parseFloat(document.getElementById('epsilonSlider').value);
-            const numSamples = parseInt(document.getElementById('samplesSlider').value);
+            var cachedSamples = null;
+            var lastSampleCount = 0;
 
-            // 更新显示值
-            document.getElementById('muValue').textContent = mu.toFixed(2);
-            document.getElementById('sigmaValue').textContent = sigma.toFixed(2);
-            document.getElementById('epsilonValue').textContent = epsilon.toFixed(3);
-            document.getElementById('samplesValue').textContent = numSamples;
-
-            // 生成高斯分布曲线
-            const xRange = [];
-            const yRange = [];
-            for (let x = mu - 4*sigma; x <= mu + 4*sigma; x += 0.1) {
-                xRange.push(x);
-                yRange.push(gaussianPDF(x, mu, sigma));
+            function gaussianPDF(x, mu, sigma) {
+                var coeff = 1 / (sigma * Math.sqrt(2 * Math.PI));
+                var exp = -Math.pow(x - mu, 2) / (2 * sigma * sigma);
+                return coeff * Math.exp(exp);
             }
 
-            // 计算概率阈值对应的x值
-            const thresholdProb = gaussianPDF(mu, mu, sigma) * epsilon;
+            function randomGaussian(mu, sigma) {
+                var u1 = Math.random();
+                var u2 = Math.random();
+                var z0 = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+                return z0 * sigma + mu;
+            }
 
-            // 绘制高斯分布
-            const trace1 = {
-                x: xRange,
-                y: yRange,
-                type: 'scatter',
-                mode: 'lines',
-                name: '高斯分布 PDF',
-                line: {
-                    color: '#667eea',
-                    width: 3
-                },
-                fill: 'tozeroy',
-                fillcolor: 'rgba(102, 126, 234, 0.2)'
-            };
-
-            // 异常区域标记
-            const anomalyThreshold = mu + sigma * Math.sqrt(-2 * Math.log(epsilon * sigma * Math.sqrt(2 * Math.PI)));
-
-            const trace2 = {
-                x: [anomalyThreshold, anomalyThreshold],
-                y: [0, Math.max(...yRange)],
-                type: 'scatter',
-                mode: 'lines',
-                name: '异常阈值',
-                line: {
-                    color: '#f56565',
-                    width: 2,
-                    dash: 'dash'
+            function generateSamples(mu, sigma, count) {
+                var samples = [];
+                for (var i = 0; i < count; i++) {
+                    samples.push({
+                        x: randomGaussian(mu, sigma),
+                        y: randomGaussian(mu, sigma)
+                    });
                 }
-            };
+                return samples;
+            }
 
-            const trace3 = {
-                x: [-anomalyThreshold + 2*mu, -anomalyThreshold + 2*mu],
-                y: [0, Math.max(...yRange)],
-                type: 'scatter',
-                mode: 'lines',
-                name: '异常阈值 (左)',
-                line: {
-                    color: '#f56565',
-                    width: 2,
-                    dash: 'dash'
-                },
-                showlegend: false
-            };
+            function drawPDFChart(mu, sigma, epsilon) {
+                var W = pdfCanvas.width;
+                var H = pdfCanvas.height;
+                var ctx = pdfCtx;
 
-            const layout1 = {
-                title: '高斯概率密度函数 (PDF)',
-                xaxis: { title: '特征值 x' },
-                yaxis: { title: '概率密度 p(x)' },
-                hovermode: 'closest',
-                plot_bgcolor: '#f7fafc',
-                paper_bgcolor: 'white',
-                font: { family: 'Arial, sans-serif' }
-            };
+                var pad = { top: 40, right: 40, bottom: 50, left: 70 };
+                var cw = W - pad.left - pad.right;
+                var ch = H - pad.top - pad.bottom;
 
-            Plotly.newPlot('gaussianPlot', [trace1, trace2, trace3], layout1, {responsive: true});
+                ctx.clearRect(0, 0, W, H);
 
-            // 生成样本数据
-            const samples = [];
-            const anomalies = [];
-            const normals = [];
+                var xMin = mu - 4 * sigma;
+                var xMax = mu + 4 * sigma;
+                var peakY = gaussianPDF(mu, mu, sigma);
+                var yMax = peakY * 1.15;
 
-            for (let i = 0; i < numSamples; i++) {
-                const x = randomGaussian(mu, sigma);
-                const y = randomGaussian(mu, sigma);
-                const prob = gaussianPDF(x, mu, sigma) * gaussianPDF(y, mu, sigma);
+                function toCanvasX(v) { return pad.left + ((v - xMin) / (xMax - xMin)) * cw; }
+                function toCanvasY(v) { return pad.top + ch - (v / yMax) * ch; }
 
-                samples.push({x, y, prob});
+                // Grid lines
+                ctx.strokeStyle = COLORS.gridLine;
+                ctx.lineWidth = 1;
+                var xTicks = 9;
+                var xStep = (xMax - xMin) / xTicks;
+                for (var i = 0; i <= xTicks; i++) {
+                    var xv = xMin + i * xStep;
+                    var cx = toCanvasX(xv);
+                    ctx.beginPath();
+                    ctx.moveTo(cx, pad.top);
+                    ctx.lineTo(cx, pad.top + ch);
+                    ctx.stroke();
+                }
+                var yTicks = 6;
+                var yStep = yMax / yTicks;
+                for (var i = 0; i <= yTicks; i++) {
+                    var yv = i * yStep;
+                    var cy = toCanvasY(yv);
+                    ctx.beginPath();
+                    ctx.moveTo(pad.left, cy);
+                    ctx.lineTo(pad.left + cw, cy);
+                    ctx.stroke();
+                }
 
-                if (prob < thresholdProb) {
-                    anomalies.push({x, y});
+                // Threshold probability
+                var thresholdProb = gaussianPDF(mu, mu, sigma) * epsilon;
+
+                // Compute anomaly boundary x values
+                var discriminant = -2 * sigma * sigma * Math.log(epsilon * sigma * Math.sqrt(2 * Math.PI));
+                var anomalyLeftX, anomalyRightX;
+                if (discriminant > 0) {
+                    var offset = Math.sqrt(discriminant);
+                    anomalyLeftX = mu - offset;
+                    anomalyRightX = mu + offset;
                 } else {
-                    normals.push({x, y});
+                    anomalyLeftX = xMin;
+                    anomalyRightX = xMax;
+                }
+
+                // Fill anomaly region left
+                var step = (xMax - xMin) / 400;
+                ctx.fillStyle = COLORS.anomalyFill;
+                ctx.beginPath();
+                ctx.moveTo(toCanvasX(xMin), toCanvasY(0));
+                for (var x = xMin; x <= Math.min(anomalyLeftX, xMax); x += step) {
+                    ctx.lineTo(toCanvasX(x), toCanvasY(gaussianPDF(x, mu, sigma)));
+                }
+                ctx.lineTo(toCanvasX(Math.min(anomalyLeftX, xMax)), toCanvasY(0));
+                ctx.closePath();
+                ctx.fill();
+
+                // Fill anomaly region right
+                ctx.beginPath();
+                ctx.moveTo(toCanvasX(Math.max(anomalyRightX, xMin)), toCanvasY(0));
+                for (var x = Math.max(anomalyRightX, xMin); x <= xMax; x += step) {
+                    ctx.lineTo(toCanvasX(x), toCanvasY(gaussianPDF(x, mu, sigma)));
+                }
+                ctx.lineTo(toCanvasX(xMax), toCanvasY(0));
+                ctx.closePath();
+                ctx.fill();
+
+                // Fill normal region
+                ctx.fillStyle = COLORS.fill;
+                ctx.beginPath();
+                ctx.moveTo(toCanvasX(Math.max(anomalyLeftX, xMin)), toCanvasY(0));
+                for (var x = Math.max(anomalyLeftX, xMin); x <= Math.min(anomalyRightX, xMax); x += step) {
+                    ctx.lineTo(toCanvasX(x), toCanvasY(gaussianPDF(x, mu, sigma)));
+                }
+                ctx.lineTo(toCanvasX(Math.min(anomalyRightX, xMax)), toCanvasY(0));
+                ctx.closePath();
+                ctx.fill();
+
+                // PDF curve
+                ctx.strokeStyle = COLORS.primary;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                var first = true;
+                for (var x = xMin; x <= xMax; x += step) {
+                    var y = gaussianPDF(x, mu, sigma);
+                    if (first) { ctx.moveTo(toCanvasX(x), toCanvasY(y)); first = false; }
+                    else ctx.lineTo(toCanvasX(x), toCanvasY(y));
+                }
+                ctx.stroke();
+
+                // Threshold dashed lines
+                ctx.strokeStyle = COLORS.danger;
+                ctx.lineWidth = 2;
+                ctx.setLineDash([8, 6]);
+                if (anomalyLeftX > xMin) {
+                    var lx = toCanvasX(anomalyLeftX);
+                    ctx.beginPath();
+                    ctx.moveTo(lx, pad.top);
+                    ctx.lineTo(lx, pad.top + ch);
+                    ctx.stroke();
+                }
+                if (anomalyRightX < xMax) {
+                    var rx = toCanvasX(anomalyRightX);
+                    ctx.beginPath();
+                    ctx.moveTo(rx, pad.top);
+                    ctx.lineTo(rx, pad.top + ch);
+                    ctx.stroke();
+                }
+
+                // Threshold horizontal line
+                ctx.strokeStyle = 'rgba(239, 68, 68, 0.4)';
+                ctx.lineWidth = 1;
+                var threshY = toCanvasY(thresholdProb);
+                if (threshY > pad.top && threshY < pad.top + ch) {
+                    ctx.beginPath();
+                    ctx.moveTo(pad.left, threshY);
+                    ctx.lineTo(pad.left + cw, threshY);
+                    ctx.stroke();
+                }
+                ctx.setLineDash([]);
+
+                // Axis labels
+                ctx.fillStyle = COLORS.textDim;
+                ctx.font = '22px -apple-system, BlinkMacSystemFont, sans-serif';
+                ctx.textAlign = 'center';
+                for (var i = 0; i <= xTicks; i++) {
+                    var xv = xMin + i * xStep;
+                    ctx.fillText(xv.toFixed(1), toCanvasX(xv), pad.top + ch + 30);
+                }
+                ctx.textAlign = 'right';
+                for (var i = 0; i <= yTicks; i++) {
+                    var yv = i * yStep;
+                    ctx.fillText(yv.toFixed(2), pad.left - 10, toCanvasY(yv) + 5);
+                }
+
+                // Axis titles
+                ctx.fillStyle = COLORS.text;
+                ctx.font = '24px -apple-system, BlinkMacSystemFont, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('特征值 x', pad.left + cw / 2, H - 6);
+                ctx.save();
+                ctx.translate(18, pad.top + ch / 2);
+                ctx.rotate(-Math.PI / 2);
+                ctx.fillText('概率密度 p(x)', 0, 0);
+                ctx.restore();
+
+                // Epsilon label
+                if (anomalyRightX < xMax) {
+                    ctx.fillStyle = COLORS.danger;
+                    ctx.font = 'bold 20px -apple-system, BlinkMacSystemFont, sans-serif';
+                    ctx.textAlign = 'left';
+                    ctx.fillText('p(x) < ε', toCanvasX(anomalyRightX) + 8, pad.top + 24);
                 }
             }
 
-            // 绘制散点图
-            const trace4 = {
-                x: normals.map(p => p.x),
-                y: normals.map(p => p.y),
-                type: 'scatter',
-                mode: 'markers',
-                name: '正常样本',
-                marker: {
-                    color: '#48bb78',
-                    size: 6,
-                    opacity: 0.6
-                }
-            };
+            function drawScatterChart(mu, sigma, epsilon, numSamples) {
+                var W = scatterCanvas.width;
+                var H = scatterCanvas.height;
+                var ctx = scatterCtx;
 
-            const trace5 = {
-                x: anomalies.map(p => p.x),
-                y: anomalies.map(p => p.y),
-                type: 'scatter',
-                mode: 'markers',
-                name: '异常样本',
-                marker: {
-                    color: '#f56565',
-                    size: 10,
-                    symbol: 'x',
-                    line: {
-                        width: 2
+                var pad = { top: 40, right: 40, bottom: 50, left: 70 };
+                var cw = W - pad.left - pad.right;
+                var ch = H - pad.top - pad.bottom;
+
+                ctx.clearRect(0, 0, W, H);
+
+                // Regenerate samples if count changed
+                if (!cachedSamples || lastSampleCount !== numSamples) {
+                    cachedSamples = generateSamples(mu, sigma, numSamples);
+                    lastSampleCount = numSamples;
+                }
+
+                // Recalculate with current parameters
+                var thresholdProb = gaussianPDF(mu, mu, sigma) * epsilon;
+                thresholdProb = thresholdProb * thresholdProb;  // 2D joint probability threshold
+
+                var normals = [];
+                var anomalies = [];
+                var allX = [];
+                var allY = [];
+
+                for (var i = 0; i < cachedSamples.length; i++) {
+                    var s = cachedSamples[i];
+                    var px = gaussianPDF(s.x, mu, sigma);
+                    var py = gaussianPDF(s.y, mu, sigma);
+                    var prob = px * py;
+                    allX.push(s.x);
+                    allY.push(s.y);
+                    if (prob < gaussianPDF(mu, mu, sigma) * gaussianPDF(mu, mu, sigma) * epsilon) {
+                        anomalies.push(s);
+                    } else {
+                        normals.push(s);
                     }
                 }
-            };
 
-            const layout2 = {
-                title: '二维特征空间中的异常检测',
-                xaxis: { title: '特征 1' },
-                yaxis: { title: '特征 2' },
-                hovermode: 'closest',
-                plot_bgcolor: '#f7fafc',
-                paper_bgcolor: 'white',
-                font: { family: 'Arial, sans-serif' }
-            };
+                var xMin = Math.min.apply(null, allX) - 0.5;
+                var xMax = Math.max.apply(null, allX) + 0.5;
+                var yMin = Math.min.apply(null, allY) - 0.5;
+                var yMax = Math.max.apply(null, allY) + 0.5;
 
-            Plotly.newPlot('scatterPlot', [trace4, trace5], layout2, {responsive: true});
+                function toCanvasX(v) { return pad.left + ((v - xMin) / (xMax - xMin)) * cw; }
+                function toCanvasY(v) { return pad.top + ch - ((v - yMin) / (yMax - yMin)) * ch; }
 
-            // 更新统计信息
-            document.getElementById('anomalyCount').textContent = anomalies.length;
-            document.getElementById('anomalyRate').textContent =
-                ((anomalies.length / numSamples) * 100).toFixed(1) + '%';
-            document.getElementById('normalCount').textContent = normals.length;
-            document.getElementById('probThreshold').textContent = thresholdProb.toExponential(2);
+                // Grid
+                ctx.strokeStyle = COLORS.gridLine;
+                ctx.lineWidth = 1;
+                var gridCount = 8;
+                for (var i = 0; i <= gridCount; i++) {
+                    var xv = xMin + (i / gridCount) * (xMax - xMin);
+                    var yv = yMin + (i / gridCount) * (yMax - yMin);
+                    ctx.beginPath(); ctx.moveTo(toCanvasX(xv), pad.top); ctx.lineTo(toCanvasX(xv), pad.top + ch); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(pad.left, toCanvasY(yv)); ctx.lineTo(pad.left + cw, toCanvasY(yv)); ctx.stroke();
+                }
+
+                // Normal samples
+                for (var i = 0; i < normals.length; i++) {
+                    var s = normals[i];
+                    ctx.beginPath();
+                    ctx.arc(toCanvasX(s.x), toCanvasY(s.y), 4, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(16, 185, 129, 0.5)';
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(16, 185, 129, 0.8)';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+
+                // Anomaly samples
+                for (var i = 0; i < anomalies.length; i++) {
+                    var s = anomalies[i];
+                    var cx = toCanvasX(s.x);
+                    var cy = toCanvasY(s.y);
+
+                    // Glow
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, 10, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(239, 68, 68, 0.15)';
+                    ctx.fill();
+
+                    // X marker
+                    ctx.strokeStyle = COLORS.danger;
+                    ctx.lineWidth = 2.5;
+                    ctx.beginPath();
+                    ctx.moveTo(cx - 5, cy - 5); ctx.lineTo(cx + 5, cy + 5);
+                    ctx.moveTo(cx + 5, cy - 5); ctx.lineTo(cx - 5, cy + 5);
+                    ctx.stroke();
+                }
+
+                // Axis labels
+                ctx.fillStyle = COLORS.textDim;
+                ctx.font = '22px -apple-system, BlinkMacSystemFont, sans-serif';
+                ctx.textAlign = 'center';
+                for (var i = 0; i <= gridCount; i++) {
+                    var xv = xMin + (i / gridCount) * (xMax - xMin);
+                    ctx.fillText(xv.toFixed(1), toCanvasX(xv), pad.top + ch + 30);
+                }
+                ctx.textAlign = 'right';
+                for (var i = 0; i <= gridCount; i++) {
+                    var yv = yMin + (i / gridCount) * (yMax - yMin);
+                    ctx.fillText(yv.toFixed(1), pad.left - 10, toCanvasY(yv) + 5);
+                }
+
+                // Axis titles
+                ctx.fillStyle = COLORS.text;
+                ctx.font = '24px -apple-system, BlinkMacSystemFont, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('特征 1', pad.left + cw / 2, H - 6);
+                ctx.save();
+                ctx.translate(18, pad.top + ch / 2);
+                ctx.rotate(-Math.PI / 2);
+                ctx.fillText('特征 2', 0, 0);
+                ctx.restore();
+
+                // Update stats
+                var singleThreshProb = gaussianPDF(mu, mu, sigma) * epsilon;
+                document.getElementById('anomalyCount').textContent = anomalies.length;
+                document.getElementById('anomalyRate').textContent = ((anomalies.length / numSamples) * 100).toFixed(1) + '%';
+                document.getElementById('normalCount').textContent = normals.length;
+                document.getElementById('probThreshold').textContent = singleThreshProb.toExponential(2);
+            }
+
+            function update() {
+                var mu = parseFloat(document.getElementById('muSlider').value);
+                var sigma = parseFloat(document.getElementById('sigmaSlider').value);
+                var epsilon = parseFloat(document.getElementById('epsilonSlider').value);
+                var numSamples = parseInt(document.getElementById('samplesSlider').value);
+
+                document.getElementById('muValue').textContent = mu.toFixed(2);
+                document.getElementById('sigmaValue').textContent = sigma.toFixed(2);
+                document.getElementById('epsilonValue').textContent = epsilon.toFixed(3);
+                document.getElementById('samplesValue').textContent = numSamples;
+
+                drawPDFChart(mu, sigma, epsilon);
+                drawScatterChart(mu, sigma, epsilon, numSamples);
+            }
+
+            document.getElementById('muSlider').addEventListener('input', function () {
+                cachedSamples = null;
+                update();
+            });
+            document.getElementById('sigmaSlider').addEventListener('input', function () {
+                cachedSamples = null;
+                update();
+            });
+            document.getElementById('epsilonSlider').addEventListener('input', update);
+            document.getElementById('samplesSlider').addEventListener('input', function () {
+                cachedSamples = null;
+                update();
+            });
+
+            update();
+        })();
+    </script>
+
+    <script>
+    (function () {
+        var sendHeight = function () {
+            if (window.parent === window) return;
+            var body = document.body;
+            var root = document.documentElement;
+            var height = Math.max(
+                body ? body.scrollHeight : 0,
+                body ? body.offsetHeight : 0,
+                root ? root.scrollHeight : 0,
+                root ? root.offsetHeight : 0
+            );
+            window.parent.postMessage({ type: 'iframe-height', height: height }, '*');
+        };
+        window.addEventListener('load', sendHeight);
+        window.addEventListener('resize', sendHeight);
+        if ('ResizeObserver' in window) {
+            var observer = new ResizeObserver(sendHeight);
+            if (document.body) observer.observe(document.body);
+            if (document.documentElement) observer.observe(document.documentElement);
         }
-
-        // 事件监听
-        document.getElementById('muSlider').addEventListener('input', updateVisualization);
-        document.getElementById('sigmaSlider').addEventListener('input', updateVisualization);
-        document.getElementById('epsilonSlider').addEventListener('input', updateVisualization);
-        document.getElementById('samplesSlider').addEventListener('input', updateVisualization);
-
-        function reportHeight() {
-            const height = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
-            window.parent.postMessage({ type: 'iframe-height', height }, '*');
-        }
-
-        // 初始化
-        updateVisualization();
-        window.addEventListener('load', () => {
-            reportHeight();
-            const ro = new ResizeObserver(reportHeight);
-            ro.observe(document.body);
-            ro.observe(document.documentElement);
-            setTimeout(reportHeight, 120);
-        });
+        requestAnimationFrame(sendHeight);
+        setTimeout(sendHeight, 250);
+        setTimeout(sendHeight, 1000);
+    })();
     </script>
 </body>
 </html>

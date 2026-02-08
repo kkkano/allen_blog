@@ -1,392 +1,721 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>多分类决策边界3D可视化</title>
-    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 20px;
-            background: linear-gradient(135deg, #1d4ed8 0%, #0f766e 100%);
-        }
-        .container {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-        }
-        h1 {
-            color: #1d4ed8;
-            text-align: center;
-            margin-bottom: 10px;
-        }
-        .subtitle {
-            text-align: center;
-            color: #666;
-            margin-bottom: 30px;
-        }
-        .controls {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-        .control-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 5px;
-            color: #333;
-        }
-        select {
-            width: 100%;
-            padding: 10px;
-            border: 2px solid #1d4ed8;
-            border-radius: 5px;
-            font-size: 14px;
-        }
-        .info-box {
-            background: #e3f2fd;
-            border-left: 4px solid #2196f3;
-            padding: 15px;
-            margin-top: 20px;
-            border-radius: 5px;
-        }
-        .legend {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 10px;
-            margin-top: 20px;
-        }
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px;
-            background: #f8f9fa;
-            border-radius: 5px;
-        }
-        .legend-color {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>多分类决策边界可视化</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --text: #e2e8f0;
+    --primary: #3b82f6;
+    --accent: #10b981;
+    --frozen: #64748b;
+    --trainable: #ef4444;
+    --lora: #8b5cf6;
+    --warning: #f59e0b;
+    --card-bg: rgba(30, 41, 59, 0.7);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 0;
+    overflow-x: hidden;
+    line-height: 1.6;
+  }
+  .container { max-width: 960px; margin: 0 auto; padding: 24px 16px; }
+  h1 {
+    text-align: center; font-size: 1.6rem; font-weight: 700; margin-bottom: 4px;
+    background: linear-gradient(135deg, var(--lora), var(--primary));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .subtitle { text-align: center; font-size: 0.85rem; color: #94a3b8; margin-bottom: 24px; }
+
+  .section {
+    background: var(--card-bg); border-radius: 14px; padding: 20px;
+    margin-bottom: 20px; border: 1px solid rgba(100, 116, 139, 0.2);
+    backdrop-filter: blur(10px); position: relative; overflow: hidden;
+  }
+  .section::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--lora), var(--primary), var(--accent));
+  }
+  .section-title {
+    font-size: 1.05rem; font-weight: 600; margin-bottom: 16px; color: var(--primary);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-title::before { content: ''; width: 4px; height: 18px; background: var(--lora); border-radius: 2px; }
+
+  /* Controls */
+  .controls-row {
+    display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 16px; align-items: center;
+  }
+  .ctrl-label { font-size: 0.82rem; color: #94a3b8; font-weight: 600; }
+  .ctrl-select {
+    padding: 8px 14px; border-radius: 10px; font-size: 0.82rem; font-weight: 600;
+    border: 1px solid rgba(100,116,139,0.3); background: rgba(15, 23, 42, 0.8);
+    color: var(--text); cursor: pointer; outline: none;
+  }
+  .ctrl-select:focus { border-color: var(--primary); }
+  .ctrl-select option { background: var(--bg); color: var(--text); }
+  .ctrl-btn {
+    padding: 8px 20px; border-radius: 10px; font-size: 0.82rem; font-weight: 600;
+    border: 1px solid rgba(100,116,139,0.3); background: rgba(15, 23, 42, 0.6);
+    color: #94a3b8; cursor: pointer; transition: all 0.3s;
+  }
+  .ctrl-btn:hover { border-color: var(--primary); color: var(--primary); transform: translateY(-1px); }
+  .ctrl-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(16,185,129,0.15); }
+
+  /* Slider */
+  .slider-group { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .slider-label { font-size: 0.82rem; color: #94a3b8; min-width: 70px; }
+  .range-slider {
+    flex: 1; min-width: 140px; -webkit-appearance: none; appearance: none;
+    height: 6px; border-radius: 3px; outline: none;
+    background: linear-gradient(90deg, var(--primary), var(--accent));
+  }
+  .range-slider::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%;
+    background: var(--primary); cursor: pointer; border: 3px solid var(--bg);
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
+  }
+  .range-slider::-moz-range-thumb {
+    width: 20px; height: 20px; border-radius: 50%; background: var(--primary);
+    cursor: pointer; border: 3px solid var(--bg);
+  }
+  .slider-value {
+    font-size: 1.1rem; font-weight: 700; color: var(--primary);
+    min-width: 36px; text-align: center;
+  }
+
+  /* Canvas */
+  .canvas-wrapper { position: relative; width: 100%; }
+  canvas { display: block; width: 100%; border-radius: 8px; cursor: crosshair; }
+
+  /* Stats Grid */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-top: 14px; }
+  .stat-card {
+    background: rgba(15, 23, 42, 0.6); border-radius: 10px; padding: 14px;
+    border: 1px solid rgba(100,116,139,0.2); text-align: center;
+    transition: border-color 0.3s, transform 0.3s;
+  }
+  .stat-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+  .stat-label { font-size: 0.72rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .stat-value { font-size: 1.2rem; font-weight: 700; }
+  .stat-value.primary-c { color: var(--primary); }
+  .stat-value.accent-c { color: var(--accent); }
+  .stat-value.lora-c { color: var(--lora); }
+  .stat-value.warning-c { color: var(--warning); }
+
+  /* Legend */
+  .legend-wrap {
+    display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 10px 0;
+  }
+  .legend-chip {
+    display: flex; align-items: center; gap: 5px; font-size: 0.73rem; color: #94a3b8;
+    padding: 3px 10px; border-radius: 6px; background: rgba(15, 23, 42, 0.5);
+    border: 1px solid rgba(100,116,139,0.15); cursor: pointer; transition: all 0.3s;
+  }
+  .legend-chip:hover { border-color: var(--primary); }
+  .legend-chip.active { border-color: var(--accent); background: rgba(16,185,129,0.1); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  /* Insight Cards */
+  .insight-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+  .insight-card {
+    background: rgba(15, 23, 42, 0.5); border-radius: 10px; padding: 16px;
+    border: 1px solid rgba(59, 130, 246, 0.15);
+    backdrop-filter: blur(8px); transition: border-color 0.3s, transform 0.3s;
+  }
+  .insight-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+  .insight-card h4 { font-size: 0.88rem; color: var(--primary); margin-bottom: 6px; }
+  .insight-card p { font-size: 0.78rem; color: #cbd5e1; line-height: 1.55; }
+  .insight-card code {
+    background: rgba(59, 130, 246, 0.15); padding: 1px 6px; border-radius: 4px;
+    font-family: 'Cambria Math', monospace; font-size: 0.82rem; color: var(--primary);
+  }
+
+  /* Confusion pairs canvas */
+  .pairs-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+  @media (max-width: 700px) {
+    h1 { font-size: 1.3rem; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .pairs-row { grid-template-columns: 1fr; }
+  }
+</style>
 </head>
 <body>
-    <div class="container">
-        <h1>🎨 多分类决策边界3D可视化</h1>
-        <p class="subtitle">通过PCA降维展示10类手写数字在特征空间中的分布</p>
+<div class="container">
+  <h1>多分类决策边界可视化</h1>
+  <p class="subtitle">通过特征空间中的二维投影观察分类器如何划分不同类别的区域</p>
 
-        <div class="controls">
-            <div class="control-group">
-                <label>选择可视化模式：</label>
-                <select id="viewMode" onchange="updateVisualization()">
-                    <option value="3d">3D散点图（PCA前3个主成分）</option>
-                    <option value="2d">2D投影（PCA前2个主成分）</option>
-                    <option value="confusion">易混淆类别对分析</option>
-                </select>
-            </div>
-            <div class="control-group">
-                <label>高亮类别：</label>
-                <select id="highlightClass" onchange="updateVisualization()">
-                    <option value="all">全部类别</option>
-                    <option value="0">数字 0</option>
-                    <option value="1">数字 1</option>
-                    <option value="2">数字 2</option>
-                    <option value="3">数字 3</option>
-                    <option value="4">数字 4</option>
-                    <option value="5">数字 5</option>
-                    <option value="6">数字 6</option>
-                    <option value="7">数字 7</option>
-                    <option value="8">数字 8</option>
-                    <option value="9">数字 9</option>
-                </select>
-            </div>
-        </div>
-
-        <div id="mainChart"></div>
-
-        <div class="legend">
-            <div class="legend-item">
-                <div class="legend-color" style="background: #1d4ed8;"></div>
-                <span>数字 0</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: #0284c7;"></div>
-                <span>数字 1</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: #0f766e;"></div>
-                <span>数字 2</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: #16a34a;"></div>
-                <span>数字 3</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: #84cc16;"></div>
-                <span>数字 4</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: #eab308;"></div>
-                <span>数字 5</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: #f59e0b;"></div>
-                <span>数字 6</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: #f97316;"></div>
-                <span>数字 7</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: #dc2626;"></div>
-                <span>数字 8</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: #475569;"></div>
-                <span>数字 9</span>
-            </div>
-        </div>
-
-        <div class="info-box">
-            <strong>🔍 关键洞察：</strong>
-            <ul>
-                <li><strong>PCA降维</strong>: 将400维像素空间降至3维，保留主要变化方向</li>
-                <li><strong>类别分离度</strong>: 聚类越紧密、类间距离越大，分类越容易</li>
-                <li><strong>易混淆对</strong>: 如4和9、3和8在特征空间中有重叠区域</li>
-                <li><strong>决策边界</strong>: 神经网络学习的是高维空间中的非线性分界面</li>
-                <li><strong>实际应用</strong>: 可用于数据质量检查和模型调试</li>
-            </ul>
-        </div>
+  <!-- Controls -->
+  <div class="section">
+    <div class="section-title">可视化控制</div>
+    <div class="controls-row">
+      <span class="ctrl-label">类别数:</span>
+      <select class="ctrl-select" id="sel-classes">
+        <option value="3">3 个类别</option>
+        <option value="4">4 个类别</option>
+        <option value="5" selected>5 个类别</option>
+        <option value="7">7 个类别</option>
+        <option value="10">10 个类别</option>
+      </select>
+      <span class="ctrl-label">复杂度:</span>
+      <select class="ctrl-select" id="sel-complexity">
+        <option value="simple">线性可分</option>
+        <option value="medium" selected>中等重叠</option>
+        <option value="complex">高度交织</option>
+      </select>
+      <button class="ctrl-btn" id="btn-regen">重新生成数据</button>
     </div>
+    <div class="controls-row">
+      <div class="slider-group" style="flex:1">
+        <span class="slider-label">每类样本数:</span>
+        <input type="range" class="range-slider" id="slider-samples" min="20" max="120" step="10" value="50">
+        <span class="slider-value" id="val-samples">50</span>
+      </div>
+      <div class="slider-group" style="flex:1">
+        <span class="slider-label">网格精度:</span>
+        <input type="range" class="range-slider" id="slider-resolution" min="40" max="160" step="20" value="80">
+        <span class="slider-value" id="val-resolution">80</span>
+      </div>
+    </div>
+  </div>
 
-    <script>
-        // 模拟生成PCA降维后的数据（实际应用中应使用真实数据）
-        function generateMockData() {
-            const data = [];
-            const colors = ['#1d4ed8', '#0284c7', '#0f766e', '#16a34a', '#84cc16',
-                           '#eab308', '#f59e0b', '#f97316', '#dc2626', '#475569'];
+  <!-- Legend -->
+  <div class="section">
+    <div class="section-title">类别图例</div>
+    <div class="legend-wrap" id="legend-wrap"></div>
+  </div>
 
-            for (let digit = 0; digit < 10; digit++) {
-                const numSamples = 50;
-                const centerX = Math.cos(digit * Math.PI / 5) * 5;
-                const centerY = Math.sin(digit * Math.PI / 5) * 5;
-                const centerZ = (digit % 3) * 3;
+  <!-- Main Decision Boundary Canvas -->
+  <div class="section">
+    <div class="section-title">决策边界 (2D 特征空间)</div>
+    <div class="canvas-wrapper">
+      <canvas id="boundary-canvas" height="520"></canvas>
+    </div>
+  </div>
 
-                for (let i = 0; i < numSamples; i++) {
-                    data.push({
-                        x: centerX + (Math.random() - 0.5) * 3,
-                        y: centerY + (Math.random() - 0.5) * 3,
-                        z: centerZ + (Math.random() - 0.5) * 2,
-                        label: digit,
-                        color: colors[digit]
-                    });
-                }
-            }
-            return data;
-        }
+  <!-- Stats -->
+  <div class="section">
+    <div class="section-title">数据统计</div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">总样本数</div>
+        <div class="stat-value primary-c" id="stat-total">-</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">类别数</div>
+        <div class="stat-value lora-c" id="stat-classes">-</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">1-NN 训练准确率</div>
+        <div class="stat-value accent-c" id="stat-acc">-</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">类间平均距离</div>
+        <div class="stat-value warning-c" id="stat-dist">-</div>
+      </div>
+    </div>
+  </div>
 
-        const mockData = generateMockData();
+  <!-- Confusion Pairs Bar Chart -->
+  <div class="section">
+    <div class="section-title">易混淆类别对分析</div>
+    <div class="canvas-wrapper">
+      <canvas id="pairs-canvas" height="260"></canvas>
+    </div>
+  </div>
 
-        function build2DLayout(layout) {
-            const axisBase = {
-                gridcolor: '#dbe6f8',
-                zerolinecolor: '#c5d6f3',
-                linecolor: '#8ea9de',
-                tickcolor: '#8ea9de',
-                ticks: 'outside',
-                automargin: true,
-            };
+  <!-- Insights -->
+  <div class="section">
+    <div class="section-title">核心概念</div>
+    <div class="insight-grid">
+      <div class="insight-card">
+        <h4>决策边界</h4>
+        <p>分类器在特征空间中划分的区域边界。<strong>线性分类器</strong>产生直线/超平面边界，
+        而<strong>神经网络</strong>可以学习任意非线性的复杂边界。</p>
+      </div>
+      <div class="insight-card">
+        <h4>特征空间分布</h4>
+        <p>类别在特征空间中的分布决定了分类难度。<strong>类内紧密、类间分离</strong>是理想状态。
+        重叠区域是分类器易出错的地方。</p>
+      </div>
+      <div class="insight-card">
+        <h4>维度降低</h4>
+        <p>实际高维数据通过 <code>PCA</code> 或 <code>t-SNE</code> 降至 2D 可视化。
+        降维可能丢失高维中的可分性信息，低维重叠不意味着高维不可分。</p>
+      </div>
+      <div class="insight-card">
+        <h4>过拟合与泛化</h4>
+        <p>过于复杂的决策边界虽然能完美拟合训练数据，但对新数据泛化能力差。
+        适当的模型复杂度在拟合与泛化之间取得平衡。</p>
+      </div>
+    </div>
+  </div>
+</div>
 
-            return {
-                paper_bgcolor: '#f8fbff',
-                plot_bgcolor: '#f8fbff',
-                font: { color: '#0f172a' },
-                margin: { t: 56, r: 24, b: 52, l: 60 },
-                ...layout,
-                xaxis: {
-                    ...axisBase,
-                    ...(layout?.xaxis || {}),
-                },
-                yaxis: {
-                    ...axisBase,
-                    ...(layout?.yaxis || {}),
-                },
-            };
-        }
+<script>
+/* ============ Constants ============ */
+var CLASS_COLORS = [
+  '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
+  '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#64748b'
+];
+var CLASS_NAMES = [];
 
-        function build3DLayout(layout) {
-            const sceneAxis = {
-                showbackground: true,
-                backgroundcolor: '#f8fbff',
-                gridcolor: '#dbe6f8',
-                zerolinecolor: '#c5d6f3',
-                linecolor: '#8ea9de',
-                tickcolor: '#8ea9de',
-            };
+/* ============ State ============ */
+var data = [];
+var centers = [];
+var numClasses = 5;
+var highlightClass = -1;
 
-            const currentScene = layout?.scene || {};
+/* ============ Data Generation ============ */
+function generateData() {
+  numClasses = parseInt(document.getElementById('sel-classes').value);
+  var complexity = document.getElementById('sel-complexity').value;
+  var samplesPerClass = parseInt(document.getElementById('slider-samples').value);
 
-            return {
-                paper_bgcolor: '#f8fbff',
-                plot_bgcolor: '#f8fbff',
-                font: { color: '#0f172a' },
-                margin: { t: 56, r: 24, b: 30, l: 24 },
-                ...layout,
-                scene: {
-                    bgcolor: '#f8fbff',
-                    ...currentScene,
-                    xaxis: {
-                        ...sceneAxis,
-                        ...(currentScene.xaxis || {}),
-                    },
-                    yaxis: {
-                        ...sceneAxis,
-                        ...(currentScene.yaxis || {}),
-                    },
-                    zaxis: {
-                        ...sceneAxis,
-                        ...(currentScene.zaxis || {}),
-                    },
-                },
-            };
-        }
+  CLASS_NAMES = [];
+  for (var i = 0; i < numClasses; i++) {
+    CLASS_NAMES.push('Class ' + i);
+  }
 
+  // Generate cluster centers arranged in a circle
+  centers = [];
+  var radius = complexity === 'simple' ? 4.0 : (complexity === 'medium' ? 2.8 : 1.8);
+  for (var i = 0; i < numClasses; i++) {
+    var angle = (i / numClasses) * Math.PI * 2 - Math.PI / 2;
+    centers.push({
+      x: Math.cos(angle) * radius,
+      y: Math.sin(angle) * radius
+    });
+  }
 
+  // Generate samples around each center
+  var spread = complexity === 'simple' ? 0.6 : (complexity === 'medium' ? 1.2 : 2.0);
+  data = [];
+  for (var c = 0; c < numClasses; c++) {
+    for (var s = 0; s < samplesPerClass; s++) {
+      // Box-Muller transform for normal distribution
+      var u1 = Math.random();
+      var u2 = Math.random();
+      var z0 = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+      var z1 = Math.sqrt(-2 * Math.log(u1)) * Math.sin(2 * Math.PI * u2);
 
-        function updateVisualization() {
-            const viewMode = document.getElementById('viewMode').value;
-            const highlightClass = document.getElementById('highlightClass').value;
+      data.push({
+        x: centers[c].x + z0 * spread,
+        y: centers[c].y + z1 * spread,
+        label: c
+      });
+    }
+  }
 
-            let filteredData = mockData;
-            if (highlightClass !== 'all') {
-                const targetClass = parseInt(highlightClass);
-                filteredData = mockData.map(d => ({
-                    ...d,
-                    color: d.label === targetClass ? d.color : '#cccccc',
-                    opacity: d.label === targetClass ? 1.0 : 0.2
-                }));
-            }
+  buildLegend();
+  updateAll();
+}
 
-            if (viewMode === '3d') {
-                plot3DScatter(filteredData);
-            } else if (viewMode === '2d') {
-                plot2DProjection(filteredData);
-            } else {
-                plotConfusionPairs();
-            }
-        }
+/* ============ Simple Classifier (Nearest Centroid) ============ */
+function classify(px, py) {
+  var minDist = Infinity;
+  var bestClass = 0;
+  for (var c = 0; c < centers.length; c++) {
+    var dx = px - centers[c].x;
+    var dy = py - centers[c].y;
+    var dist = dx * dx + dy * dy;
+    if (dist < minDist) {
+      minDist = dist;
+      bestClass = c;
+    }
+  }
+  return bestClass;
+}
 
-        function plot3DScatter(data) {
-            const traces = [];
-            for (let digit = 0; digit < 10; digit++) {
-                const digitData = data.filter(d => d.label === digit);
-                traces.push({
-                    x: digitData.map(d => d.x),
-                    y: digitData.map(d => d.y),
-                    z: digitData.map(d => d.z),
-                    mode: 'markers',
-                    type: 'scatter3d',
-                    name: `数字 ${digit}`,
-                    marker: {
-                        size: 5,
-                        color: digitData[0].color,
-                        opacity: digitData[0].opacity || 0.8
-                    }
-                });
-            }
+/* ============ Draw Decision Boundary ============ */
+function drawBoundary() {
+  var canvas = document.getElementById('boundary-canvas');
+  var dpr = window.devicePixelRatio || 1;
+  var rect = canvas.parentElement.getBoundingClientRect();
+  var w = rect.width;
+  var h = 520;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  var ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, w, h);
 
-            const layout = {
-                title: '手写数字在PCA空间中的3D分布',
-                scene: {
-                    xaxis: {title: 'PC1 (主成分1)'},
-                    yaxis: {title: 'PC2 (主成分2)'},
-                    zaxis: {title: 'PC3 (主成分3)'}
-                },
-                height: 700,
-                showlegend: false
-            };
+  if (data.length === 0) return;
 
-            Plotly.newPlot('mainChart', traces, build3DLayout(layout));
-        }
+  var pad = { left: 50, right: 20, top: 20, bottom: 40 };
+  var chartW = w - pad.left - pad.right;
+  var chartH = h - pad.top - pad.bottom;
 
-        function plot2DProjection(data) {
-            const traces = [];
-            for (let digit = 0; digit < 10; digit++) {
-                const digitData = data.filter(d => d.label === digit);
-                traces.push({
-                    x: digitData.map(d => d.x),
-                    y: digitData.map(d => d.y),
-                    mode: 'markers',
-                    type: 'scatter',
-                    name: `数字 ${digit}`,
-                    marker: {
-                        size: 8,
-                        color: digitData[0].color,
-                        opacity: digitData[0].opacity || 0.7
-                    }
-                });
-            }
+  // Compute data bounds
+  var xMin = Infinity, xMax = -Infinity, yMin = Infinity, yMax = -Infinity;
+  for (var i = 0; i < data.length; i++) {
+    if (data[i].x < xMin) xMin = data[i].x;
+    if (data[i].x > xMax) xMax = data[i].x;
+    if (data[i].y < yMin) yMin = data[i].y;
+    if (data[i].y > yMax) yMax = data[i].y;
+  }
+  var xPad = (xMax - xMin) * 0.15;
+  var yPad = (yMax - yMin) * 0.15;
+  xMin -= xPad; xMax += xPad;
+  yMin -= yPad; yMax += yPad;
 
-            const layout = {
-                title: '手写数字在PCA空间中的2D投影',
-                xaxis: {title: 'PC1 (主成分1)'},
-                yaxis: {title: 'PC2 (主成分2)'},
-                height: 600,
-                showlegend: false
-            };
+  function toCanvasX(x) { return pad.left + (x - xMin) / (xMax - xMin) * chartW; }
+  function toCanvasY(y) { return pad.top + chartH - (y - yMin) / (yMax - yMin) * chartH; }
 
-            Plotly.newPlot('mainChart', traces, build2DLayout(layout));
-        }
+  // Draw decision boundary regions using offscreen ImageData for performance
+  var resolution = parseInt(document.getElementById('slider-resolution').value);
+  var imgData = ctx.createImageData(Math.ceil(chartW), Math.ceil(chartH));
+  var imgW = imgData.width;
+  var imgH = imgData.height;
 
-        function plotConfusionPairs() {
-            // 模拟易混淆类别对的数据
-            const confusionPairs = [
-                {pair: '4 vs 9', count: 23, accuracy: 0.92},
-                {pair: '3 vs 8', count: 18, accuracy: 0.94},
-                {pair: '5 vs 6', count: 15, accuracy: 0.95},
-                {pair: '7 vs 9', count: 12, accuracy: 0.96},
-                {pair: '2 vs 7', count: 10, accuracy: 0.97},
-                {pair: '1 vs 7', count: 8, accuracy: 0.98},
-                {pair: '3 vs 5', count: 7, accuracy: 0.98},
-                {pair: '0 vs 6', count: 5, accuracy: 0.99}
-            ];
+  for (var py = 0; py < imgH; py++) {
+    for (var px = 0; px < imgW; px++) {
+      // Map pixel to data coordinates
+      var dataX = xMin + (px / imgW) * (xMax - xMin);
+      var dataY = yMax - (py / imgH) * (yMax - yMin);
 
-            const trace = {
-                x: confusionPairs.map(p => p.pair),
-                y: confusionPairs.map(p => p.count),
-                type: 'bar',
-                marker: {
-                    color: confusionPairs.map(p => p.accuracy),
-                    colorscale: 'RdYlGn',
-                    showscale: true,
-                    colorbar: {title: '准确率'}
-                },
-                text: confusionPairs.map(p => `错误: ${p.count}<br>准确率: ${(p.accuracy*100).toFixed(1)}%`),
-                hoverinfo: 'text'
-            };
+      // Classify with lower resolution sampling for performance
+      if (px % Math.max(1, Math.floor(imgW / resolution)) === 0 || py % Math.max(1, Math.floor(imgH / resolution)) === 0) {
+        // We'll render all pixels anyway; classify each
+      }
+      var cls = classify(dataX, dataY);
 
-            const layout = {
-                title: '易混淆数字对分析',
-                xaxis: {title: '数字对'},
-                yaxis: {title: '混淆次数'},
-                height: 500
-            };
+      // Parse color
+      var color = CLASS_COLORS[cls];
+      var r = parseInt(color.slice(1, 3), 16);
+      var g = parseInt(color.slice(3, 5), 16);
+      var b = parseInt(color.slice(5, 7), 16);
 
-            Plotly.newPlot('mainChart', [trace], build2DLayout(layout));
-        }
+      var alpha = (highlightClass >= 0 && cls !== highlightClass) ? 15 : 35;
 
-        // 初始化
-        updateVisualization();
-    </script>
+      var idx = (py * imgW + px) * 4;
+      imgData.data[idx] = r;
+      imgData.data[idx + 1] = g;
+      imgData.data[idx + 2] = b;
+      imgData.data[idx + 3] = alpha;
+    }
+  }
+
+  // Use a temporary canvas for the region fill
+  var tempCanvas = document.createElement('canvas');
+  tempCanvas.width = imgW;
+  tempCanvas.height = imgH;
+  var tempCtx = tempCanvas.getContext('2d');
+  tempCtx.putImageData(imgData, 0, 0);
+  ctx.drawImage(tempCanvas, pad.left, pad.top, chartW, chartH);
+
+  // Draw gridlines
+  ctx.strokeStyle = 'rgba(100,116,139,0.1)';
+  ctx.lineWidth = 1;
+  ctx.fillStyle = '#64748b';
+  ctx.font = '10px system-ui';
+  var xSteps = 6;
+  var ySteps = 6;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  for (var i = 0; i <= xSteps; i++) {
+    var val = xMin + (xMax - xMin) * i / xSteps;
+    var cx = toCanvasX(val);
+    ctx.beginPath();
+    ctx.moveTo(cx, pad.top);
+    ctx.lineTo(cx, pad.top + chartH);
+    ctx.stroke();
+    ctx.fillText(val.toFixed(1), cx, pad.top + chartH + 6);
+  }
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  for (var i = 0; i <= ySteps; i++) {
+    var val = yMin + (yMax - yMin) * i / ySteps;
+    var cy = toCanvasY(val);
+    ctx.beginPath();
+    ctx.moveTo(pad.left, cy);
+    ctx.lineTo(pad.left + chartW, cy);
+    ctx.stroke();
+    ctx.fillText(val.toFixed(1), pad.left - 6, cy);
+  }
+
+  // Axis labels
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '11px system-ui';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.fillText('Feature 1 (x)', pad.left + chartW / 2, pad.top + chartH + 22);
+  ctx.save();
+  ctx.translate(14, pad.top + chartH / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('Feature 2 (y)', 0, 0);
+  ctx.restore();
+
+  // Draw data points
+  for (var i = 0; i < data.length; i++) {
+    var d = data[i];
+    var cx = toCanvasX(d.x);
+    var cy = toCanvasY(d.y);
+
+    var isHighlighted = (highlightClass < 0 || d.label === highlightClass);
+    var ptAlpha = isHighlighted ? 1.0 : 0.15;
+    var ptSize = isHighlighted ? 5 : 3;
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, ptSize, 0, Math.PI * 2);
+    ctx.fillStyle = CLASS_COLORS[d.label];
+    ctx.globalAlpha = ptAlpha;
+    ctx.fill();
+
+    // Outline
+    ctx.strokeStyle = '#0f172a';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.globalAlpha = 1.0;
+  }
+
+  // Draw cluster centers
+  for (var c = 0; c < centers.length; c++) {
+    var cx = toCanvasX(centers[c].x);
+    var cy = toCanvasY(centers[c].y);
+    var isActive = (highlightClass < 0 || c === highlightClass);
+
+    if (!isActive) continue;
+
+    // Cross marker
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(cx - 8, cy); ctx.lineTo(cx + 8, cy);
+    ctx.moveTo(cx, cy - 8); ctx.lineTo(cx, cy + 8);
+    ctx.stroke();
+
+    // Glow ring
+    ctx.beginPath();
+    ctx.arc(cx, cy, 12, 0, Math.PI * 2);
+    ctx.strokeStyle = CLASS_COLORS[c];
+    ctx.lineWidth = 2;
+    ctx.shadowColor = CLASS_COLORS[c];
+    ctx.shadowBlur = 10;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+}
+
+/* ============ Confusion Pairs ============ */
+function computeConfusionPairs() {
+  // Count how many data points are closer to a different class center
+  var pairs = {};
+  for (var i = 0; i < data.length; i++) {
+    var trueLabel = data[i].label;
+    var predLabel = classify(data[i].x, data[i].y);
+    if (trueLabel !== predLabel) {
+      var key = Math.min(trueLabel, predLabel) + '-' + Math.max(trueLabel, predLabel);
+      if (!pairs[key]) pairs[key] = { a: Math.min(trueLabel, predLabel), b: Math.max(trueLabel, predLabel), count: 0 };
+      pairs[key].count++;
+    }
+  }
+  // Convert to sorted array
+  var arr = [];
+  for (var k in pairs) arr.push(pairs[k]);
+  arr.sort(function(a, b) { return b.count - a.count; });
+  return arr.slice(0, 8);
+}
+
+function drawConfusionPairs() {
+  var canvas = document.getElementById('pairs-canvas');
+  var dpr = window.devicePixelRatio || 1;
+  var rect = canvas.parentElement.getBoundingClientRect();
+  var w = rect.width;
+  var h = 260;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  var ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, w, h);
+
+  var pairs = computeConfusionPairs();
+  if (pairs.length === 0) {
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '14px system-ui';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('所有样本分类正确，无混淆对', w / 2, h / 2);
+    return;
+  }
+
+  var pad = { left: 80, right: 20, top: 15, bottom: 40 };
+  var chartW = w - pad.left - pad.right;
+  var chartH = h - pad.top - pad.bottom;
+  var maxCount = Math.max.apply(null, pairs.map(function(p) { return p.count; }));
+  var barH = Math.min(24, (chartH - 10) / pairs.length - 4);
+
+  for (var i = 0; i < pairs.length; i++) {
+    var p = pairs[i];
+    var y = pad.top + i * (barH + 6);
+    var barW = (p.count / maxCount) * chartW * 0.85;
+
+    // Label
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '11px system-ui';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('C' + p.a + ' vs C' + p.b, pad.left - 10, y + barH / 2);
+
+    // Gradient bar
+    var grad = ctx.createLinearGradient(pad.left, 0, pad.left + barW, 0);
+    grad.addColorStop(0, CLASS_COLORS[p.a]);
+    grad.addColorStop(1, CLASS_COLORS[p.b]);
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.roundRect(pad.left, y, barW, barH, 4);
+    ctx.fill();
+
+    // Count label
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = 'bold 10px system-ui';
+    ctx.textAlign = 'left';
+    ctx.fillText(p.count + ' 个误分', pad.left + barW + 8, y + barH / 2);
+  }
+}
+
+/* ============ Stats ============ */
+function updateStats() {
+  document.getElementById('stat-total').textContent = data.length;
+  document.getElementById('stat-classes').textContent = numClasses;
+
+  // Compute nearest-centroid accuracy
+  var correct = 0;
+  for (var i = 0; i < data.length; i++) {
+    if (classify(data[i].x, data[i].y) === data[i].label) correct++;
+  }
+  var acc = data.length > 0 ? (correct / data.length * 100) : 0;
+  document.getElementById('stat-acc').textContent = acc.toFixed(1) + '%';
+
+  // Average inter-class center distance
+  if (centers.length > 1) {
+    var totalDist = 0;
+    var count = 0;
+    for (var i = 0; i < centers.length; i++) {
+      for (var j = i + 1; j < centers.length; j++) {
+        var dx = centers[i].x - centers[j].x;
+        var dy = centers[i].y - centers[j].y;
+        totalDist += Math.sqrt(dx * dx + dy * dy);
+        count++;
+      }
+    }
+    document.getElementById('stat-dist').textContent = (totalDist / count).toFixed(2);
+  }
+}
+
+/* ============ Legend ============ */
+function buildLegend() {
+  var wrap = document.getElementById('legend-wrap');
+  wrap.innerHTML = '';
+  var allChip = document.createElement('div');
+  allChip.className = 'legend-chip' + (highlightClass < 0 ? ' active' : '');
+  allChip.innerHTML = '<div class="legend-dot" style="background:linear-gradient(135deg,#3b82f6,#10b981)"></div>全部类别';
+  allChip.addEventListener('click', function() {
+    highlightClass = -1;
+    buildLegend();
+    drawBoundary();
+  });
+  wrap.appendChild(allChip);
+
+  for (var i = 0; i < numClasses; i++) {
+    (function(ci) {
+      var chip = document.createElement('div');
+      chip.className = 'legend-chip' + (highlightClass === ci ? ' active' : '');
+      chip.innerHTML = '<div class="legend-dot" style="background:' + CLASS_COLORS[ci] + '"></div>' + CLASS_NAMES[ci];
+      chip.addEventListener('click', function() {
+        highlightClass = (highlightClass === ci) ? -1 : ci;
+        buildLegend();
+        drawBoundary();
+      });
+      wrap.appendChild(chip);
+    })(i);
+  }
+}
+
+/* ============ Master Update ============ */
+function updateAll() {
+  drawBoundary();
+  drawConfusionPairs();
+  updateStats();
+}
+
+/* ============ Event Listeners ============ */
+document.getElementById('sel-classes').addEventListener('change', function() {
+  highlightClass = -1;
+  generateData();
+});
+document.getElementById('sel-complexity').addEventListener('change', function() {
+  highlightClass = -1;
+  generateData();
+});
+document.getElementById('btn-regen').addEventListener('click', function() {
+  generateData();
+});
+document.getElementById('slider-samples').addEventListener('input', function() {
+  document.getElementById('val-samples').textContent = this.value;
+});
+document.getElementById('slider-samples').addEventListener('change', function() {
+  generateData();
+});
+document.getElementById('slider-resolution').addEventListener('input', function() {
+  document.getElementById('val-resolution').textContent = this.value;
+});
+document.getElementById('slider-resolution').addEventListener('change', function() {
+  updateAll();
+});
+
+// Click on canvas to highlight nearest class
+document.getElementById('boundary-canvas').addEventListener('click', function(e) {
+  var rect = this.getBoundingClientRect();
+  var mx = e.clientX - rect.left;
+  var my = e.clientY - rect.top;
+
+  // Find bounds to convert pixel to data coords
+  if (data.length === 0) return;
+  var xMin = Infinity, xMax = -Infinity, yMin = Infinity, yMax = -Infinity;
+  for (var i = 0; i < data.length; i++) {
+    if (data[i].x < xMin) xMin = data[i].x;
+    if (data[i].x > xMax) xMax = data[i].x;
+    if (data[i].y < yMin) yMin = data[i].y;
+    if (data[i].y > yMax) yMax = data[i].y;
+  }
+  var xPad = (xMax - xMin) * 0.15;
+  var yPad = (yMax - yMin) * 0.15;
+  xMin -= xPad; xMax += xPad;
+  yMin -= yPad; yMax += yPad;
+
+  var padL = 50, padT = 20, padR = 20, padB = 40;
+  var chartW = rect.width - padL - padR;
+  var chartH = rect.height - padT - padB;
+
+  var dataX = xMin + ((mx - padL) / chartW) * (xMax - xMin);
+  var dataY = yMax - ((my - padT) / chartH) * (yMax - yMin);
+
+  var cls = classify(dataX, dataY);
+  highlightClass = (highlightClass === cls) ? -1 : cls;
+  buildLegend();
+  drawBoundary();
+});
+
+window.addEventListener('resize', function() {
+  if (data.length > 0) updateAll();
+});
+
+// Initialize
+generateData();
+</script>
 
 <script>
 (function () {
@@ -402,16 +731,13 @@
     );
     window.parent.postMessage({ type: 'iframe-height', height }, '*');
   };
-
   window.addEventListener('load', sendHeight);
   window.addEventListener('resize', sendHeight);
-
   if ('ResizeObserver' in window) {
     const observer = new ResizeObserver(sendHeight);
     if (document.body) observer.observe(document.body);
     if (document.documentElement) observer.observe(document.documentElement);
   }
-
   requestAnimationFrame(sendHeight);
   setTimeout(sendHeight, 250);
   setTimeout(sendHeight, 1000);

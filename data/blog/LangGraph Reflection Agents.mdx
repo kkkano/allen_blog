@@ -1,13 +1,13 @@
 ---
 title: 'LangGraph Reflection Agents 完全指南：从原理到实战'
-date: '2025-12-25'
+date: '2025-01-25'
 tags: ['LangChain', 'LangGraph', 'AI Agent', 'Reflection', 'LLM']
 draft: false
 summary: '深入解析 LangGraph 中的 Reflection Agents 技术，涵盖 Basic Reflection、Reflexion、LATS 三种核心方法，以及与 ReAct 的对比分析。包含完整代码示例和实战指南。'
 authors: ['allen']
 ---
 
-## 🚀 Reflection 是什么？为什么值得用？
+## Reflection 是什么？为什么值得用？
 
 Reflection Agents 的核心思想是让模型在“生成之后再自我批评和改写”，通过多轮迭代把答案从“能用”提升到“更好”。
 
@@ -19,11 +19,11 @@ Reflection Agents 的核心思想是让模型在“生成之后再自我批评�
 
 你可以先看下面的可视化：每一轮都会增加 Token 消耗和延迟，但通常能换来更高的质量与更稳的推理链路。
 
-# LangGraph Reflection Agents 完全指南
+## LangGraph Reflection Agents 完全指南
 
 > **让 AI 学会"三思而后行"** —— 通过自我反思机制，显著提升 LLM 输出质量
 
-## 📚 前言
+## 前言
 
 在使用 LLM 时，你是否遇到过这些问题？
 
@@ -37,7 +37,7 @@ Reflection Agents 的核心思想是让模型在“生成之后再自我批评�
 
 ---
 
-## 🎯 什么是 Reflection Agents？
+## 什么是 Reflection Agents？
 
 ### 核心思想
 
@@ -80,7 +80,7 @@ graph LR
 
 ---
 
-## 🔧 三种 Reflection 技术详解
+## 三种 Reflection 技术详解
 
 LangGraph 提供了三种由简到繁的 Reflection 实现方式：
 
@@ -574,7 +574,7 @@ graph = graph_builder.compile()
 
 ---
 
-## 🔄 ReAct vs Reflection vs Reflexion
+## ReAct vs Reflection vs Reflexion
 
 这三个概念容易混淆，让我们彻底理清它们的区别：
 
@@ -655,7 +655,7 @@ Reflexion = Reflection + ReAct 的工具验证能力
 
 ---
 
-## 🔗 三者结合使用
+## 三者结合使用
 
 在实际应用中，这三种技术可以模块化组合，发挥各自优势：
 
@@ -688,7 +688,7 @@ graph TD
 
 ---
 
-## ⚙️ AgentExecutor vs LangGraph
+## AgentExecutor vs LangGraph
 
 ### 背景
 
@@ -771,7 +771,7 @@ result = graph.invoke(None, config)  # 传入 None 继续执行
 
 ---
 
-## 🛠️ 完整实战：推文优化 Agent
+## 完整实战：推文优化 Agent
 
 让我们用一个完整的例子来串联所有知识点：构建一个能自我改进的推文生成 Agent。
 
@@ -1057,17 +1057,17 @@ LangChain 让你：
 
 ---
 
-## 📚 学习资源与路径
+## 学习资源与路径
 
 ### 官方资源
 
 | 资源            | 链接                                                                                                          | 说明         |
 | :-------------- | :------------------------------------------------------------------------------------------------------------ | :----------- |
 | LangGraph 文档  | LangGraph [<sup>1</sup>](https://langchain-ai.github.io/langgraph/)                                           | 最权威的参考 |
-| Reflection 教程 | Reflection Tutorial [<sup>2</sup>](https://langchain-ai.github.io/langgraph/tutorials/reflection/reflection/) | 官方教程     |
+| Reflection 教程 | Reflection Tutorial [<sup>5</sup>](https://langchain-ai.github.io/langgraph/tutorials/reflection/reflection/) | 官方教程     |
 | Reflexion 教程  | Reflexion Tutorial [<sup>3</sup>](https://langchain-ai.github.io/langgraph/tutorials/reflexion/reflexion/)    | 带工具验证   |
 | LATS 教程       | LATS Tutorial [<sup>4</sup>](https://langchain-ai.github.io/langgraph/tutorials/lats/lats/)                   | 树搜索实现   |
-| LangChain 博客  | Reflection Agents [<sup>5</sup>](https://blog.langchain.com/reflection-agents/)                               | 概念介绍     |
+| LangChain 博客  | Reflection Agents [<sup>2</sup>](https://blog.langchain.com/reflection-agents/)                               | 概念介绍     |
 
 ### 推荐学习路径
 
@@ -1095,7 +1095,7 @@ graph LR
 
 ---
 
-## 🎯 总结
+## 总结
 
 ### 核心要点回顾
 
@@ -1123,13 +1123,13 @@ graph LR
 
 ---
 
-## 📖 参考文献
+## 参考文献
 
-1. LangGraph Reflection Tutorial [<sup>2</sup>](https://langchain-ai.github.io/langgraph/tutorials/reflection/reflection/)
-2. LangChain Blog: Reflection Agents [<sup>5</sup>](https://blog.langchain.com/reflection-agents/)
-3. Reflexion: Language Agents with Verbal Reinforcement Learning [<sup>6</sup>](https://arxiv.org/abs/2303.11366)
-4. Language Agent Tree Search Unifies Reasoning Acting and Planning [<sup>7</sup>](https://arxiv.org/abs/2310.04406)
-5. LangGraph Documentation [<sup>1</sup>](https://langchain-ai.github.io/langgraph/)
+1. LangGraph Documentation [<sup>1</sup>](https://langchain-ai.github.io/langgraph/)
+2. LangChain Blog: Reflection Agents [<sup>2</sup>](https://blog.langchain.com/reflection-agents/)
+3. Reflexion: Language Agents with Verbal Reinforcement Learning [<sup>3</sup>](https://arxiv.org/abs/2303.11366)
+4. Language Agent Tree Search Unifies Reasoning Acting and Planning [<sup>4</sup>](https://arxiv.org/abs/2310.04406)
+5. LangGraph Reflection Tutorial [<sup>5</sup>](https://langchain-ai.github.io/langgraph/tutorials/reflection/reflection/)
 
 ---
 
