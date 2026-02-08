@@ -216,6 +216,72 @@
             return coefficient * Math.exp(-0.5 * z);
         }
 
+        function build2DLayout(layout) {
+            const axisBase = {
+                gridcolor: '#dbe6f8',
+                zerolinecolor: '#c5d6f3',
+                linecolor: '#8ea9de',
+                tickcolor: '#8ea9de',
+                ticks: 'outside',
+                automargin: true,
+            };
+
+            return {
+                paper_bgcolor: '#f8fbff',
+                plot_bgcolor: '#f8fbff',
+                font: { color: '#0f172a' },
+                margin: { t: 56, r: 24, b: 52, l: 60 },
+                ...layout,
+                xaxis: {
+                    ...axisBase,
+                    ...(layout?.xaxis || {}),
+                },
+                yaxis: {
+                    ...axisBase,
+                    ...(layout?.yaxis || {}),
+                },
+            };
+        }
+
+        function build3DLayout(layout) {
+            const sceneAxis = {
+                showbackground: true,
+                backgroundcolor: '#f8fbff',
+                gridcolor: '#dbe6f8',
+                zerolinecolor: '#c5d6f3',
+                linecolor: '#8ea9de',
+                tickcolor: '#8ea9de',
+            };
+
+            const currentScene = layout?.scene || {};
+
+            return {
+                paper_bgcolor: '#f8fbff',
+                plot_bgcolor: '#f8fbff',
+                font: { color: '#0f172a' },
+                margin: { t: 56, r: 24, b: 30, l: 24 },
+                ...layout,
+                scene: {
+                    bgcolor: '#f8fbff',
+                    ...currentScene,
+                    xaxis: {
+                        ...sceneAxis,
+                        ...(currentScene.xaxis || {}),
+                    },
+                    yaxis: {
+                        ...sceneAxis,
+                        ...(currentScene.yaxis || {}),
+                    },
+                    zaxis: {
+                        ...sceneAxis,
+                        ...(currentScene.zaxis || {}),
+                    },
+                },
+            };
+        }
+
+
+
         function updateVisualization() {
             const mu1 = parseFloat(document.getElementById('mu1Slider').value);
             const mu2 = parseFloat(document.getElementById('mu2Slider').value);
@@ -288,7 +354,7 @@
                 margin: { l: 0, r: 0, b: 0, t: 40 }
             };
 
-            Plotly.newPlot('surface3D', [surfaceTrace], layout3D, {responsive: true});
+            Plotly.newPlot('surface3D', [surfaceTrace], build3DLayout(layout3D), {responsive: true});
 
             // 等高线图
             const contourTrace = {
@@ -337,7 +403,7 @@
                 margin: { l: 60, r: 60, b: 60, t: 40 }
             };
 
-            Plotly.newPlot('contourPlot', [contourTrace, meanPoint], layoutContour, {responsive: true});
+            Plotly.newPlot('contourPlot', [contourTrace, meanPoint], build2DLayout(layoutContour), {responsive: true});
         }
 
         document.getElementById('mu1Slider').addEventListener('input', updateVisualization);

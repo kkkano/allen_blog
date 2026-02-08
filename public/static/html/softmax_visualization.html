@@ -11,7 +11,7 @@
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1d4ed8 0%, #0f766e 100%);
         }
         .container {
             background: white;
@@ -20,7 +20,7 @@
             box-shadow: 0 10px 40px rgba(0,0,0,0.2);
         }
         h1 {
-            color: #667eea;
+            color: #1d4ed8;
             text-align: center;
             margin-bottom: 10px;
         }
@@ -55,12 +55,12 @@
             width: 20px;
             height: 20px;
             border-radius: 50%;
-            background: #667eea;
+            background: #1d4ed8;
             cursor: pointer;
         }
         .value-display {
             display: inline-block;
-            background: #667eea;
+            background: #1d4ed8;
             color: white;
             padding: 5px 15px;
             border-radius: 20px;
@@ -99,7 +99,7 @@
             margin: 15px 0;
             text-align: center;
             font-family: 'Courier New', monospace;
-            border: 2px solid #667eea;
+            border: 2px solid #1d4ed8;
         }
     </style>
 </head>
@@ -165,6 +165,34 @@
             return exps.map(e => e / sumExps);
         }
 
+        function build2DLayout(layout) {
+            const axisBase = {
+                gridcolor: '#dbe6f8',
+                zerolinecolor: '#c5d6f3',
+                linecolor: '#8ea9de',
+                tickcolor: '#8ea9de',
+                ticks: 'outside',
+                automargin: true,
+            };
+
+            return {
+                paper_bgcolor: '#f8fbff',
+                plot_bgcolor: '#f8fbff',
+                font: { color: '#0f172a' },
+                margin: { t: 56, r: 24, b: 52, l: 60 },
+                ...layout,
+                xaxis: {
+                    ...axisBase,
+                    ...(layout?.xaxis || {}),
+                },
+                yaxis: {
+                    ...axisBase,
+                    ...(layout?.yaxis || {}),
+                },
+            };
+        }
+
+
         function updateCharts() {
             const temperature = parseFloat(document.getElementById('temperature').value);
             document.getElementById('tempValue').textContent = temperature.toFixed(1);
@@ -184,7 +212,7 @@
                 type: 'bar',
                 marker: {
                     color: probs,
-                    colorscale: 'Viridis',
+                    colorscale: 'YlGnBu',
                     showscale: true,
                     colorbar: {title: '概率'}
                 },
@@ -199,7 +227,7 @@
                 height: 400
             };
 
-            Plotly.newPlot('barChart', [barTrace], barLayout);
+            Plotly.newPlot('barChart', [barTrace], build2DLayout(barLayout));
 
             // 饼图
             const pieTrace = {
@@ -208,9 +236,9 @@
                 type: 'pie',
                 textinfo: 'label+percent',
                 marker: {
-                    colors: ['#667eea', '#764ba2', '#f093fb', '#4facfe',
-                             '#43e97b', '#fa709a', '#fee140', '#30cfd0',
-                             '#a8edea', '#fed6e3']
+                    colors: ['#1d4ed8', '#0284c7', '#0f766e', '#0d9488',
+                             '#14b8a6', '#22c55e', '#84cc16', '#eab308',
+                             '#f59e0b', '#f97316']
                 }
             };
 
@@ -219,7 +247,7 @@
                 height: 400
             };
 
-            Plotly.newPlot('pieChart', [pieTrace], pieLayout);
+            Plotly.newPlot('pieChart', [pieTrace], build2DLayout(pieLayout));
         }
 
         // 事件监听

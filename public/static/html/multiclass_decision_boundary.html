@@ -11,7 +11,7 @@
             max-width: 1400px;
             margin: 0 auto;
             padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1d4ed8 0%, #0f766e 100%);
         }
         .container {
             background: white;
@@ -20,7 +20,7 @@
             box-shadow: 0 10px 40px rgba(0,0,0,0.2);
         }
         h1 {
-            color: #667eea;
+            color: #1d4ed8;
             text-align: center;
             margin-bottom: 10px;
         }
@@ -47,7 +47,7 @@
         select {
             width: 100%;
             padding: 10px;
-            border: 2px solid #667eea;
+            border: 2px solid #1d4ed8;
             border-radius: 5px;
             font-size: 14px;
         }
@@ -115,43 +115,43 @@
 
         <div class="legend">
             <div class="legend-item">
-                <div class="legend-color" style="background: #1f77b4;"></div>
+                <div class="legend-color" style="background: #1d4ed8;"></div>
                 <span>数字 0</span>
             </div>
             <div class="legend-item">
-                <div class="legend-color" style="background: #ff7f0e;"></div>
+                <div class="legend-color" style="background: #0284c7;"></div>
                 <span>数字 1</span>
             </div>
             <div class="legend-item">
-                <div class="legend-color" style="background: #2ca02c;"></div>
+                <div class="legend-color" style="background: #0f766e;"></div>
                 <span>数字 2</span>
             </div>
             <div class="legend-item">
-                <div class="legend-color" style="background: #d62728;"></div>
+                <div class="legend-color" style="background: #16a34a;"></div>
                 <span>数字 3</span>
             </div>
             <div class="legend-item">
-                <div class="legend-color" style="background: #9467bd;"></div>
+                <div class="legend-color" style="background: #84cc16;"></div>
                 <span>数字 4</span>
             </div>
             <div class="legend-item">
-                <div class="legend-color" style="background: #8c564b;"></div>
+                <div class="legend-color" style="background: #eab308;"></div>
                 <span>数字 5</span>
             </div>
             <div class="legend-item">
-                <div class="legend-color" style="background: #e377c2;"></div>
+                <div class="legend-color" style="background: #f59e0b;"></div>
                 <span>数字 6</span>
             </div>
             <div class="legend-item">
-                <div class="legend-color" style="background: #7f7f7f;"></div>
+                <div class="legend-color" style="background: #f97316;"></div>
                 <span>数字 7</span>
             </div>
             <div class="legend-item">
-                <div class="legend-color" style="background: #bcbd22;"></div>
+                <div class="legend-color" style="background: #dc2626;"></div>
                 <span>数字 8</span>
             </div>
             <div class="legend-item">
-                <div class="legend-color" style="background: #17becf;"></div>
+                <div class="legend-color" style="background: #475569;"></div>
                 <span>数字 9</span>
             </div>
         </div>
@@ -172,8 +172,8 @@
         // 模拟生成PCA降维后的数据（实际应用中应使用真实数据）
         function generateMockData() {
             const data = [];
-            const colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
-                           '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'];
+            const colors = ['#1d4ed8', '#0284c7', '#0f766e', '#16a34a', '#84cc16',
+                           '#eab308', '#f59e0b', '#f97316', '#dc2626', '#475569'];
 
             for (let digit = 0; digit < 10; digit++) {
                 const numSamples = 50;
@@ -195,6 +195,72 @@
         }
 
         const mockData = generateMockData();
+
+        function build2DLayout(layout) {
+            const axisBase = {
+                gridcolor: '#dbe6f8',
+                zerolinecolor: '#c5d6f3',
+                linecolor: '#8ea9de',
+                tickcolor: '#8ea9de',
+                ticks: 'outside',
+                automargin: true,
+            };
+
+            return {
+                paper_bgcolor: '#f8fbff',
+                plot_bgcolor: '#f8fbff',
+                font: { color: '#0f172a' },
+                margin: { t: 56, r: 24, b: 52, l: 60 },
+                ...layout,
+                xaxis: {
+                    ...axisBase,
+                    ...(layout?.xaxis || {}),
+                },
+                yaxis: {
+                    ...axisBase,
+                    ...(layout?.yaxis || {}),
+                },
+            };
+        }
+
+        function build3DLayout(layout) {
+            const sceneAxis = {
+                showbackground: true,
+                backgroundcolor: '#f8fbff',
+                gridcolor: '#dbe6f8',
+                zerolinecolor: '#c5d6f3',
+                linecolor: '#8ea9de',
+                tickcolor: '#8ea9de',
+            };
+
+            const currentScene = layout?.scene || {};
+
+            return {
+                paper_bgcolor: '#f8fbff',
+                plot_bgcolor: '#f8fbff',
+                font: { color: '#0f172a' },
+                margin: { t: 56, r: 24, b: 30, l: 24 },
+                ...layout,
+                scene: {
+                    bgcolor: '#f8fbff',
+                    ...currentScene,
+                    xaxis: {
+                        ...sceneAxis,
+                        ...(currentScene.xaxis || {}),
+                    },
+                    yaxis: {
+                        ...sceneAxis,
+                        ...(currentScene.yaxis || {}),
+                    },
+                    zaxis: {
+                        ...sceneAxis,
+                        ...(currentScene.zaxis || {}),
+                    },
+                },
+            };
+        }
+
+
 
         function updateVisualization() {
             const viewMode = document.getElementById('viewMode').value;
@@ -249,7 +315,7 @@
                 showlegend: false
             };
 
-            Plotly.newPlot('mainChart', traces, layout);
+            Plotly.newPlot('mainChart', traces, build3DLayout(layout));
         }
 
         function plot2DProjection(data) {
@@ -278,7 +344,7 @@
                 showlegend: false
             };
 
-            Plotly.newPlot('mainChart', traces, layout);
+            Plotly.newPlot('mainChart', traces, build2DLayout(layout));
         }
 
         function plotConfusionPairs() {
@@ -315,7 +381,7 @@
                 height: 500
             };
 
-            Plotly.newPlot('mainChart', [trace], layout);
+            Plotly.newPlot('mainChart', [trace], build2DLayout(layout));
         }
 
         // 初始化

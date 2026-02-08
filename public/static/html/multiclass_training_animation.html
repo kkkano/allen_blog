@@ -11,7 +11,7 @@
             max-width: 1400px;
             margin: 0 auto;
             padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1d4ed8 0%, #0f766e 100%);
         }
         .container {
             background: white;
@@ -20,7 +20,7 @@
             box-shadow: 0 10px 40px rgba(0,0,0,0.2);
         }
         h1 {
-            color: #667eea;
+            color: #1d4ed8;
             text-align: center;
             margin-bottom: 30px;
         }
@@ -41,20 +41,20 @@
             font-weight: 600;
         }
         .btn-primary {
-            background: #667eea;
+            background: #1d4ed8;
             color: white;
         }
         .btn-primary:hover {
-            background: #5568d3;
+            background: #1e40af;
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
         .btn-secondary {
-            background: #f093fb;
+            background: #0f766e;
             color: white;
         }
         .btn-secondary:hover {
-            background: #e082ea;
+            background: #115e59;
         }
         .metrics {
             display: grid;
@@ -63,7 +63,7 @@
             margin-bottom: 20px;
         }
         .metric-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1d4ed8 0%, #0f766e 100%);
             color: white;
             padding: 20px;
             border-radius: 10px;
@@ -106,7 +106,7 @@
             <button class="btn-primary" onclick="startTraining()">▶️ 开始训练</button>
             <button class="btn-secondary" onclick="pauseTraining()">⏸️ 暂停</button>
             <button class="btn-secondary" onclick="resetTraining()">🔄 重置</button>
-            <select id="learningRate" style="padding: 10px; border-radius: 5px; border: 2px solid #667eea;">
+            <select id="learningRate" style="padding: 10px; border-radius: 5px; border: 2px solid #1d4ed8;">
                 <option value="0.0001">学习率: 0.0001</option>
                 <option value="0.001" selected>学习率: 0.001</option>
                 <option value="0.01">学习率: 0.01</option>
@@ -189,6 +189,34 @@
             return { loss, trainAcc, valAcc };
         }
 
+        function build2DLayout(layout) {
+            const axisBase = {
+                gridcolor: '#dbe6f8',
+                zerolinecolor: '#c5d6f3',
+                linecolor: '#8ea9de',
+                tickcolor: '#8ea9de',
+                ticks: 'outside',
+                automargin: true,
+            };
+
+            return {
+                paper_bgcolor: '#f8fbff',
+                plot_bgcolor: '#f8fbff',
+                font: { color: '#0f172a' },
+                margin: { t: 56, r: 24, b: 52, l: 60 },
+                ...layout,
+                xaxis: {
+                    ...axisBase,
+                    ...(layout?.xaxis || {}),
+                },
+                yaxis: {
+                    ...axisBase,
+                    ...(layout?.yaxis || {}),
+                },
+            };
+        }
+
+
         function updateCharts() {
             const epochs = Array.from({length: currentEpoch}, (_, i) => i + 1);
 
@@ -199,15 +227,15 @@
                 type: 'scatter',
                 mode: 'lines+markers',
                 name: 'Training Loss',
-                line: {color: '#667eea', width: 3}
+                line: {color: '#1d4ed8', width: 3}
             };
 
-            Plotly.newPlot('lossChart', [lossTrace], {
+            Plotly.newPlot('lossChart', [lossTrace], build2DLayout({
                 title: 'SparseCategoricalCrossentropy损失',
                 xaxis: {title: 'Epoch'},
                 yaxis: {title: 'Loss'},
                 height: 300
-            });
+            }));
 
             // 准确率曲线
             const trainAccTrace = {
@@ -225,15 +253,15 @@
                 type: 'scatter',
                 mode: 'lines+markers',
                 name: '验证准确率',
-                line: {color: '#fa709a', width: 3, dash: 'dash'}
+                line: {color: '#f59e0b', width: 3, dash: 'dash'}
             };
 
-            Plotly.newPlot('accuracyChart', [trainAccTrace, valAccTrace], {
+            Plotly.newPlot('accuracyChart', [trainAccTrace, valAccTrace], build2DLayout({
                 title: '准确率变化',
                 xaxis: {title: 'Epoch'},
                 yaxis: {title: 'Accuracy', range: [0, 1]},
                 height: 300
-            });
+            }));
 
             // 混淆矩阵
             const confusionTrace = {
@@ -241,16 +269,16 @@
                 x: Array.from({length: 10}, (_, i) => `${i}`),
                 y: Array.from({length: 10}, (_, i) => `${i}`),
                 type: 'heatmap',
-                colorscale: 'Viridis',
+                colorscale: 'YlGnBu',
                 showscale: true
             };
 
-            Plotly.newPlot('confusionMatrix', [confusionTrace], {
+            Plotly.newPlot('confusionMatrix', [confusionTrace], build2DLayout({
                 title: `混淆矩阵 (Epoch ${currentEpoch})`,
                 xaxis: {title: '预测类别'},
                 yaxis: {title: '真实类别'},
                 height: 500
-            });
+            }));
         }
 
         function startTraining() {

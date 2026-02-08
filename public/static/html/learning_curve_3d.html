@@ -11,16 +11,16 @@
             max-width: 1400px;
             margin: 0 auto;
             padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1d4ed8 0%, #0f766e 100%);
         }
         .container {
             background: white;
             border-radius: 15px;
             padding: 30px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            box-shadow: 0 14px 36px rgba(15, 23, 42, 0.12);
         }
         h1 {
-            color: #667eea;
+            color: #1d4ed8;
             text-align: center;
             margin-bottom: 10px;
         }
@@ -30,7 +30,7 @@
             margin-bottom: 30px;
         }
         .controls {
-            background: #f8f9fa;
+            background: #f4f8ff;
             padding: 20px;
             border-radius: 10px;
             margin-bottom: 20px;
@@ -47,7 +47,7 @@
         select {
             width: 100%;
             padding: 10px;
-            border: 2px solid #667eea;
+            border: 2px solid #1d4ed8;
             border-radius: 5px;
             font-size: 14px;
         }
@@ -167,6 +167,72 @@
             return { trainSizes, complexities, trainErrorSurface, valErrorSurface };
         }
 
+        function build2DLayout(layout) {
+            const axisBase = {
+                gridcolor: '#dbe6f8',
+                zerolinecolor: '#c5d6f3',
+                linecolor: '#8ea9de',
+                tickcolor: '#8ea9de',
+                ticks: 'outside',
+                automargin: true,
+            };
+
+            return {
+                paper_bgcolor: '#f8fbff',
+                plot_bgcolor: '#f8fbff',
+                font: { color: '#0f172a' },
+                margin: { t: 56, r: 24, b: 52, l: 60 },
+                ...layout,
+                xaxis: {
+                    ...axisBase,
+                    ...(layout?.xaxis || {}),
+                },
+                yaxis: {
+                    ...axisBase,
+                    ...(layout?.yaxis || {}),
+                },
+            };
+        }
+
+        function build3DLayout(layout) {
+            const sceneAxis = {
+                showbackground: true,
+                backgroundcolor: '#f8fbff',
+                gridcolor: '#dbe6f8',
+                zerolinecolor: '#c5d6f3',
+                linecolor: '#8ea9de',
+                tickcolor: '#8ea9de',
+            };
+
+            const currentScene = layout?.scene || {};
+
+            return {
+                paper_bgcolor: '#f8fbff',
+                plot_bgcolor: '#f8fbff',
+                font: { color: '#0f172a' },
+                margin: { t: 56, r: 24, b: 30, l: 24 },
+                ...layout,
+                scene: {
+                    bgcolor: '#f8fbff',
+                    ...currentScene,
+                    xaxis: {
+                        ...sceneAxis,
+                        ...(currentScene.xaxis || {}),
+                    },
+                    yaxis: {
+                        ...sceneAxis,
+                        ...(currentScene.yaxis || {}),
+                    },
+                    zaxis: {
+                        ...sceneAxis,
+                        ...(currentScene.zaxis || {}),
+                    },
+                },
+            };
+        }
+
+
+
         function updateVisualization() {
             const viewMode = document.getElementById('viewMode').value;
             const modelType = document.getElementById('modelType').value;
@@ -217,7 +283,7 @@
                 height: 700
             };
 
-            Plotly.newPlot('mainChart', [trace1, trace2], layout);
+            Plotly.newPlot('mainChart', [trace1, trace2], build3DLayout(layout));
 
             document.getElementById('recommendation').innerHTML =
                 '<strong>💡 建议：</strong>观察红色曲面（验证误差）的最低点区域，' +
@@ -234,7 +300,7 @@
                 mode: 'lines+markers',
                 type: 'scatter',
                 name: '训练误差',
-                line: { color: '#667eea', width: 3 },
+                line: { color: '#1d4ed8', width: 3 },
                 marker: { size: 8 }
             };
 
@@ -255,7 +321,7 @@
                 height: 500
             };
 
-            Plotly.newPlot('mainChart', [trace1, trace2], layout);
+            Plotly.newPlot('mainChart', [trace1, trace2], build2DLayout(layout));
 
             // 判断是否需要更多数据
             const lastTrainError = data.trainErrors[data.trainErrors.length - 1];
@@ -296,7 +362,7 @@
                 mode: 'lines+markers',
                 type: 'scatter',
                 name: '训练误差',
-                line: { color: '#667eea', width: 3 },
+                line: { color: '#1d4ed8', width: 3 },
                 marker: { size: 8 }
             };
 
@@ -317,7 +383,7 @@
                 height: 500
             };
 
-            Plotly.newPlot('mainChart', [trace1, trace2], layout);
+            Plotly.newPlot('mainChart', [trace1, trace2], build2DLayout(layout));
 
             // 找到最优复杂度
             const minValErrorIdx = valErrors.indexOf(Math.min(...valErrors));
@@ -359,7 +425,7 @@
                 height: 600
             };
 
-            Plotly.newPlot('mainChart', [trace], layout);
+            Plotly.newPlot('mainChart', [trace], build2DLayout(layout));
 
             document.getElementById('recommendation').innerHTML =
                 '<strong>💡 建议：</strong>绿色区域表示模型泛化良好，' +

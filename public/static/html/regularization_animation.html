@@ -11,16 +11,16 @@
             max-width: 1400px;
             margin: 0 auto;
             padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1d4ed8 0%, #0f766e 100%);
         }
         .container {
             background: white;
             border-radius: 15px;
             padding: 30px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            box-shadow: 0 14px 36px rgba(15, 23, 42, 0.12);
         }
         h1 {
-            color: #667eea;
+            color: #1d4ed8;
             text-align: center;
             margin-bottom: 30px;
         }
@@ -41,16 +41,16 @@
             font-weight: 600;
         }
         .btn-primary {
-            background: #667eea;
+            background: #1d4ed8;
             color: white;
         }
         .btn-primary:hover {
-            background: #5568d3;
+            background: #1e40af;
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 5px 15px rgba(29, 78, 216, 0.35);
         }
         .slider-container {
-            background: #f8f9fa;
+            background: #f4f8ff;
             padding: 20px;
             border-radius: 10px;
             margin-bottom: 20px;
@@ -70,7 +70,7 @@
         }
         .value-display {
             display: inline-block;
-            background: #667eea;
+            background: #1d4ed8;
             color: white;
             padding: 5px 15px;
             border-radius: 20px;
@@ -91,7 +91,7 @@
             margin: 15px 0;
             text-align: center;
             font-family: 'Courier New', monospace;
-            border: 2px solid #667eea;
+            border: 2px solid #1d4ed8;
         }
     </style>
 </head>
@@ -197,6 +197,38 @@
             return y;
         }
 
+        function safeFinite(value, fallback = 0) {
+            return Number.isFinite(value) ? value : fallback;
+        }
+
+        function build2DLayout(layout) {
+            const axisBase = {
+                gridcolor: '#dbe6f8',
+                zerolinecolor: '#c5d6f3',
+                linecolor: '#8ea9de',
+                tickcolor: '#8ea9de',
+                ticks: 'outside',
+                automargin: true,
+            };
+
+            return {
+                paper_bgcolor: '#f8fbff',
+                plot_bgcolor: '#f8fbff',
+                font: { color: '#0f172a' },
+                margin: { t: 56, r: 24, b: 52, l: 60 },
+                ...layout,
+                xaxis: {
+                    ...axisBase,
+                    ...(layout?.xaxis || {}),
+                },
+                yaxis: {
+                    ...axisBase,
+                    ...(layout?.yaxis || {}),
+                },
+            };
+        }
+
+
         function updateVisualization(lambda) {
             document.getElementById('lambdaValue').textContent = lambda.toFixed(1);
 
@@ -217,7 +249,7 @@
                 mode: 'markers',
                 type: 'scatter',
                 name: '训练数据',
-                marker: { size: 10, color: '#667eea' }
+                marker: { size: 10, color: '#1d4ed8' }
             };
 
             const trace2 = {
@@ -229,12 +261,12 @@
                 line: { color: '#f44336', width: 3 }
             };
 
-            Plotly.newPlot('fittingChart', [trace1, trace2], {
+            Plotly.newPlot('fittingChart', [trace1, trace2], build2DLayout({
                 title: `Ridge回归拟合效果 (λ=${lambda.toFixed(1)})`,
                 xaxis: { title: 'x' },
                 yaxis: { title: 'y' },
                 height: 400
-            });
+            }));
 
             // 权重可视化
             const trace3 = {
@@ -243,7 +275,7 @@
                 type: 'bar',
                 marker: {
                     color: coeffs.map(c => safeFinite(Math.abs(c), 0)),
-                    colorscale: 'Viridis',
+                    colorscale: 'YlGnBu',
                     showscale: true,
                     colorbar: { title: '|权重|' }
                 },
@@ -251,12 +283,12 @@
                 textposition: 'outside'
             };
 
-            Plotly.newPlot('weightsChart', [trace3], {
+            Plotly.newPlot('weightsChart', [trace3], build2DLayout({
                 title: '模型权重分布',
                 xaxis: { title: '权重参数' },
                 yaxis: { title: '权重值' },
                 height: 350
-            });
+            }));
         }
 
         function animateRegularization() {
