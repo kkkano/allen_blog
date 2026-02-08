@@ -1,278 +1,560 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>神经网络结构可视化</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 20px;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 0;
-        }
-        .container {
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            max-width: 1200px;
-            width: 100%;
-        }
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 10px;
-        }
-        .subtitle {
-            text-align: center;
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 14px;
-        }
-        #canvas {
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            display: block;
-            margin: 0 auto;
-            background: #fafafa;
-        }
-        .controls {
-            margin-top: 20px;
-            text-align: center;
-        }
-        .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 16px;
-            margin: 0 10px;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-        .info-panel {
-            margin-top: 20px;
-            padding: 15px;
-            background: #f5f5f5;
-            border-radius: 10px;
-            font-size: 14px;
-            line-height: 1.6;
-        }
-        .legend {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            margin-top: 15px;
-            flex-wrap: wrap;
-        }
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .legend-circle {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            border: 2px solid #333;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>神经网络结构可视化</title>
+  <style>
+    :root {
+      --bg: #f4f7ff;
+      --card: #ffffff;
+      --border: #d8e2ff;
+      --text: #1f2a44;
+      --sub: #5f6f97;
+      --line: #a6b8ec;
+      --line-active: #4f6fe6;
+      --in: #4caf50;
+      --h1: #2f8df8;
+      --h2: #ff9800;
+      --out: #f44336;
+      --chip: #eef3ff;
+      --btn-a: #5d78e8;
+      --btn-b: #6f58c9;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 16px;
+      background: linear-gradient(135deg, #dfe8ff 0%, #edf2ff 100%);
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      min-height: 0;
+      color: var(--text);
+    }
+
+    .wrap {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+      box-shadow: 0 12px 30px rgba(75, 103, 196, 0.14);
+      overflow: hidden;
+    }
+
+    .head {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .head h1 {
+      margin: 0;
+      font-size: 1.8rem;
+      color: #2d3b63;
+      letter-spacing: 0.2px;
+    }
+
+    .head p {
+      margin: 6px 0 0;
+      color: var(--sub);
+      font-size: 0.92rem;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 10px;
+    }
+
+    .panel {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #fafcff;
+      padding: 10px;
+    }
+
+    .network-shell {
+      position: relative;
+      overflow: hidden;
+    }
+
+    #networkCanvas {
+      width: 100%;
+      height: auto;
+      display: block;
+      border: 1px solid #d0dcff;
+      border-radius: 10px;
+      background: linear-gradient(180deg, #f8fbff 0%, #f2f7ff 100%);
+    }
+
+    .legend {
+      margin-top: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid #d8e2ff;
+      background: var(--chip);
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: 0.78rem;
+      color: #3d4d75;
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 1px solid #2a3654;
+    }
+
+    .controls {
+      display: grid;
+      gap: 8px;
+    }
+
+    .controls h3 {
+      margin: 0;
+      color: #30416c;
+      font-size: 0.95rem;
+    }
+
+    .line {
+      display: grid;
+      gap: 5px;
+    }
+
+    .line label {
+      display: flex;
+      justify-content: space-between;
+      color: #465a89;
+      font-size: 0.8rem;
+      gap: 8px;
+    }
+
+    .val {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      color: #2b3f79;
+      font-weight: 600;
+    }
+
+    input[type='range'] {
+      width: 100%;
+      accent-color: #607ee6;
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 8px 14px;
+      background: linear-gradient(135deg, var(--btn-a), var(--btn-b));
+      color: #fff;
+      font-size: 0.84rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 18px rgba(97, 122, 220, 0.3);
+    }
+
+    button.secondary {
+      background: linear-gradient(135deg, #8194cb, #6f80b4);
+    }
+
+    .status {
+      margin-top: 6px;
+      font-size: 0.82rem;
+      color: #4a5d8f;
+      min-height: 1.2rem;
+    }
+
+    .stats {
+      border: 1px solid #d8e2ff;
+      border-radius: 10px;
+      background: #f6f9ff;
+      padding: 8px;
+      font-size: 0.82rem;
+      line-height: 1.5;
+      color: #3f537f;
+    }
+
+    .stats strong {
+      color: #2c3f6d;
+    }
+
+    @media (max-width: 940px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .head h1 {
+        font-size: 1.5rem;
+      }
+    }
+
+    @media (max-width: 560px) {
+      body { padding: 10px; }
+      .wrap { padding: 10px; }
+      .head h1 { font-size: 1.28rem; }
+      .btn-row button { flex: 1 1 auto; }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🧠 神经网络结构可视化</h1>
-        <p class="subtitle">手写数字0/1识别 - 三层神经网络架构</p>
-
-        <canvas id="canvas" width="1000" height="400"></canvas>
-
-        <div class="controls">
-            <button class="btn" onclick="animateForward()">▶️ 前向传播动画</button>
-            <button class="btn" onclick="resetAnimation()">🔄 重置</button>
-        </div>
-
-        <div class="legend">
-            <div class="legend-item">
-                <div class="legend-circle" style="background: #4CAF50;"></div>
-                <span>输入层 (400个神经元)</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-circle" style="background: #2196F3;"></div>
-                <span>隐藏层1 (25个神经元)</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-circle" style="background: #FF9800;"></div>
-                <span>隐藏层2 (15个神经元)</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-circle" style="background: #F44336;"></div>
-                <span>输出层 (1个神经元)</span>
-            </div>
-        </div>
-
-        <div class="info-panel">
-            <strong>📊 网络参数统计：</strong><br>
-            • 第1层参数：400 × 25 + 25 = <strong>10,025</strong><br>
-            • 第2层参数：25 × 15 + 15 = <strong>390</strong><br>
-            • 第3层参数：15 × 1 + 1 = <strong>16</strong><br>
-            • 总参数量：<strong>10,431</strong><br>
-            • 激活函数：<strong>Sigmoid (所有层)</strong>
-        </div>
+  <div class="wrap">
+    <div class="head">
+      <h1>🧠 神经网络结构可视化</h1>
+      <p>手写数字 0/1 识别：输入层(400) → 隐藏层1(25) → 隐藏层2(15) → 输出层(1)</p>
     </div>
 
-    <script>
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
+    <div class="layout">
+      <div class="panel network-shell">
+        <canvas id="networkCanvas" width="860" height="420"></canvas>
 
-        // 网络结构定义
-        const layers = [
-            { neurons: 10, x: 100, color: '#4CAF50', label: '输入层\n(400)' },
-            { neurons: 8, x: 350, color: '#2196F3', label: '隐藏层1\n(25)' },
-            { neurons: 6, x: 600, color: '#FF9800', label: '隐藏层2\n(15)' },
-            { neurons: 1, x: 850, color: '#F44336', label: '输出层\n(1)' }
-        ];
+        <div class="legend">
+          <span class="chip"><span class="dot" style="background:#4caf50"></span>输入层（400）</span>
+          <span class="chip"><span class="dot" style="background:#2f8df8"></span>隐藏层1（25）</span>
+          <span class="chip"><span class="dot" style="background:#ff9800"></span>隐藏层2（15）</span>
+          <span class="chip"><span class="dot" style="background:#f44336"></span>输出层（1）</span>
+        </div>
+      </div>
 
-        let animationProgress = 0;
-        let isAnimating = false;
+      <div class="panel controls">
+        <h3>交互控制</h3>
 
-        function drawNetwork() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        <div class="line">
+          <label>线条密度 <span id="densityVal" class="val">0.80</span></label>
+          <input id="density" type="range" min="0.3" max="1" step="0.05" value="0.8" />
+        </div>
 
-            // 绘制连接线
-            for (let i = 0; i < layers.length - 1; i++) {
-                const currentLayer = layers[i];
-                const nextLayer = layers[i + 1];
+        <div class="line">
+          <label>激活强度 <span id="activationVal" class="val">0.70</span></label>
+          <input id="activation" type="range" min="0.2" max="1" step="0.05" value="0.7" />
+        </div>
 
-                for (let j = 0; j < currentLayer.neurons; j++) {
-                    const y1 = getYPosition(j, currentLayer.neurons);
+        <div class="line">
+          <label>传播速度 <span id="speedVal" class="val">1.00</span></label>
+          <input id="speed" type="range" min="0.5" max="2" step="0.1" value="1.0" />
+        </div>
 
-                    for (let k = 0; k < nextLayer.neurons; k++) {
-                        const y2 = getYPosition(k, nextLayer.neurons);
+        <div class="btn-row">
+          <button id="forwardBtn">▶ 前向传播</button>
+          <button id="autoBtn">🔄 自动演示</button>
+          <button id="resetBtn" class="secondary">↺ 重置</button>
+        </div>
 
-                        ctx.beginPath();
-                        ctx.moveTo(currentLayer.x, y1);
-                        ctx.lineTo(nextLayer.x, y2);
+        <div id="status" class="status">准备就绪：点击“前向传播”查看信号从左到右流动。</div>
 
-                        if (isAnimating && i < animationProgress) {
-                            ctx.strokeStyle = '#667eea';
-                            ctx.lineWidth = 2;
-                        } else {
-                            ctx.strokeStyle = '#e0e0e0';
-                            ctx.lineWidth = 1;
-                        }
+        <div class="stats">
+          <strong>参数规模（真实层宽）</strong><br />
+          第1层：400 × 25 + 25 = <strong>10,025</strong><br />
+          第2层：25 × 15 + 15 = <strong>390</strong><br />
+          输出层：15 × 1 + 1 = <strong>16</strong><br />
+          总参数：<strong>10,431</strong>
+        </div>
+      </div>
+    </div>
+  </div>
 
-                        ctx.stroke();
-                    }
-                }
+  <script>
+    (function () {
+      const canvas = document.getElementById('networkCanvas');
+      const context = canvas.getContext('2d');
+
+      const controls = {
+        density: document.getElementById('density'),
+        activation: document.getElementById('activation'),
+        speed: document.getElementById('speed'),
+      };
+
+      const labels = {
+        density: document.getElementById('densityVal'),
+        activation: document.getElementById('activationVal'),
+        speed: document.getElementById('speedVal'),
+      };
+
+      const forwardBtn = document.getElementById('forwardBtn');
+      const autoBtn = document.getElementById('autoBtn');
+      const resetBtn = document.getElementById('resetBtn');
+      const statusEl = document.getElementById('status');
+
+      const layers = [
+        { name: '输入层\n(400)', x: 95, shown: 10, color: '#4caf50', real: 400 },
+        { name: '隐藏层1\n(25)', x: 305, shown: 8, color: '#2f8df8', real: 25 },
+        { name: '隐藏层2\n(15)', x: 520, shown: 6, color: '#ff9800', real: 15 },
+        { name: '输出层\n(1)', x: 740, shown: 1, color: '#f44336', real: 1 },
+      ];
+
+      const state = {
+        density: Number(controls.density.value),
+        activation: Number(controls.activation.value),
+        speed: Number(controls.speed.value),
+        auto: false,
+        phase: -1,
+      };
+
+      let animationTimer = null;
+      let autoTimer = null;
+
+      function syncLabels() {
+        labels.density.textContent = state.density.toFixed(2);
+        labels.activation.textContent = state.activation.toFixed(2);
+        labels.speed.textContent = state.speed.toFixed(2);
+      }
+
+      function neuronY(index, total) {
+        const top = 90;
+        const height = 270;
+        if (total === 1) return top + height / 2;
+        const gap = height / (total - 1);
+        return top + gap * index;
+      }
+
+      function drawLayerTitles() {
+        context.fillStyle = '#2a385d';
+        context.textAlign = 'center';
+        context.font = 'bold 18px Segoe UI';
+        layers.forEach((layer) => {
+          const lines = layer.name.split('\n');
+          context.fillText(lines[0], layer.x, 30);
+          context.fillStyle = '#4a5f8f';
+          context.font = 'bold 16px Segoe UI';
+          context.fillText(lines[1], layer.x, 53);
+          context.fillStyle = '#2a385d';
+          context.font = 'bold 18px Segoe UI';
+        });
+      }
+
+      function shouldDrawConnection(fromIndex, toIndex) {
+        const key = (fromIndex + 1) * 131 + (toIndex + 1) * 197;
+        const normalized = (Math.sin(key) + 1) / 2;
+        return normalized <= state.density;
+      }
+
+      function drawConnections() {
+        for (let layerIndex = 0; layerIndex < layers.length - 1; layerIndex += 1) {
+          const current = layers[layerIndex];
+          const next = layers[layerIndex + 1];
+          const activeBand = state.phase === layerIndex;
+
+          for (let i = 0; i < current.shown; i += 1) {
+            const fromY = neuronY(i, current.shown);
+            for (let j = 0; j < next.shown; j += 1) {
+              if (!shouldDrawConnection(i + layerIndex * 10, j + layerIndex * 20)) {
+                continue;
+              }
+
+              const toY = neuronY(j, next.shown);
+              context.beginPath();
+              context.moveTo(current.x + 14, fromY);
+              context.lineTo(next.x - 14, toY);
+
+              if (activeBand) {
+                context.strokeStyle = `rgba(79, 111, 230, ${0.35 + state.activation * 0.45})`;
+                context.lineWidth = 1.8;
+              } else {
+                context.strokeStyle = 'rgba(150, 171, 231, 0.52)';
+                context.lineWidth = 1.05;
+              }
+              context.stroke();
             }
+          }
+        }
+      }
 
-            // 绘制神经元
-            layers.forEach((layer, layerIndex) => {
-                for (let i = 0; i < layer.neurons; i++) {
-                    const y = getYPosition(i, layer.neurons);
+      function drawNeurons() {
+        layers.forEach((layer, layerIndex) => {
+          for (let i = 0; i < layer.shown; i += 1) {
+            const y = neuronY(i, layer.shown);
+            const active = state.phase >= layerIndex;
 
-                    // 神经元圆圈
-                    ctx.beginPath();
-                    ctx.arc(layer.x, y, 15, 0, Math.PI * 2);
+            context.beginPath();
+            context.arc(layer.x, y, 14, 0, Math.PI * 2);
+            context.fillStyle = active ? layer.color : '#f0f4ff';
+            context.fill();
 
-                    if (isAnimating && layerIndex <= animationProgress) {
-                        ctx.fillStyle = layer.color;
-                        ctx.shadowBlur = 15;
-                        ctx.shadowColor = layer.color;
-                    } else {
-                        ctx.fillStyle = 'white';
-                        ctx.shadowBlur = 0;
-                    }
+            context.strokeStyle = layer.color;
+            context.lineWidth = 2;
+            context.stroke();
 
-                    ctx.fill();
-                    ctx.strokeStyle = layer.color;
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
-                    ctx.shadowBlur = 0;
-                }
+            if (active) {
+              context.shadowColor = layer.color;
+              context.shadowBlur = 10 + state.activation * 10;
+              context.beginPath();
+              context.arc(layer.x, y, 14, 0, Math.PI * 2);
+              context.strokeStyle = `rgba(255,255,255,${0.2 + state.activation * 0.3})`;
+              context.lineWidth = 1;
+              context.stroke();
+              context.shadowBlur = 0;
+            }
+          }
+        });
+      }
 
-                // 层标签
-                ctx.fillStyle = '#333';
-                ctx.font = 'bold 14px Arial';
-                ctx.textAlign = 'center';
-                const lines = layer.label.split('\n');
-                lines.forEach((line, idx) => {
-                    ctx.fillText(line, layer.x, 30 + idx * 20);
-                });
-            });
+      function drawCountHints() {
+        context.fillStyle = '#6c80b1';
+        context.font = '12px Segoe UI';
+        context.textAlign = 'center';
+        layers.forEach((layer) => {
+          if (layer.real !== layer.shown) {
+            context.fillText(`示意 ${layer.shown}/${layer.real}`, layer.x, 390);
+          }
+        });
+      }
+
+      function render() {
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        drawLayerTitles();
+        drawConnections();
+        drawNeurons();
+        drawCountHints();
+        reportHeight();
+      }
+
+      function stopForward() {
+        if (animationTimer) {
+          clearInterval(animationTimer);
+          animationTimer = null;
+        }
+      }
+
+      function startForward() {
+        if (animationTimer) {
+          return;
+        }
+        stopAutoPlay();
+        state.phase = -1;
+        statusEl.textContent = '前向传播中：信号从输入层依次流向隐藏层与输出层。';
+        render();
+
+        const interval = Math.max(220, 650 / Math.max(0.5, state.speed));
+        animationTimer = setInterval(() => {
+          state.phase += 1;
+          render();
+
+          if (state.phase >= layers.length - 1) {
+            stopForward();
+            statusEl.textContent = '前向传播完成：输出层已得到分类概率。';
+          }
+        }, interval);
+      }
+
+      function startAutoPlay() {
+        if (state.auto) {
+          stopAutoPlay();
+          return;
         }
 
-        function getYPosition(index, total) {
-            const spacing = 300 / (total + 1);
-            return 80 + spacing * (index + 1);
+        stopForward();
+        state.auto = true;
+        autoBtn.textContent = '⏸ 停止自动演示';
+        statusEl.textContent = '自动演示中：循环展示前向传播过程。';
+
+        const cycle = () => {
+          state.phase = -1;
+          render();
+
+          const interval = Math.max(180, 530 / Math.max(0.5, state.speed));
+          let localTimer = setInterval(() => {
+            state.phase += 1;
+            render();
+            if (state.phase >= layers.length - 1) {
+              clearInterval(localTimer);
+            }
+          }, interval);
+        };
+
+        cycle();
+        autoTimer = setInterval(cycle, Math.max(1400, 3000 / Math.max(0.5, state.speed)));
+      }
+
+      function stopAutoPlay() {
+        if (!state.auto && !autoTimer) {
+          return;
         }
-
-        function animateForward() {
-            if (isAnimating) return;
-
-            isAnimating = true;
-            animationProgress = 0;
-
-            const interval = setInterval(() => {
-                animationProgress++;
-                drawNetwork();
-
-                if (animationProgress >= layers.length) {
-                    clearInterval(interval);
-                    setTimeout(() => {
-                        isAnimating = false;
-                    }, 1000);
-                }
-            }, 600);
+        state.auto = false;
+        if (autoTimer) {
+          clearInterval(autoTimer);
+          autoTimer = null;
         }
+        autoBtn.textContent = '🔄 自动演示';
+      }
 
-        function resetAnimation() {
-            isAnimating = false;
-            animationProgress = 0;
-            drawNetwork();
+      function resetAll() {
+        stopForward();
+        stopAutoPlay();
+        state.phase = -1;
+        statusEl.textContent = '准备就绪：点击“前向传播”查看信号从左到右流动。';
+        render();
+      }
+
+      function bind() {
+        forwardBtn.addEventListener('click', startForward);
+        autoBtn.addEventListener('click', startAutoPlay);
+        resetBtn.addEventListener('click', resetAll);
+
+        Object.entries(controls).forEach(([key, element]) => {
+          element.addEventListener('input', () => {
+            state[key] = Number(element.value);
+            syncLabels();
+            render();
+          });
+        });
+
+        window.addEventListener('resize', reportHeight, { passive: true });
+        if ('ResizeObserver' in window) {
+          const observer = new ResizeObserver(reportHeight);
+          observer.observe(document.body);
+          observer.observe(document.documentElement);
         }
+      }
 
-        // 初始绘制
-        drawNetwork();
-    </script>
+      function reportHeight() {
+        if (window.parent === window) return;
+        const body = document.body;
+        const root = document.documentElement;
+        const h = Math.max(
+          body ? body.scrollHeight : 0,
+          body ? body.offsetHeight : 0,
+          root ? root.scrollHeight : 0,
+          root ? root.offsetHeight : 0
+        );
+        window.parent.postMessage({ type: 'iframe-height', height: h }, '*');
+      }
 
-<script>
-(function () {
-  const sendHeight = () => {
-    if (window.parent === window) return;
-    const body = document.body;
-    const root = document.documentElement;
-    const height = Math.max(
-      body ? body.scrollHeight : 0,
-      body ? body.offsetHeight : 0,
-      root ? root.scrollHeight : 0,
-      root ? root.offsetHeight : 0
-    );
-    window.parent.postMessage({ type: 'iframe-height', height }, '*');
-  };
+      function init() {
+        syncLabels();
+        bind();
+        render();
+        setTimeout(reportHeight, 120);
+        setTimeout(reportHeight, 500);
+      }
 
-  window.addEventListener('load', sendHeight);
-  window.addEventListener('resize', sendHeight);
-
-  if ('ResizeObserver' in window) {
-    const observer = new ResizeObserver(sendHeight);
-    if (document.body) observer.observe(document.body);
-    if (document.documentElement) observer.observe(document.documentElement);
-  }
-
-  requestAnimationFrame(sendHeight);
-  setTimeout(sendHeight, 250);
-  setTimeout(sendHeight, 1000);
-})();
-</script>
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init, { once: true });
+      } else {
+        init();
+      }
+    })();
+  </script>
 </body>
 </html>
