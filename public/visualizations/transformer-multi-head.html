@@ -35,12 +35,15 @@ body {
   line-height: 1.6;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
 .container {
-  max-width: 960px;
+  max-width: 100%;
+  width: 960px;
   margin: 0 auto;
   padding: 32px 20px 48px;
+  box-sizing: border-box;
 }
 
 .page-title {
@@ -130,6 +133,7 @@ body {
 
 canvas {
   display: block;
+  max-width: 100%;
 }
 
 .multi-heads-row {
@@ -191,6 +195,7 @@ canvas {
   display: flex;
   justify-content: center;
   overflow-x: auto;
+  max-width: 100%;
 }
 
 /* Section 3: Heatmaps */
@@ -410,7 +415,7 @@ input[type="range"]::-moz-range-thumb {
       <div class="comparison-panel">
         <h4 class="panel-label-single">单头注意力 (Single Head)</h4>
         <div class="canvas-wrap">
-          <canvas id="singleHeadCanvas" width="380" height="260"></canvas>
+          <canvas id="singleHeadCanvas"></canvas>
         </div>
         <p style="text-align:center;color:var(--muted);font-size:0.75rem;margin-top:8px;">仅捕获语法关系</p>
       </div>
@@ -419,19 +424,19 @@ input[type="range"]::-moz-range-thumb {
         <div class="multi-heads-row" id="multiHeadGrid">
           <div class="mini-head-wrap">
             <div class="mini-head-label" style="color:var(--head1)">Head 1: 语法</div>
-            <canvas id="mh1" width="170" height="115"></canvas>
+            <canvas id="mh1"></canvas>
           </div>
           <div class="mini-head-wrap">
             <div class="mini-head-label" style="color:var(--head2)">Head 2: 位置</div>
-            <canvas id="mh2" width="170" height="115"></canvas>
+            <canvas id="mh2"></canvas>
           </div>
           <div class="mini-head-wrap">
             <div class="mini-head-label" style="color:var(--head3)">Head 3: 指代</div>
-            <canvas id="mh3" width="170" height="115"></canvas>
+            <canvas id="mh3"></canvas>
           </div>
           <div class="mini-head-wrap">
             <div class="mini-head-label" style="color:var(--head4)">Head 4: 语义</div>
-            <canvas id="mh4" width="170" height="115"></canvas>
+            <canvas id="mh4"></canvas>
           </div>
         </div>
       </div>
@@ -448,7 +453,7 @@ input[type="range"]::-moz-range-thumb {
       <span class="step-indicator" id="stepLabel">步骤 0 / 4</span>
     </div>
     <div class="anim-canvas-wrap">
-      <canvas id="animCanvas" width="920" height="380"></canvas>
+      <canvas id="animCanvas"></canvas>
     </div>
   </div>
 
@@ -597,9 +602,12 @@ const ALL_HEADS = [ATTN_HEAD1, ATTN_HEAD2, ATTN_HEAD3, ATTN_HEAD4];
 // ===============================
 // Section 1: Single vs Multi-Head Comparison
 // ===============================
-function drawAttentionArcs(canvasId, tokens, patterns, color, w, h) {
+function drawAttentionArcs(canvasId, tokens, patterns, color, requestedW, requestedH) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
+  const container = canvas.parentElement;
+  const w = Math.min(requestedW, container.clientWidth - 4);
+  const h = Math.round(requestedH * (w / requestedW));
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
 
@@ -701,24 +709,28 @@ function drawAnimFrame() {
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
-  const W = 920, H = 380;
+  const container = canvas.parentElement;
+  const W = Math.min(920, container.clientWidth - 4);
+  const scale = W / 920;
+  const H = Math.round(380 * scale);
 
   canvas.width = W * dpr;
   canvas.height = H * dpr;
   canvas.style.width = W + 'px';
   canvas.style.height = H + 'px';
-  ctx.scale(dpr, dpr);
-  ctx.clearRect(0, 0, W, H);
+  ctx.scale(dpr * scale, dpr * scale);
+  ctx.clearRect(0, 0, 920, 380);
 
   const p = animProgress;
 
-  // Layout
+  // Layout (using original 920x380 coordinate system, scaled by ctx.scale)
+  const OW = 920, OH = 380;
   const inputX = 40;
   const splitX = 185;
   const attnX = 380;
   const concatX = 600;
   const outputX = 780;
-  const midY = H / 2;
+  const midY = OH / 2;
 
   const cellW = 20, cellH = 28;
   const dmodel = 8;
@@ -814,7 +826,7 @@ function drawAnimFrame() {
   ctx.fillStyle = COLORS.text;
   ctx.font = '600 14px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText(STEP_LABELS[animStep], W / 2, 24);
+  ctx.fillText(STEP_LABELS[animStep], OW / 2, 24);
 
   // Step 1+: split arrows and head vectors
   const headGap = 70;
@@ -1046,8 +1058,12 @@ function buildHeatmaps() {
 
 function drawHeatmap(canvas, pattern, headColor) {
   const dpr = window.devicePixelRatio || 1;
-  const cellSz = 36;
+  const container = canvas.parentElement;
+  const maxAvail = container.clientWidth - 4;
   const labelSpace = 42;
+  const idealCellSz = 36;
+  const idealW = labelSpace + N * idealCellSz + 4;
+  const cellSz = idealW <= maxAvail ? idealCellSz : Math.floor((maxAvail - labelSpace - 4) / N);
   const W = labelSpace + N * cellSz + 4;
   const H = labelSpace + N * cellSz + 4;
 
