@@ -7,7 +7,7 @@ const siteMetadata = {
     'The purpose of this blog is to share his insights and experiences in the field of technology, programming, and personal thoughts.',
   language: 'en-us',
   theme: 'gradient', // system, dark, light or gradient
-  siteUrl: 'https://tailwind-nextjs-starter-blog.vercel.app',
+  siteUrl: 'https://allenblog.icu',
   siteRepo: 'https://github.com/kkkano/allen_blog',
   siteLogo: `${process.env.BASE_PATH || ''}/static/images/logo.png`,
   socialBanner: `${process.env.BASE_PATH || ''}/static/images/twitter-card.png`,
