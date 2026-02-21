@@ -4,7 +4,7 @@ date: '2026-02-21'
 tags: ['AI', 'OpenClaw', 'Telegram Bot', 'DevOps', 'self-hosted']
 draft: false
 comments: true
-summary: '一篇完整的 OpenClaw 部署记录：从腾讯云服务器搭建、Docker 构建、GFW 绕行（Xray + Chromium 包装脚本翻墙）、Telegram Bot 接入、161 个 Skills 同步、记忆系统配置（远程 embedding 失败 → hf-mirror.com 镜像下载 → 本地 node-llama-cpp 模型）、浏览器自动化（/dev/shm OOM、SingletonLock 残留、CDP 端口推导、Chrome Profile 自动选择陷阱、Playwright snapshot 验证、GFW 导航超时根因分析），到 Claude Code 与 Telegram Bot 的双向记忆同步架构。踩了 21 个坑，每个都有完整的根因分析。'
+summary: '一篇完整的 OpenClaw 部署记录：从腾讯云服务器搭建、Docker 构建、GFW 绕行（Xray + Chromium 包装脚本翻墙）、Telegram Bot 接入、161 个 Skills 同步、记忆系统配置（远程 embedding 失败 → hf-mirror.com 镜像下载 → 本地 node-llama-cpp 模型）、浏览器自动化（/dev/shm OOM、SingletonLock 残留、CDP 端口推导、Chrome Profile 自动选择陷阱、Playwright snapshot 验证、GFW 导航超时根因分析），到 Claude Code 与 Telegram Bot 的双向记忆同步架构（SQLite → Markdown 导出 → GitHub 私有仓库 → cron 定时推送）。踩了 21 个坑，每个都有完整的根因分析。'
 authors: ['allen']
 ---
 
@@ -1143,6 +1143,8 @@ sudo docker compose logs -f openclaw-gateway
 | `/home/ubuntu/.openclaw/workspace/skills/`   | Skills 目录           | 161 个 skill 的 SKILL.md                     |
 | `/home/ubuntu/.openclaw/models/`             | 本地模型目录          | embeddinggemma GGUF 文件 (314MB)             |
 | `/home/ubuntu/openclaw/post-start.sh`        | 容器启动后修复脚本    | 部署 Chrome 代理包装 + 预启动 Chrome         |
+| `/home/ubuntu/scripts/sync-memory.sh`        | 记忆同步脚本          | 每 6 小时推送记忆到 GitHub                   |
+| `/home/ubuntu/openclaw-memory/`              | 记忆同步仓库（本地）  | git 仓库，自动 push 到 GitHub                |
 | `/etc/xray/config.json`                      | Xray 代理配置         | VMess outbound, SOCKS5:10808, HTTP:10809     |
 | `/etc/systemd/system/xray.service`           | Xray systemd 服务     | 开机自启、自动重启                           |
 
@@ -1160,10 +1162,11 @@ sudo docker compose logs -f openclaw-gateway
 
 ### 本地开发机
 
-| 文件                 | 用途                    | 说明                              |
-| -------------------- | ----------------------- | --------------------------------- |
-| `~/.claude/skills/`  | Claude Code Skills 目录 | 同步到服务器的 161 个 Skills 来源 |
-| `sync_all_skills.py` | Skills 同步脚本         | Python + paramiko，递归上传       |
+| 文件                  | 用途                    | 说明                              |
+| --------------------- | ----------------------- | --------------------------------- |
+| `~/.claude/skills/`   | Claude Code Skills 目录 | 同步到服务器的 161 个 Skills 来源 |
+| `sync_all_skills.py`  | Skills 同步脚本         | Python + paramiko，递归上传       |
+| `D:/openclaw-memory/` | 记忆同步仓库（本地）    | 从 GitHub pull Bot 的记忆导出     |
 
 > **最重要的文件**：`/home/ubuntu/.openclaw/openclaw.json`——几乎所有配置都在这一个文件里。OpenClaw 支持热重载（不用重启容器），改完配置几秒后自动生效。
 
@@ -1203,11 +1206,130 @@ sudo systemctl enable xray
 
 ---
 
-## 十六、还可以做什么
+## 十六、记忆同步架构
+
+部署完 Bot 之后，一个自然的需求是：**让 Telegram Bot 和本地的 Claude Code 共享记忆**。
+
+这样无论是在 Telegram 里聊天还是在终端里写代码，AI 都知道你是谁、之前聊过什么。
+
+### 16.1 记忆存储格式
+
+OpenClaw 的记忆存在 SQLite 数据库中（不是 JSON 文件）：
+
+```
+/home/ubuntu/.openclaw/
+├── memory/
+│   └── default.sqlite          # 核心记忆数据库
+│       ├── chunks              # 记忆片段（文本 + 768 维向量 embedding）
+│       ├── chunks_fts          # 全文搜索索引（FTS5）
+│       ├── chunks_vec          # 向量搜索索引（vec0）
+│       ├── files               # 已索引文件列表
+│       ├── embedding_cache     # embedding 缓存
+│       └── meta                # 模型配置元信息
+├── agents/default/sessions/
+│   ├── *.jsonl                 # 完整对话日志（按会话 ID）
+│   └── sessions.json           # 会话元数据索引
+└── models/
+    └── embeddinggemma-300m-qat-Q8_0.gguf  # 本地 embedding 模型
+```
+
+### 16.2 同步架构
+
+用一个 **私有 GitHub 仓库** 作为桥梁，两边各自读写：
+
+```
+Telegram Bot (腾讯云)              GitHub 私有仓库            Claude Code (本地)
+       │                          (openclaw-memory)                │
+       │                                │                         │
+       │  cron 每6小时 push ──────────► │                         │
+       │  · memory.sqlite               │ ◄────── git pull        │
+       │  · memory-export.md            │    读取 Bot 的记忆       │
+       │  · sessions-meta.json          │                         │
+       │  · config-sanitized.json       │                         │
+       │                                │                         │
+       └──── telegram-bot/ ───────────► │ ◄──── claude-code/ ─────┘
+                                        │
+                                   shared/ (双向)
+```
+
+仓库目录结构：
+
+```
+openclaw-memory/                        # 私有仓库
+├── .sync-status.json                   # 最后同步时间戳
+├── telegram-bot/                       # Bot 推送的数据
+│   ├── db/memory.sqlite                # SQLite 记忆数据库副本
+│   ├── export/memory-export.md         # 记忆导出为 Markdown（Claude Code 可读）
+│   └── sessions/
+│       ├── sessions-meta.json          # 会话元数据
+│       └── session-stats.md            # 会话统计
+├── claude-code/                        # Claude Code 的数据（预留）
+└── shared/                             # 共享区
+    └── config-sanitized.json           # 脱敏后的配置
+```
+
+### 16.3 同步脚本
+
+服务器上的 cron 定时任务，每 6 小时执行一次：
+
+```bash
+# /home/ubuntu/scripts/sync-memory.sh
+# 核心逻辑：
+# 1. sudo cp SQLite 数据库（Docker 以 root 写入，需要提权）
+# 2. sqlite3 导出记忆为 Markdown（Claude Code 直接可读）
+# 3. 复制会话元数据（不复制 GB 级的原始 jsonl 日志）
+# 4. python3 脱敏导出 openclaw.json（移除 token/key/secret）
+# 5. git add + commit + push
+
+# crontab -e
+0 */6 * * * /home/ubuntu/scripts/sync-memory.sh >> /home/ubuntu/logs/memory-sync.log 2>&1
+```
+
+关键细节：
+
+- Docker 容器以 **root** 运行，持续覆写文件权限为 `0600/root`，所以同步脚本用 `sudo cp` + `chown`
+- 只同步 **元数据和导出**，不同步原始 `.jsonl` 对话日志（太大，且含敏感内容）
+- SQLite 导出为 Markdown 时，按 `updated_at DESC` 排序，最新记忆在最前面
+- 配置文件用 python 脱敏，自动过滤 `token`、`key`、`secret`、`password` 等字段
+
+### 16.4 Claude Code 侧怎么用
+
+本地克隆仓库后，在 `CLAUDE.md` 里引用 Bot 的记忆：
+
+```bash
+# 克隆（只需一次）
+git clone git@github.com:yourname/openclaw-memory.git D:/openclaw-memory
+
+# 后续拉取最新记忆
+cd D:/openclaw-memory && git pull
+```
+
+在 `~/.claude/CLAUDE.md` 中添加：
+
+```markdown
+## Shared Memory with Telegram Bot
+
+Bot memory export: D:/openclaw-memory/telegram-bot/export/memory-export.md
+Bot config: D:/openclaw-memory/shared/config-sanitized.json
+```
+
+这样 Claude Code 启动时就能读到 Bot 最新的记忆状态了。
+
+### 16.5 为什么不直接共享 SQLite
+
+| 方案                   | 优点                                | 缺点                                                |
+| ---------------------- | ----------------------------------- | --------------------------------------------------- |
+| **直接共享 SQLite**    | 数据完整                            | Claude Code 不原生支持读 SQLite；文件二进制 diff 大 |
+| **导出为 Markdown** ✅ | Claude Code 直接可读；git diff 友好 | 丢失向量 embedding                                  |
+| **两边都用**           | 兼顾                                | 当前方案：SQLite 做备份，Markdown 做日常共享        |
+
+---
+
+## 十七、还可以做什么
 
 1. **Dockerfile 固化**：把 Chromium 包装脚本写进 Dockerfile 的 `RUN` 层或 entrypoint 脚本，彻底根治容器重建问题
 2. **HTTPS + 域名**：给 Gateway 加上 Nginx + Let's Encrypt
-3. **记忆 GitHub 同步**：定时把容器内的记忆文件推送到 GitHub 仓库，实现 Telegram Bot 和 Claude Code 的双向同步
+3. ~~**记忆 GitHub 同步**~~ ✅ 已实现！cron 每 6 小时自动推送到 `openclaw-memory` 私有仓库
 4. **监控告警**：Uptime Robot 或自建 healthcheck，Bot 挂了及时通知
 5. **多 Agent 支持**：配置不同人格的 Agent，根据对话场景切换
 6. **限流 & 认证**：生产环境应该限制 `allowFrom`，避免被滥用
