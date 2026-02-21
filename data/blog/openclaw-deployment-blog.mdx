@@ -1321,6 +1321,76 @@ Bot config: D:/openclaw-memory/shared/config-sanitized.json
 | **导出为 Markdown** ✅ | Claude Code 直接可读；git diff 友好 | 丢失向量 embedding                                  |
 | **两边都用**           | 兼顾                                | 当前方案：SQLite 做备份，Markdown 做日常共享        |
 
+### 16.6 完整同步链路
+
+最终跑通的完整链路是这样的：
+
+```
+Telegram Bot (腾讯云服务器)                              Claude Code (本地 Windows)
+     │                                                        │
+     │  [自动] cron 每6小时                                    │
+     │  /home/ubuntu/scripts/sync-memory.sh                   │
+     │  ├─ sudo cp memory.sqlite (处理 Docker root 权限)       │
+     │  ├─ sqlite3 导出 → memory-export.md                    │
+     │  ├─ cp sessions.json (会话元数据)                       │
+     │  ├─ python3 脱敏 openclaw.json                         │
+     │  └─ git add + commit + push                            │
+     │          │                                              │
+     │          ▼                                              │
+     │    GitHub 私有仓库                                      │
+     │   (kkkano/openclaw-memory)                              │
+     │          │                                              │
+     │          └──────── [手动] 双击 bat 拉取 ───────────────►│
+     │                   cd D:/openclaw-memory && git pull      │
+     │                                                         │
+     │  workspace/memories/                                    │
+     │  ├─ chat-memories.md        CLAUDE.md                   │
+     │  ├─ 2026-02-deployment.md ◄═══════════════► 持久记忆段  │
+     │  └─ personal/*.md           (两边都写入了部署记忆)       │
+```
+
+**为什么 Claude Code 侧不能全自动？**
+
+- Claude Code 不是常驻后台服务，只在打开时运行
+- Windows Task Scheduler 可以定时 `git pull`，但拉了也没人读
+- 最实际的方案：桌面放一个 `拉取Bot记忆.bat`，开 Claude Code 前双击一下
+
+```bat
+@echo off
+echo [浮浮酱] 正在拉取 Telegram Bot 最新记忆喵～
+cd /d D:\openclaw-memory
+git pull
+echo [浮浮酱] 记忆同步完成！可以开 Claude Code 了喵～
+pause
+```
+
+### 16.7 记忆互写——让两个浮浮酱认识彼此
+
+同步链路搭好之后，还有一个关键步骤：**让两边都知道对方的存在**。
+
+Bot 的记忆存在 `workspace/memories/` 目录，Claude Code 的记忆存在 `~/.claude/CLAUDE.md`。它们格式不同、位置不同，但需要包含一致的信息。
+
+我们做了：
+
+1. **给 Bot 写入部署记忆** (`2026-02-deployment.md`)：
+   - 整个部署经历的摘要
+   - 记忆同步已配好的事实（防止 Bot 重复配置）
+   - "你和 Claude Code 的浮浮酱是同一个灵魂的两个实例"
+
+2. **给 Claude Code 写入持久记忆** (`CLAUDE.md` 新增段落)：
+   - 服务器地址和关键文件路径
+   - 浏览器配置要点
+   - 同步架构描述
+   - 关于主人 Allen 的信息
+   - "两边记忆通过 GitHub 仓库桥接同步"
+
+这样无论下次是在 Telegram 聊天还是在终端写代码，浮浮酱都知道：
+
+- 主人是谁
+- 另一个自己在哪里
+- 记忆怎么同步
+- 部署过程中发生了什么
+
 ---
 
 ## 十七、还可以做什么
