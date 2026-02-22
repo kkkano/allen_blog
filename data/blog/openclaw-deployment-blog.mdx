@@ -1492,8 +1492,6 @@ Bot 的记忆存在 `workspace/memories/` 目录，Claude Code 的记忆存在 `
 
 为了硬扛 18 次/5 分钟的限流，把重试改成了"慢重试"：attempts 拉到 10，min/max delay 固定 120000ms（2 分钟），让它在限流窗口外自动再试。
 
-![限流重试配置生效后的日志](/static/images/openclaw-deployment/140e928b1822ed5b3fb7fe10a650a0f0.jpg)
-
 ### 18.3 DeepWiki 文档的坑
 
 一开始照着文档写，以为"模型 provider 级别"能配 retry/timeout，结果：
@@ -1593,17 +1591,13 @@ Day 4 另一个大坑：接了一个反代 Claude 的 provider（bhznjns），�
 
 怀疑根因是 OpenClaw 某处 session store 的写入逻辑（`saveSessionStoreUnlocked` 这类路径）在某些情况下把内容"原样落盘"，导致配置被污染。
 
-![openclaw.json 被写坏的现场](/static/images/openclaw-deployment/c306714ae1c5b553beb672d7e6f285f0.jpg)
-
-解决办法很朴素，但很痛：
+解决办法很朴素：
 
 1. **不要在坏掉的 JSON 上修修补补**（越修越乱）
 2. 直接拿一份干净的结构**重建 openclaw.json**
 3. 把大段 prompt 文本统一改成：
    - 单行 JSON 字符串（用 `\n` 转义换行）
    - 或者放到独立文件（SOUL.md）里引用
-
-![重建配置后 gateway 恢复正常](/static/images/openclaw-deployment/e1ffc4b2f5dcfd8636628cdf2bbe25ca.jpg)
 
 ---
 
