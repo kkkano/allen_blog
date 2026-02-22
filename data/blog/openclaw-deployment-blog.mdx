@@ -1,6 +1,6 @@
 ---
 title: '从零部署 OpenClaw 到 Telegram 的完整记录'
-date: '2026-02-21'
+date: '2026-02-22'
 tags: ['AI', 'OpenClaw', 'Telegram Bot', 'DevOps', 'self-hosted']
 draft: false
 comments: true
@@ -65,6 +65,16 @@ Day 3（下午→晚上）
     → defaultProfile 设了但不生效（AI 模型被工具描述引导）
     → 最终：两个 profile 都指向 CDP 端口 18800
   → Bot 成功自主浏览 Hacker News 并汇报热帖 🎉
+
+Day 4（02-22）
+  → 接入 bhznjns 反代 Claude provider
+  → 发现 Bot 身份串味（坚称自己在 claude.ai）
+  → 三层环境注入修复：SOUL.md + identity.theme + compaction systemPrompt
+  → 配置限流重试：channels.telegram.retry（attempts=10, delay=120s）
+  → 踩 strict schema 坑：DeepWiki 文档键名 ≠ JSON 配置键名
+  → openclaw.json 被真实换行符写坏 → 重建配置文件
+  → Subagent 拉不起来 → 排查到 operator.write scope 缺失
+  → thinking 档位：Claude 用 high，Codex subagent 用 xhigh
 ```
 
 <TOCInline toc={props.toc} exclude="写在前面" />
@@ -1419,6 +1429,199 @@ Bot 的记忆存在 `workspace/memories/` 目录，Claude Code 的记忆存在 `
 
 ---
 
+## 十八、Day 4：API 限流、Strict Schema，以及"配置键写错直接炸容器"
+
+以为 Day 3 结束之后大坑都填完了。结果 Day 4 才是真正的硬仗。
+
+### 18.1 x666.me 的 18 次/5 分钟限流
+
+用的 LLM API（x666.me）有 **18 次/5 分钟** 的限流。不是那种一次就崩的错误，而是：
+
+- 某些回合突然卡住很久
+- 偶发 429 / rate limit
+- gateway 开始重启，但你完全不知道"重试到底配没配上"
+
+真正要命的是：你以为自己在某个地方配了 `maxRetries` / `timeout`，实际上 OpenClaw **严格校验 schema**，写错键名会导致 **gateway 直接启动失败**，进入 restart loop。
+
+这是 Day 4 最大的血泪教训：**别信"看起来像对的键名"，去看源码的 zod schema 才是最终真理。**
+
+> schema 源码位置：
+>
+> - `src/config/zod-schema.ts`
+> - `src/config/zod-schema.core.ts`
+> - `src/config/zod-schema.agent-defaults.ts`
+> - `src/config/zod-schema.providers-core.ts`
+
+### 18.2 真的生效的配置路径（写错就炸）
+
+踩过的无效键：
+
+- `models.providers.custom.maxRetries` ❌
+- `models.providers.custom.timeout` ❌
+- `agents.defaults.model.timeoutSeconds` ❌
+
+最后确认能生效的：
+
+**Telegram 通道级别**（最关键）：
+
+```json
+{
+  "channels": {
+    "telegram": {
+      "retry": {
+        "attempts": 10,
+        "minDelayMs": 120000,
+        "maxDelayMs": 120000,
+        "jitter": false
+      },
+      "timeoutSeconds": 300
+    }
+  }
+}
+```
+
+**Agent 默认超时**：
+
+```json
+{
+  "agents": {
+    "defaults": {
+      "timeoutSeconds": 300
+    }
+  }
+}
+```
+
+为了硬扛 18 次/5 分钟的限流，把重试改成了"慢重试"：attempts 拉到 10，min/max delay 固定 120000ms（2 分钟），让它在限流窗口外自动再试。
+
+![限流重试配置生效后的日志](/static/images/openclaw-deployment/140e928b1822ed5b3fb7fe10a650a0f0.jpg)
+
+### 18.3 DeepWiki 文档的坑
+
+一开始照着文档写，以为"模型 provider 级别"能配 retry/timeout，结果：
+
+- gateway 起不来
+- 容器反复重启
+- 日志里只看到 schema error
+
+后来才想明白：DeepWiki 里很多字段是**内部对象属性**，并不一定暴露成 `openclaw.json` 可写配置。
+
+结论只有一句：**OpenClaw 的配置以 zod schema 为准；文档只能当参考。**
+
+---
+
+## 十九、Day 4：反代 Claude 接入，以及"身份串味"
+
+Day 4 另一个大坑：接了一个反代 Claude 的 provider（bhznjns），模型能用、速度也还行，但带来了一个非常诡异的副作用：
+
+> Bot 在 Telegram 里，开始坚称自己"运行在 claude.ai 网页端"。
+
+不是单纯的角色扮演，而是一种"环境认知串味"：它会引用网页端能力、UI 入口，甚至假装自己能点按钮。
+
+![Bot 坚持说自己在 claude.ai](/static/images/openclaw-deployment/e0b75eafdcabfc0dac2eb9193daa3e9d.jpg)
+
+### 19.1 为什么会串味
+
+直觉是：当 provider 走反代/转译链路时，系统提示词的"绝对优先级"可能被削弱，或者被平台侧额外 prompt 混入；于是模型的训练时默认身份更容易浮出来。
+
+所以不再只依赖单点 system prompt，而是做"多层注入"，让"你在 Telegram Bot 里"这个事实变成强约束。
+
+### 19.2 三层环境注入
+
+**第一层：SOUL.md**
+
+在人格文件里明确写清楚：
+
+- 你是 Telegram 里的 Bot（@ufomiaobot）
+- 运行在 OpenClaw 网关里
+- 不能假设自己有网页 UI / 按钮 / 面板
+- 有工具边界：不知道就说不知道
+
+**第二层：`identity.theme`**
+
+在 `agents.list[0].identity.theme` 里再写一遍"运行环境声明"，让它作为 identity 的一部分长期存在。
+
+**第三层：compaction systemPrompt**
+
+防止长对话压缩后"环境信息被遗忘"，让每次记忆冲刷时都重新提醒一遍。
+
+三层一致之后，串味问题基本消失了。
+
+![三层环境注入配置](/static/images/openclaw-deployment/9309c27f2f49b38de4096d3fa3e5567f.jpg)
+
+---
+
+## 二十、Day 4：Subagent 拉不起来——最后发现是权限 scope 缺了
+
+主 agent 正常，一调用 subagent 就各种失败。看着像模型问题，像网络问题，像 API 问题，但都不是。
+
+最后排查到根因：**paired device 的 scope 缺少 `operator.write`**。
+
+虽然配了 `operator.read` / `operator.admin`，但没有写权限，subagent spawn 需要的能力不完整。
+
+修复方式：在 `paired.json` 里把 device 和 token 的 scopes 补齐：
+
+```json
+{
+  "scopes": ["operator.admin", "operator.read", "operator.write"]
+}
+```
+
+![subagent 配对权限修复](/static/images/openclaw-deployment/a6228456d4390c12b6e00f99a243e88e.jpg)
+
+### 20.1 thinking 档位也有坑：xhigh 不是谁都能用
+
+还踩了一个"看起来像性能调参"的坑：
+
+- Codex 系（gpt-5.3-codex）能吃 `xhigh`
+- Claude 系最多 `high`
+
+把默认 thinking 直接拉到 `xhigh`，可能出现不兼容或表现异常。最终方案：
+
+- Claude：`thinkingDefault: "high"`
+- Subagent（Codex）：单独配置 `thinking: "xhigh"`
+
+![thinking 档位与模型链路配置](/static/images/openclaw-deployment/aad330b56b113e5e353a5e17b5cbfaec.jpg)
+
+---
+
+## 二十一、Day 4：openclaw.json 被"写坏了"
+
+这次事故非常离谱，必须单开一节。
+
+现象：明明只是在调 systemPrompt / identity.theme 这种字符串字段，结果 gateway 一夜之间起不来，报 JSON 解析错误。
+
+回看文件才发现：有一段字符串被写进了**真实换行符**——不是 `\n`，而是文件里真的换行了，直接把 JSON 字符串结构破坏掉。
+
+怀疑根因是 OpenClaw 某处 session store 的写入逻辑（`saveSessionStoreUnlocked` 这类路径）在某些情况下把内容"原样落盘"，导致配置被污染。
+
+![openclaw.json 被写坏的现场](/static/images/openclaw-deployment/c306714ae1c5b553beb672d7e6f285f0.jpg)
+
+解决办法很朴素，但很痛：
+
+1. **不要在坏掉的 JSON 上修修补补**（越修越乱）
+2. 直接拿一份干净的结构**重建 openclaw.json**
+3. 把大段 prompt 文本统一改成：
+   - 单行 JSON 字符串（用 `\n` 转义换行）
+   - 或者放到独立文件（SOUL.md）里引用
+
+![重建配置后 gateway 恢复正常](/static/images/openclaw-deployment/e1ffc4b2f5dcfd8636628cdf2bbe25ca.jpg)
+
+---
+
+## 二十二、Day 4 小结
+
+Day 4 结束时，对 OpenClaw 有了新的理解：
+
+- strict schema 是双刃剑：可靠，但对"错一个键名"毫不留情
+- 反代/多 provider 的世界里，系统提示词不是银弹，"环境一致性"必须多层构建
+- subagent 的问题不要只盯模型、网络、API，**权限 scope** 也能直接把你卡死
+- `openclaw.json` 里的大段文本，老老实实用 `\n` 转义，别让换行符混进去
+
+以及最重要的一句：**当你觉得自己已经把坑踩完了，真正的大坑往往才刚刚开始。**
+
+---
+
 ## 写在最后
 
 从下午开始折腾，到凌晨才基本搞定。然后第二天又调了一整天——浏览器能启动但 snapshot 超时、embedding 模型 API 代理不支持、Chrome 崩溃后的 SingletonLock 残留、CDP 端口 18800 和 18793 傻傻分不清……第三天发现真正的 boss 是 GFW：Hacker News、Wikipedia、HuggingFace 全部被墙在 TCP 层，最终装了 Xray + Chromium 包装脚本才搞定翻墙。还有 Chrome Profile 的坑——OpenClaw 会自动创建一个 extension relay 的 "chrome" profile，AI 模型会被工具描述引导去选它，在无桌面的 Docker 环境里永远不会工作。
@@ -1433,5 +1636,5 @@ Bot 的记忆存在 `workspace/memories/` 目录，Claude Code 的记忆存在 `
 
 ---
 
-_Allen, 2026.02.21 凌晨_
+_Allen, 2026.02.22 深夜_
 _佛山禅城，又是一个人写到半夜_
