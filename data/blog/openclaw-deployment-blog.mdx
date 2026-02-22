@@ -667,13 +667,11 @@ workspace/
 
 一开始只是想让 Bot 自己开个浏览器探索互联网——结果引出了长达三天的浏览器踩坑之旅：
 
-![让 Bot 开浏览器 → 找不到 Chrome](/static/images/openclaw-deployment/browser-not-found.jpg)
+![让 Bot 开浏览器 → 找不到 Chrome，同时 web_search 也没配好](/static/images/openclaw-deployment/no-browser-no-search.jpg)
 
 "能，但你这台环境**现在开不起来**喵。没检测到 Chrome/Chromium/Edge 可执行文件。"
 
-同时 web_search 也没配好，Bot 完全没有外部信息获取能力：
-
-![没有搜索 + 没有浏览器](/static/images/openclaw-deployment/no-browser-no-search.jpg)
+同时 web_search 也没配好，Bot 完全没有外部信息获取能力。
 
 ### 8.2 安装 Chromium
 
