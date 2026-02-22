@@ -795,13 +795,13 @@ curl -x socks5h://127.0.0.1:40000 https://news.ycombinator.com/ --max-time 10
 
 **exit code 97**——WARP 虽然注册成功、状态显示 Connected，但从大陆云服务器实际发出的代理流量完全跑不通。
 
-主人一句话点破："**WARP 几乎无法在中国内地云服务器上稳定工作。即使今天通了，明天也会断。**"
+一句话点破："**WARP 几乎无法在中国内地云服务器上稳定工作。即使今天通了，明天也会断。**"
 
 果断放弃 WARP，切换方案一。
 
 ### 8.9 方案一：Xray + Clash 订阅（成功）
 
-主人提供了一个 Clash 订阅链接。从订阅中解码出 VMess 节点信息，配置到 Xray-core：
+使用 Clash 订阅链接。从订阅中解码出 VMess 节点信息，配置到 Xray-core：
 
 ```bash
 # 安装 Xray
