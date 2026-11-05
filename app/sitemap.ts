@@ -10,13 +10,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const blogRoutes = allBlogs
     .filter((post) => !post.draft)
     .map((post) => ({
-      url: `${siteUrl}/${post.path}`,
+      // Slugs may contain spaces or CJK characters; sitemap URLs must be percent-encoded
+      url: `${siteUrl}/${encodeURI(post.path)}`,
       lastModified: post.lastmod || post.date,
     }))
 
-  const routes = ['', 'blog', 'projects', 'tags'].map((route) => ({
+  // List pages change when a post is published, not on every build
+  const latestPost = blogRoutes
+    .map((route) => route.lastModified)
+    .sort()
+    .at(-1)
+  const routes = ['', 'blog', 'projects', 'tags', 'about'].map((route) => ({
     url: `${siteUrl}/${route}`,
-    lastModified: new Date().toISOString().split('T')[0],
+    lastModified: latestPost,
   }))
 
   return [...routes, ...blogRoutes]

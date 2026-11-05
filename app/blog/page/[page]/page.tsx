@@ -2,8 +2,14 @@ import ListLayout from '@/layouts/ListLayoutWithTags'
 import { allCoreContent, sortPosts } from 'pliny/utils/contentlayer'
 import { allBlogs } from 'contentlayer/generated'
 import { notFound } from 'next/navigation'
+import { genPageMetadata } from 'app/seo'
 
 const POSTS_PER_PAGE = 5
+
+export async function generateMetadata(props: { params: Promise<{ page: string }> }) {
+  const params = await props.params
+  return genPageMetadata({ title: `Blog · 第 ${params.page} 页` })
+}
 
 export const generateStaticParams = async () => {
   const totalPages = Math.ceil(allBlogs.length / POSTS_PER_PAGE)

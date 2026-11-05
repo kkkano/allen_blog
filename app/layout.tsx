@@ -22,17 +22,17 @@ const space_grotesk = Space_Grotesk({
 export const metadata: Metadata = {
   metadataBase: new URL(siteMetadata.siteUrl),
   title: {
-    default: siteMetadata.title,
+    default: `${siteMetadata.title} · Allen Wang 的 AI 与编程技术博客`,
     template: `%s | ${siteMetadata.title}`,
   },
-  description: siteMetadata.description,
+  description: siteMetadata.seoDescription,
   openGraph: {
     title: siteMetadata.title,
-    description: siteMetadata.description,
+    description: siteMetadata.seoDescription,
     url: './',
     siteName: siteMetadata.title,
     images: [siteMetadata.socialBanner],
-    locale: 'en_US',
+    locale: 'zh_CN',
     type: 'website',
   },
   alternates: {
@@ -51,6 +51,17 @@ export const metadata: Metadata = {
       'max-image-preview': 'large',
       'max-snippet': -1,
     },
+  },
+  // Search console ownership tags are configured as Vercel env vars, so no code change is needed to add them
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+    other: Object.fromEntries(
+      [
+        ['baidu-site-verification', process.env.NEXT_PUBLIC_BAIDU_SITE_VERIFICATION],
+        ['msvalidate.01', process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION],
+        ['bytedance-verification-code', process.env.NEXT_PUBLIC_BYTEDANCE_SITE_VERIFICATION],
+      ].filter(([, value]) => value)
+    ),
   },
   twitter: {
     title: siteMetadata.title,

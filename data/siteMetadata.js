@@ -5,7 +5,10 @@ const siteMetadata = {
   headerTitle: "Allen's Blog",
   description:
     'The purpose of this blog is to share his insights and experiences in the field of technology, programming, and personal thoughts.',
-  language: 'en-us',
+  language: 'zh-CN',
+  // Used for search engines, social cards, RSS and llms.txt; `description` stays the on-page English intro
+  seoDescription:
+    'Allen Wang 的个人技术博客：机器学习、深度学习、Transformer 与大模型（LLM）、AI Agent 工程实践笔记，以及编程与个人随笔。',
   theme: 'gradient', // system, dark, light or gradient
   siteUrl: 'https://allenblog.icu',
   siteRepo: 'https://github.com/kkkano/allen_blog',

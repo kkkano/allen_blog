@@ -1,6 +1,29 @@
 import { sortPosts, allCoreContent } from 'pliny/utils/contentlayer'
 import { allBlogs } from 'contentlayer/generated'
 import Main from './Main'
+import siteMetadata from '@/data/siteMetadata'
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'WebSite',
+      '@id': `${siteMetadata.siteUrl}/#website`,
+      url: siteMetadata.siteUrl,
+      name: siteMetadata.title,
+      description: siteMetadata.seoDescription,
+      inLanguage: siteMetadata.language,
+      author: { '@id': `${siteMetadata.siteUrl}/#author` },
+    },
+    {
+      '@type': 'Person',
+      '@id': `${siteMetadata.siteUrl}/#author`,
+      name: siteMetadata.author,
+      url: `${siteMetadata.siteUrl}/about`,
+      sameAs: [siteMetadata.github, siteMetadata.linkedin].filter(Boolean),
+    },
+  ],
+}
 
 export default async function Page() {
   const sortedPosts = sortPosts(allBlogs)
@@ -18,5 +41,13 @@ export default async function Page() {
     .slice(0, 8)
     .map(([tag]) => tag)
 
-  return <Main posts={posts} topTags={topTags} />
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <Main posts={posts} topTags={topTags} />
+    </>
+  )
 }

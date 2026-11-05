@@ -12,14 +12,14 @@ interface PageSEOProps {
 export function genPageMetadata({ title, description, image, ...rest }: PageSEOProps): Metadata {
   return {
     title,
-    description: description || siteMetadata.description,
+    description: description || siteMetadata.seoDescription,
     openGraph: {
       title: `${title} | ${siteMetadata.title}`,
-      description: description || siteMetadata.description,
+      description: description || siteMetadata.seoDescription,
       url: './',
       siteName: siteMetadata.title,
       images: image ? [image] : [siteMetadata.socialBanner],
-      locale: 'en_US',
+      locale: 'zh_CN',
       type: 'website',
     },
     twitter: {

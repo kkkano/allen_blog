@@ -52,11 +52,12 @@ export async function generateMetadata(props: {
   return {
     title: post.title,
     description: post.summary,
+    keywords: post.tags,
     openGraph: {
       title: post.title,
       description: post.summary,
       siteName: siteMetadata.title,
-      locale: 'en_US',
+      locale: 'zh_CN',
       type: 'article',
       publishedTime: publishedAt,
       modifiedTime: modifiedAt,
@@ -101,6 +102,7 @@ export default async function Page(props: { params: Promise<{ slug: string[] }> 
     return {
       '@type': 'Person',
       name: author.name,
+      url: `${siteMetadata.siteUrl}/about`,
     }
   })
 
